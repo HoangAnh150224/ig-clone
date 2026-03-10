@@ -3,8 +3,8 @@ import { Box, HStack, VStack, Text, Button, Link, Flex, Spinner } from '@chakra-
 import UserAvatar from '../common/UserAvatar';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { currentUser } from '../../api/dummyData';
-import profileService from '../../api/profileService';
+import profileService from '../../services/profileService';
+import userService from '../../services/userService';
 
 const RightSidebar = () => {
   const { user: authUser } = useSelector((state) => state.auth);
@@ -12,6 +12,7 @@ const RightSidebar = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const currentUser = userService.getCurrentUser();
   const myUsername = authUser?.username || currentUser.username;
   const myFullName = authUser?.fullName || currentUser.fullName;
   const myAvatar = authUser?.avatar || currentUser.avatar;

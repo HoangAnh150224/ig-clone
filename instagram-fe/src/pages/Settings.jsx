@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Flex, VStack, Text, HStack, Button, Image, Input, Textarea, Divider } from '@chakra-ui/react';
-import { currentUser } from '../api/dummyData';
 import UserAvatar from '../components/common/UserAvatar';
 import { LuLock, LuShieldAlert, LuUserPlus, LuChevronRight } from "react-icons/lu";
+import userService from '../services/userService';
 
 const SettingsItem = ({ icon: Icon, label, isActive, onClick }) => (
-  <HStack 
+  <HStack
     px={6} py={3} cursor="pointer" bg={isActive ? "gray.50" : "transparent"}
     _hover={{ bg: "gray.50" }} onClick={onClick} borderLeft={isActive ? "2px solid black" : "none"}
   >
@@ -15,6 +15,7 @@ const SettingsItem = ({ icon: Icon, label, isActive, onClick }) => (
 );
 
 const Settings = () => {
+  const currentUser = userService.getCurrentUser();
   const [activeTab, setActiveTab] = useState('edit-profile');
   const [isPrivate, setIsPrivate] = useState(currentUser.privacy.isPrivateAccount);
   const [blockedUsers, setBlockedUsers] = useState(currentUser.social.blockedUsers);
@@ -67,8 +68,8 @@ const Settings = () => {
                 <Text fontWeight="bold">Private Account</Text>
                 <Text fontSize="sm" color="gray.500">When your account is private, only people you approve can see your photos and videos on Instagram.</Text>
               </VStack>
-              <Box 
-                as="button" p={1} width="40px" borderRadius="full" 
+              <Box
+                as="button" p={1} width="40px" borderRadius="full"
                 bg={isPrivate ? "black" : "gray.200"} transition="0.3s"
                 onClick={() => setIsPrivate(!isPrivate)}
               >

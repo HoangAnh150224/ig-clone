@@ -21,7 +21,7 @@ import ImageCarousel from "../common/ImageCarousel";
 import UserListModal from "../modals/UserListModal";
 import "./CommentModal.css";
 import { useNavigate } from "react-router-dom";
-import { commentsDB } from "../../api/dummyData";
+import commentService from "../../services/commentService";
 
 const CommentModal = ({
   onClose,
@@ -42,7 +42,7 @@ const CommentModal = ({
     navigate(`/${post.user?.username}`);
   };
 
-  const comments = commentsDB[post.id] || [];
+  const comments = commentService.getCommentsByPostId(post.id);
   const likedUsers = post.likedBy || [];
 
   return (
@@ -130,7 +130,7 @@ const CommentModal = ({
                       </Box>
                     </Flex>
                     {/* NHẤN VÀO ĐỂ XEM DANH SÁCH NGƯỜI LIKE */}
-                    <Text 
+                    <Text
                       fontWeight="bold" fontSize="sm" color="black" cursor="pointer"
                       onClick={() => setIsLikeListOpen(true)}
                     >
@@ -151,11 +151,11 @@ const CommentModal = ({
         </DialogPositioner>
       </DialogRoot>
 
-      <UserListModal 
-        isOpen={isLikeListOpen} 
-        onClose={() => setIsLikeListOpen(false)} 
-        title="Likes" 
-        users={likedUsers} 
+      <UserListModal
+        isOpen={isLikeListOpen}
+        onClose={() => setIsLikeListOpen(false)}
+        title="Likes"
+        users={likedUsers}
       />
     </>
   );

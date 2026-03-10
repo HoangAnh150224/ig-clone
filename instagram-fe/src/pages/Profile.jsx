@@ -6,7 +6,7 @@ import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileTabs from '../components/profile/ProfileTabs';
 import PostGrid from '../components/profile/PostGrid';
 import ProfileHighlights from '../components/profile/ProfileHighlights';
-import profileService from '../api/profileService';
+import profileService from '../services/profileService';
 import { setUserProfile, setProfilePosts, setLoading } from '../store/slices/userSlice';
 
 const Profile = () => {
@@ -59,12 +59,12 @@ const Profile = () => {
   return (
     <Container maxW="935px" p={0} bg="white" color="black">
       <ProfileHeader user={userProfile} />
-      
+
       {/* Profile Highlights Section */}
       <ProfileHighlights isOwnProfile={isOwnProfile} user={userProfile} />
-      
+
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
       <Box py={4}>
         {activeTab === 'posts' && <PostGrid posts={posts} loading={loading} />}
         {activeTab === 'saved' && (

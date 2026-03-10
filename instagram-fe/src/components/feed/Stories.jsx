@@ -1,37 +1,30 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Box, HStack, Text, VStack } from '@chakra-ui/react';
 import UserAvatar from '../common/UserAvatar';
-import { useNavigate } from 'react-router-dom';
 import StoryModal from '../modals/StoryModal';
-import { allUsers, currentUser, userRelationsDB } from '../../api/dummyData';
+import storyService from '../../services/storyService';
 
 const Stories = () => {
   const scrollRef = useRef(null);
-  const navigate = useNavigate();
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
-  
+
   const [selectedUser, setSelectedUser] = useState(null);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
+  const [stories, setStories] = useState([]);
 
   // Mouse Drag Logic
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // Lọc Stories từ danh sách Following trong userRelations
-  const myFollowingList = userRelationsDB[currentUser.id]?.following || [];
-  const followingUsernames = myFollowingList.map(u => u.username);
-  
-  const followingWithStories = allUsers.filter(user => 
-    followingUsernames.includes(user.username) && user.hasStory
-  );
-
-  // SỬA LỖI: Lấy đúng stories từ currentUser (chứa views và replies)
-  const mockStories = [
-    { ...currentUser, isOwn: true }, 
-    ...followingWithStories
-  ];
+  useEffect(() => {
+    const fetchStories = async () => {
+      const response = await storyService.getStoriesForFeed();
+      setStories(response.data);
+    };
+    fetchStories();
+  }, []);
 
   const handleScroll = () => {
     if (scrollRef.current) {
@@ -110,17 +103,17 @@ const Stories = () => {
           </Box>
         )}
 
-        <Box 
-          ref={scrollRef} width="100%" py={4} bg="white" overflowX="auto" 
+        <Box
+          ref={scrollRef} width="100%" py={4} bg="white" overflowX="auto"
           cursor={isDragging ? "grabbing" : "pointer"}
           css={{ '&::-webkit-scrollbar': { display: 'none' }, 'scrollbarWidth': 'none', 'msOverflowStyle': 'none' }}
           onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseUp} onMouseMove={onMouseMove} onScroll={handleScroll}
         >
           <HStack gap={4} px={4}>
-            {mockStories.map((story) => (
+            {stories.map((story) => (
               <VStack key={story.id} gap={2} cursor="pointer" minW="90px" onClick={() => handleStoryClick(story)}>
-                <Box 
-                  p="3px" borderRadius="full" 
+                <Box
+                  p="3px" borderRadius="full"
                   bg={story.hasStory ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)" : "transparent"}
                   border={!story.hasStory ? "1px solid" : "none"}
                   borderColor="gray.200" width="90px" height="90px" display="flex" alignItems="center" justifyContent="center"
@@ -141,15 +134,15 @@ const Stories = () => {
       </Box>
 
       {/* Story Player */}
-      <StoryModal 
-        isOpen={isStoryOpen} 
-        onClose={() => setIsStoryOpen(false)} 
-        highlights={mockStories.map(s => ({ 
-          title: 'Story', 
+      <StoryModal
+        isOpen={isStoryOpen}
+        onClose={() => setIsStoryOpen(false)}
+        highlights={stories.map(s => ({
+          title: 'Story',
           user: s,
-          stories: s.stories || [{ id: s.id, url: `https://picsum.photos/1080/1920?random=${s.id}` }] 
+          stories: s.stories || [{ id: s.id, url: `https://picsum.photos/1080/1920?random=${s.id}` }]
         }))}
-        initialHighlightIndex={mockStories.findIndex(s => s.id === selectedUser?.id)}
+        initialHighlightIndex={stories.findIndex(s => s.id === selectedUser?.id)}
       />
     </>
   );

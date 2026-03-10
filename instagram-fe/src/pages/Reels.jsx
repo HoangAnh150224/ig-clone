@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Box, Flex, VStack, Image, Text, HStack } from '@chakra-ui/react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Flex, VStack, Image, Text, HStack, Spinner, Center } from '@chakra-ui/react';
 import { AiOutlineHeart, AiFillHeart, AiOutlineMessage } from 'react-icons/ai';
 import { BsThreeDots, BsMusicNoteBeamed } from 'react-icons/bs';
 import { RiSendPlaneFill } from 'react-icons/ri';
@@ -7,7 +7,7 @@ import { FaRegBookmark } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import UserAvatar from '../components/common/UserAvatar';
 import ReelCommentPanel from '../components/messages/ReelCommentPanel';
-import { allReels } from '../api/dummyData';
+import reelService from '../services/reelService';
 
 const ReelCard = ({ reel, onOpenComments }) => {
   const authUser = useSelector((state) => state.auth.user);
@@ -16,8 +16,8 @@ const ReelCard = ({ reel, onOpenComments }) => {
   const handleLike = () => setIsLiked(!isLiked);
 
   return (
-    <Box 
-      height="98vh" width="550px" bg="black" borderRadius="12px" 
+    <Box
+      height="98vh" width="550px" bg="black" borderRadius="12px"
       position="relative" overflow="hidden" scrollSnapAlign="start" boxShadow="0 0 20px rgba(0,0,0,0.5)"
     >
       <Image src={reel.gifUrl} width="100%" height="100%" objectFit="cover" />
@@ -59,9 +59,21 @@ const ReelCard = ({ reel, onOpenComments }) => {
 };
 
 const Reels = () => {
+  const [reels, setReels] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [activeReel, setActiveReel] = useState(null);
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    const fetchReels = async () => {
+      setLoading(true);
+      const response = await reelService.getAllReels();
+      setReels(response.data);
+      setLoading(false);
+    };
+    fetchReels();
+  }, []);
 
   const handleOpenComments = (reel) => {
     setActiveReel(reel);
@@ -75,13 +87,21 @@ const Reels = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Box height="100vh" width="100%" bg="white" display="flex" alignItems="center" justifyContent="center">
+        <Spinner size="xl" color="gray.400" />
+      </Box>
+    );
+  }
+
   return (
     <Box height="100vh" width="100%" bg="white">
       <Flex height="100%" width="100%" align="center" justify="center" position="relative">
-        
+
         {/* REFINED NAVIGATION BUTTONS - JUST A BIT BIGGER */}
         <VStack position="fixed" right="5%" top="50%" transform="translateY(-50%)" zIndex={100} gap={4}>
-          <Box 
+          <Box
             p={2.8} bg="white" borderRadius="full" cursor="pointer" border="1.5px solid" borderColor="gray.300"
             onClick={() => scrollToIndex('up')} _hover={{ bg: "gray.50", transform: "scale(1.05)" }} boxShadow="md"
             transition="0.2s" display="flex" alignItems="center" justifyContent="center"
@@ -90,7 +110,7 @@ const Reels = () => {
               <polyline points="18 15 12 9 6 15"></polyline>
             </Box>
           </Box>
-          <Box 
+          <Box
             p={2.8} bg="white" borderRadius="full" cursor="pointer" border="1.5px solid" borderColor="gray.300"
             onClick={() => scrollToIndex('down')} _hover={{ bg: "gray.50", transform: "scale(1.05)" }} boxShadow="md"
             transition="0.2s" display="flex" alignItems="center" justifyContent="center"
@@ -102,13 +122,13 @@ const Reels = () => {
         </VStack>
 
         <Flex align="center" justify="center" maxW="1400px" width="100%">
-          <Box 
+          <Box
             ref={containerRef}
             height="100vh" overflowY="auto" flexShrink={0}
             css={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none' }}
           >
             <VStack gap={4} py={4}>
-              {allReels.map((reel) => (
+              {reels.map((reel) => (
                 <ReelCard key={reel.id} reel={reel} onOpenComments={handleOpenComments} />
               ))}
             </VStack>

@@ -4,7 +4,7 @@ import { BsGearWide } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import StoryModal from '../modals/StoryModal';
 import UserListModal from '../modals/UserListModal';
-import { userRelationsDB } from '../../api/dummyData';
+import userService from '../../services/userService';
 
 const ProfileHeader = ({ user }) => {
   const navigate = useNavigate();
@@ -23,13 +23,12 @@ const ProfileHeader = ({ user }) => {
   };
 
   const handleOpenList = (type) => {
-    const data = userRelationsDB[user.id] || { followers: [], following: [] };
     if (type === 'followers') {
       setListTitle('Followers');
-      setListUsers(data.followers);
+      setListUsers(userService.getFollowersList(user.id));
     } else {
       setListTitle('Following');
-      setListUsers(data.following);
+      setListUsers(userService.getFollowingList(user.id));
     }
     setIsListOpen(true);
   };
@@ -51,8 +50,8 @@ const ProfileHeader = ({ user }) => {
       <Flex direction={{ base: "column", md: "row" }} gap={{ base: 8, md: 20 }} py={8} px={4} align="center">
         {/* Avatar Section */}
         <Box flexShrink={0}>
-          <Box 
-            width={{ base: "84px", md: "168px" }} height={{ base: "84px", md: "168px" }} borderRadius="full" 
+          <Box
+            width={{ base: "84px", md: "168px" }} height={{ base: "84px", md: "168px" }} borderRadius="full"
             display="flex" alignItems="center" justifyContent="center" position="relative"
             cursor={user.hasStory ? "pointer" : "default"} p="4px" onClick={handleAvatarClick}
             bg={user.hasStory ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)" : "transparent"}
@@ -113,18 +112,18 @@ const ProfileHeader = ({ user }) => {
       </Flex>
 
       {/* Story Player CHỈ DÀNH CHO ACTIVE STORIES */}
-      <StoryModal 
-        isOpen={isStoryOpen} 
-        onClose={() => setIsStoryOpen(false)} 
-        highlights={activeStoryData} 
+      <StoryModal
+        isOpen={isStoryOpen}
+        onClose={() => setIsStoryOpen(false)}
+        highlights={activeStoryData}
         initialHighlightIndex={0}
       />
-      
-      <UserListModal 
-        isOpen={isListOpen} 
-        onClose={() => setIsListOpen(false)} 
-        title={listTitle} 
-        users={listUsers} 
+
+      <UserListModal
+        isOpen={isListOpen}
+        onClose={() => setIsListOpen(false)}
+        title={listTitle}
+        users={listUsers}
         isOwnContext={user.isOwnProfile}
       />
     </>

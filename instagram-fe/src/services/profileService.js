@@ -1,10 +1,10 @@
-import { allUsers, currentUser, contentDB, userRelationsDB, commentsDB, usersDB } from './dummyData';
+import { allUsers, currentUser, contentDB, userRelationsDB, commentsDB, usersDB } from '../api/dummyData';
 
 const profileService = {
   getUserProfile: async (username) => {
     return new Promise((resolve) => {
-      // Tìm User gốc trong usersDB để lấy dữ liệu Stories chi tiết (views, replies)
-      const rawUser = Object.values(usersDB).find(u => u.username === username) || 
+      // Find raw user in usersDB for detailed story data (views, replies)
+      const rawUser = Object.values(usersDB).find(u => u.username === username) ||
                       (username === currentUser.username ? usersDB[currentUser.id] : null);
 
       setTimeout(() => {
@@ -20,10 +20,10 @@ const profileService = {
 
         resolve({
           data: {
-            ...rawUser, // Chứa mảng stories có đầy đủ views và replies
+            ...rawUser,
             isFollowing: isFollowing,
             isOwnProfile: rawUser.id === currentUser.id,
-            postCount: userPosts.length, 
+            postCount: userPosts.length,
             followerCount: relations.followers.length,
             followingCount: relations.following.length,
             bio: rawUser.bio || '',
@@ -38,6 +38,7 @@ const profileService = {
         });
       }, 500);
     });
+    // TODO: Replace with → return axiosClient.get(`/api/users/${username}/profile`);
   },
 
   getSuggestions: async () => {
@@ -46,22 +47,23 @@ const profileService = {
         const myId = currentUser.id;
         const myFollowingList = userRelationsDB[myId]?.following || [];
         const myFollowingIds = myFollowingList.map(u => u.id);
-        
-        const filteredUsers = allUsers.filter(user => 
-          user.id !== myId && 
+
+        const filteredUsers = allUsers.filter(user =>
+          user.id !== myId &&
           !myFollowingIds.includes(user.id)
         );
 
         resolve({ data: filteredUsers });
       }, 600);
     });
+    // TODO: Replace with → return axiosClient.get('/api/users/suggestions');
   },
 
   getUserPosts: async (username) => {
     return new Promise((resolve) => {
-      const user = allUsers.find(u => u.username === username) || 
+      const user = allUsers.find(u => u.username === username) ||
                    (username === currentUser.username ? currentUser : null);
-      
+
       setTimeout(() => {
         if (!user) {
           resolve({ data: [] });
@@ -82,6 +84,7 @@ const profileService = {
         resolve({ data: posts });
       }, 800);
     });
+    // TODO: Replace with → return axiosClient.get(`/api/users/${username}/posts`);
   }
 };
 

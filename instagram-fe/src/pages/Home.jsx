@@ -5,7 +5,7 @@ import PostCard from '../components/feed/PostCard';
 import Stories from '../components/feed/Stories';
 import RightSidebar from '../components/layout/RightSidebar';
 import { setMockPosts, selectAllPosts } from '../store/slices/postSlice';
-import { allPosts, userRelationsDB } from '../api/dummyData';
+import postService from '../services/postService';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -13,17 +13,13 @@ const Home = () => {
   const authUser = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (authUser) {
-      // Lấy danh sách ID những người đang follow
-      const followingIds = userRelationsDB[authUser.id]?.following.map(u => u.id) || [];
-      
-      // Lọc bài viết: Chỉ hiện bài của mình và người mình follow
-      const filteredPosts = allPosts.filter(post => 
-        post.userId === authUser.id || followingIds.includes(post.userId)
-      );
-      
-      dispatch(setMockPosts(filteredPosts));
-    }
+    const fetchFeedPosts = async () => {
+      if (authUser) {
+        const response = await postService.getFeedPosts(authUser.id);
+        dispatch(setMockPosts(response.data));
+      }
+    };
+    fetchFeedPosts();
   }, [dispatch, authUser]);
 
   return (

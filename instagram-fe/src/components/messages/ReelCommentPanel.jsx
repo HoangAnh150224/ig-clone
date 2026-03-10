@@ -4,7 +4,7 @@ import { AiOutlineClose, AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 import { BsEmojiSmile } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
 import UserAvatar from '../common/UserAvatar';
-import { commentsDB } from '../../api/dummyData';
+import commentService from '../../services/commentService';
 
 const ReelCommentCard = ({ comment }) => {
   const authUser = useSelector((state) => state.auth.user);
@@ -45,15 +45,15 @@ const ReelCommentCard = ({ comment }) => {
       {comment.replies && comment.replies.length > 0 && (
         <Box ml="44px" mt={3}>
           {!showReplies ? (
-            <Text 
-              fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer" 
+            <Text
+              fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer"
               onClick={() => setShowReplies(true)}
             >
               ——— View all {comment.replies.length} replies
             </Text>
           ) : (
             <VStack align="stretch" gap={4} mt={4}>
-              <Text 
+              <Text
                 fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer" mb={2}
                 onClick={() => setShowReplies(false)}
               >
@@ -98,15 +98,15 @@ const ReplyItem = ({ reply, authUser }) => {
 const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
   if (!isOpen || !reel) return null;
 
-  const comments = commentsDB[reel.id] || [];
+  const comments = commentService.getCommentsByPostId(reel.id);
 
   return (
-    <Box 
-      width="400px" 
-      height="98vh" 
-      bg="white" 
-      borderRadius="12px" 
-      display="flex" 
+    <Box
+      width="400px"
+      height="98vh"
+      bg="white"
+      borderRadius="12px"
+      display="flex"
       flexDirection="column"
       ml={4}
       boxShadow="0 0 20px rgba(0,0,0,0.1)"
@@ -137,10 +137,10 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
       <Box p={4} borderTop="1px solid" borderColor="gray.100">
         <Flex align="center" gap={3} bg="gray.50" p={2} px={4} borderRadius="full" border="1px solid" borderColor="gray.200">
           <UserAvatar src="https://bit.ly/dan-abramov" size="28px" />
-          <Input 
-            variant="unstyled" 
+          <Input
+            variant="unstyled"
             placeholder="Add a comment..."
-            fontSize="14px" 
+            fontSize="14px"
             color="black"
             _placeholder={{ color: "gray.500" }}
           />

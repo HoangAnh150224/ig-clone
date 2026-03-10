@@ -1,8 +1,8 @@
-import axiosClient from './axiosClient';
+import axiosClient from '../api/axiosClient';
 
 const authService = {
   login: async (credentials) => {
-    // Tạm thời giả lập API call
+    // Temporarily simulate API call
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -19,7 +19,7 @@ const authService = {
         });
       }, 1500);
     });
-    // Khi có backend: return axiosClient.post('/auth/login', credentials);
+    // TODO: Replace with → return axiosClient.post('/auth/login', credentials);
   },
 
   signup: async (userData) => {
@@ -28,7 +28,7 @@ const authService = {
         resolve({ data: { message: 'Signup successful!' } });
       }, 1500);
     });
-    // Khi có backend: return axiosClient.post('/auth/signup', userData);
+    // TODO: Replace with → return axiosClient.post('/auth/signup', userData);
   },
 
   getCurrentUser: async () => {
