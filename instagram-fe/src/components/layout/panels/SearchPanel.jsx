@@ -66,7 +66,11 @@ const SearchPanel = ({ isOpen }) => {
                     placeholder="Search"
                     bg="gray.100"
                     border="none"
-                    _focus={{ bg: "gray.100", border: "1px solid", borderColor: "gray.300" }}
+                    _focus={{
+                        bg: "gray.100",
+                        border: "1px solid",
+                        borderColor: "gray.300",
+                    }}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     color="black"
@@ -77,13 +81,25 @@ const SearchPanel = ({ isOpen }) => {
 
             <Box height="1px" bg="gray.200" width="full" mb={4} />
 
-            <VStack align="stretch" gap={4} overflowY="auto" maxH="calc(100vh - 180px)" css={{ '&::-webkit-scrollbar': { width: '0px' } }}>
+            <VStack
+                align="stretch"
+                gap={4}
+                overflowY="auto"
+                maxH="calc(100vh - 180px)"
+                css={{ "&::-webkit-scrollbar": { width: "0px" } }}
+            >
                 <Flex justify="space-between" align="center" mb={2}>
                     <Text fontWeight="bold" color="black" fontSize="16px">
                         {searchTerm ? "Results" : "Recent"}
                     </Text>
                     {!searchTerm && (
-                        <Text color="#0095f6" fontSize="14px" fontWeight="bold" cursor="pointer" _hover={{ color: "blue.900" }}>
+                        <Text
+                            color="#0095f6"
+                            fontSize="14px"
+                            fontWeight="bold"
+                            cursor="pointer"
+                            _hover={{ color: "blue.900" }}
+                        >
                             Clear all
                         </Text>
                     )}
@@ -106,7 +122,11 @@ const SearchPanel = ({ isOpen }) => {
                         >
                             <UserAvatar src={user.avatar} size="44px" />
                             <Box>
-                                <Text fontWeight="bold" fontSize="sm" color="black">
+                                <Text
+                                    fontWeight="bold"
+                                    fontSize="sm"
+                                    color="black"
+                                >
                                     {user.username}
                                 </Text>
                                 <Text color="gray.500" fontSize="sm">
@@ -116,11 +136,21 @@ const SearchPanel = ({ isOpen }) => {
                         </Flex>
                     ))
                 ) : searchTerm ? (
-                    <Text color="gray.500" fontSize="sm" textAlign="center" mt={10}>
+                    <Text
+                        color="gray.500"
+                        fontSize="sm"
+                        textAlign="center"
+                        mt={10}
+                    >
                         No results found for "{searchTerm}".
                     </Text>
                 ) : (
-                    <Text color="gray.500" fontSize="sm" textAlign="center" mt={10}>
+                    <Text
+                        color="gray.500"
+                        fontSize="sm"
+                        textAlign="center"
+                        mt={10}
+                    >
                         No recent searches.
                     </Text>
                 )}
