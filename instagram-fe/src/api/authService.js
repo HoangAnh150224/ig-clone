@@ -9,11 +9,11 @@ const authService = {
           data: {
             token: 'mock_jwt_token_12345',
             user: {
-              id: '1',
+              id: 'u-001',
               username: credentials.username || 'antigravity_dev',
               fullName: 'Antigravity Developer',
               avatar: 'https://bit.ly/dan-abramov',
-              bio: 'Vibe coding my way to the moon 🚀',
+              bio: 'Senior AI Orchestrator 🚀 | Coding the future.',
             }
           }
         });

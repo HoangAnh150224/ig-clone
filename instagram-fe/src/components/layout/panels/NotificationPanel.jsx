@@ -1,16 +1,15 @@
 import React from 'react';
-import { Box, Text, VStack, Flex } from '@chakra-ui/react';
+import { Box, Text, VStack, Flex, Image, Center } from '@chakra-ui/react';
+import { AiOutlineHeart } from 'react-icons/ai';
 import UserAvatar from '../../common/UserAvatar';
 import { useNavigate } from 'react-router-dom';
-import { notifications } from '../../../api/dummyData'; // Sửa đường dẫn
+import { notifications } from '../../../api/dummyData';
 
 const Button = ({ children, bg, color, px, py, borderRadius, fontSize, fontWeight, ...props }) => (
   <Box 
     as="button" bg={bg} color={color} px={px} py={py} 
     borderRadius={borderRadius} fontSize={fontSize} fontWeight={fontWeight} 
-    _hover={{ opacity: 0.8 }} 
-    transition="all 0.2s"
-    {...props}
+    _hover={{ opacity: 0.8 }} transition="all 0.2s" {...props}
   >
     {children}
   </Box>
@@ -19,9 +18,12 @@ const Button = ({ children, bg, color, px, py, borderRadius, fontSize, fontWeigh
 const NotificationPanel = ({ isOpen }) => {
   const navigate = useNavigate();
 
-  const handleNavigate = (username) => {
-    navigate(`/${username}`);
-  };
+  // Group notifications by section
+  const sections = ['Today', 'Yesterday', 'Earlier'];
+  const groupedNotifications = sections.reduce((acc, section) => {
+    acc[section] = notifications.filter(n => n.section === section);
+    return acc;
+  }, {});
 
   return (
     <Box
@@ -31,39 +33,54 @@ const NotificationPanel = ({ isOpen }) => {
       opacity={isOpen ? 1 : 0}
       visibility={isOpen ? "visible" : "hidden"}
       transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+      boxShadow="20px 0 20px -20px rgba(0,0,0,0.1)"
+      borderRight="1px solid" borderColor="gray.100"
     >
       <Text fontSize="24px" fontWeight="bold" mb={6} mt={2} color="black">Notifications</Text>
       
-      <VStack align="stretch" gap={5} overflowY="auto" maxH="calc(100vh - 100px)">
-        <Text fontWeight="bold" color="black">Recent</Text>
-        
-        {notifications.map(notif => (
-          <Flex 
-            key={notif.id} align="center" gap={3} cursor="pointer" p={2} 
-            borderRadius="md" _hover={{ bg: "gray.50" }} transition="background 0.2s"
-            onClick={() => handleNavigate(notif.user.username)}
-          >
-            <UserAvatar src={notif.user.avatar} size="44px" />
-            <Box flex={1}>
-              <Text fontSize="sm" color="black">
-                <Text as="span" fontWeight="bold" color="black">{notif.user.username}</Text> {notif.content}
-                <Text as="span" color="gray.500" ml={1}>{notif.timeAgo}</Text>
-              </Text>
+      <VStack align="stretch" gap={0} overflowY="auto" maxH="calc(100vh - 80px)" css={{ '&::-webkit-scrollbar': { width: '0px' } }}>
+        {notifications.length === 0 ? (
+          <Center h="200px" flexDirection="column" gap={4}>
+            <Box p={4} borderRadius="full" border="2px solid black">
+              <AiOutlineHeart size={32} />
             </Box>
-            {notif.type === 'follow' && (
-              <Button 
-                bg="#0095f6" color="white" px={4} py={1} 
-                borderRadius="8px" fontSize="sm" fontWeight="bold"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Follow
-              </Button>
-            )}
-            {notif.type === 'like' && (
-               <Box boxSize="44px" bg="gray.100" borderRadius="md" />
-            )}
-          </Flex>
-        ))}
+            <Text fontSize="14px" color="gray.500" textAlign="center">
+              Activity on your posts will be shown here.
+            </Text>
+          </Center>
+        ) : (
+          sections.map(section => groupedNotifications[section].length > 0 && (
+            <Box key={section} mb={6}>
+              <Text fontWeight="bold" color="black" mb={4} fontSize="16px">{section}</Text>
+              <VStack align="stretch" gap={4}>
+                {groupedNotifications[section].map(notif => (
+                  <Flex key={notif.id} align="center" gap={3} cursor="pointer" p={1} onClick={() => navigate(`/${notif.user.username}`)}>
+                    <UserAvatar src={notif.user.avatar} size="44px" />
+                    <Box flex={1}>
+                      <Text fontSize="14px" color="black" lineHeight="1.2">
+                        <Text as="span" fontWeight="bold">{notif.user.username}</Text> {notif.content}
+                        <Text as="span" color="gray.500" ml={1}>{notif.timeAgo}</Text>
+                      </Text>
+                    </Box>
+                    
+                    {notif.type === 'follow' && (
+                      <Button bg="#0095f6" color="white" px={4} py={1.5} borderRadius="8px" fontSize="12px" fontWeight="bold">
+                        Follow
+                      </Button>
+                    )}
+
+                    {(notif.type === 'like' || notif.type === 'comment' || notif.type === 'mention') && notif.postImage && (
+                       <Box boxSize="40px" flexShrink={0}>
+                         <Image src={notif.postImage} borderRadius="2px" objectFit="cover" w="100%" h="100%" />
+                       </Box>
+                    )}
+                  </Flex>
+                ))}
+              </VStack>
+              {section !== 'Earlier' && <Box height="1px" bg="gray.100" mt={6} />}
+            </Box>
+          ))
+        )}
       </VStack>
     </Box>
   );

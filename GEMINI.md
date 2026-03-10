@@ -54,26 +54,41 @@ Vui lòng sử dụng các kỹ năng phù hợp nhất cho **Phát triển chun
 12. **UI/UX Pro Max**: Tương tác nâng cao.
 13. **Vitals Templates**: Tiêu chuẩn Hiệu năng.
 
-## 📑 Nhật ký Tiến độ (Cập nhật: 09/03/2026)
+## 📑 Nhật ký Tiến độ (Cập nhật: 10/03/2026)
 
 ### ✅ Các mục đã hoàn thành:
-1.  **Infinite Scroll**: Sửa logic tải bài cũ hơn xuống cuối trang (Pagination), giữ bài mới ở đầu.
-2.  **UI Core**: Ép chế độ **Light Mode thuần túy** (Nền trắng #FFFFFF, Chữ đen #000000). Xóa bỏ hoàn toàn các vạch đen/trắng bất thường.
-3.  **Layout & Scaling**:
-    *   Nới rộng Bài viết (PostCard) lên **630px**.
-    *   Nới rộng Stories lên **800px** (Avatar 66px/82px).
-    *   Căn giữa tuyệt đối khối nội dung trung tâm, cân bằng lề trái/phải.
-4.  **Tính năng mới**:
-    *   **Explore**: Đã tạo trang `/explore` với lưới bài viết ngẫu nhiên.
-    *   **Auth**: Nâng cấp UI Login/Signup mượt mà, đồng bộ Light Mode.
-    *   **Profile**: Sửa lỗi điều hướng theo username và lỗi crash component.
-5.  **Refactor**: Dọn dẹp "Zombie Code" (Sidebar trùng lặp), đồng nhất Sidebar tại `components/layout/Sidebar.jsx`.
+1.  **Sidebar Pro**: 
+    *   Tích hợp bảng **Search** và **Notifications** với hiệu ứng slide-in mượt mà.
+    *   Cơ chế **Auto-expanding on hover**: Sidebar tự mở rộng khi di chuột và thu gọn khi không dùng.
+    *   Xử lý logic Overlay: Không đẩy nội dung trang khi mở rộng Sidebar.
+2.  **Explore 2.0**:
+    *   Chuyển sang **Hierarchical Grid** (Lưới phân cấp): Một số bài viết lớn chiếm 2x2 ô, tạo giao diện sinh động.
+    *   Kích hoạt **Infinite Scroll** cho Explore.
+3.  **Messages (Direct)**:
+    *   Xây dựng hoàn chỉnh giao diện `/direct/inbox` chiếm toàn bộ chiều rộng màn hình.
+    *   Thiết kế Chat List (trái) và Chat Window (phải) chuẩn Instagram.
+    *   Sửa lỗi triệt để về màu sắc (Light Mode), ô nhập liệu và khoảng trống dư thừa.
+4.  **Infinite Scroll "Scroll & Wait"**:
+    *   Implement cơ chế khóa cuộn (`overflow: hidden`) khi đang tải dữ liệu.
+    *   Tự động cuộn nhẹ (Auto-scroll) để người dùng luôn nhìn thấy Spinner khi chạm đáy.
+    *   Xóa bỏ văn bản thừa, chỉ giữ lại animation Spinner trung tâm.
+5.  **Profile Enhancements**:
+    *   Thêm phần **Highlights** (Tin nổi bật) với vòng tròn 87px và nút "New".
+    *   Bỏ hoàn toàn bo góc bài viết (`borderRadius: 0`) trên toàn hệ thống (Profile & Explore).
+    *   Ẩn phần Gợi ý (`RightSidebar`) trên trang Profile và Explore để tập trung nội dung.
+6.  **Navigation & Interaction**:
+    *   Kích hoạt tính năng xem trang cá nhân của người khác qua Avatar/Username.
+    *   Hoàn thiện **Post Detail Modal**: Hiện chi tiết ảnh và bình luận khi nhấn vào icon Comment.
+    *   Sửa lỗi hiển thị nút **Follow** (chữ trắng trên nền xanh chuẩn #0095f6).
+7.  **Stories Upgrade**:
+    *   Avatar lớn hơn (74x74px).
+    *   Thêm bộ điều hướng **Slide** (mũi tên trái/phải) mượt mà.
 
 ### 🚀 Công việc tiếp theo:
 *   Hoàn thiện menu **"More"** (Logout, Switch Account).
 *   Kết nối API Sign Up thực tế.
 *   Xử lý Responsive cho Mobile (hiện tại đang ưu tiên Desktop).
-*   Thêm tính năng Comment và Like thực tế (hiện tại đang là Mockup).
+*   Thêm tính năng Comment và Like thực tế (kết nối Backend Spring Boot).
 
 ---
 *Ghi chú cho Agent: Luôn ưu tiên Light Mode và giữ vững tỷ lệ khung hình đã thiết lập.*

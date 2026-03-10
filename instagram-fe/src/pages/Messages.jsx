@@ -2,32 +2,39 @@ import React, { useState } from 'react';
 import { Flex, Box } from '@chakra-ui/react';
 import ChatList from '../components/messages/ChatList';
 import ChatWindow from '../components/messages/ChatWindow';
-import { allUsers, chatMessages } from '../api/dummyData';
+import { allUsers, chatMessages, messageRequests } from '../api/dummyData';
 
 const Messages = () => {
   const [activeChatId, setActiveChatId] = useState(null);
+  const [view, setView] = useState('primary'); // 'primary' | 'requests'
 
-  // Lọc lấy những user có trong hội thoại hoặc tất cả user để demo
-  const mockChats = allUsers.slice(0, 4).map(user => ({
+  const primaryChats = allUsers.slice(0, 3).map(user => ({
     id: user.id,
     user: user,
-    lastMessage: chatMessages[user.username]?.[chatMessages[user.username].length - 1]?.text || 'No messages yet',
+    lastMessage: chatMessages[user.username]?.[chatMessages[user.username].length - 1]?.text || 'No messages',
     time: chatMessages[user.username]?.[chatMessages[user.username].length - 1]?.time || '',
-    unread: user.username === 'leomessi',
+    unread: false,
     messages: chatMessages[user.username] || []
   }));
 
-  const activeChat = mockChats.find(chat => chat.id === activeChatId);
+  const requestChats = messageRequests.map(req => ({
+    ...req,
+    messages: chatMessages[req.user.username] || []
+  }));
+
+  const displayedChats = view === 'primary' ? primaryChats : requestChats;
+  const activeChat = displayedChats.find(chat => chat.id === activeChatId);
 
   return (
     <Flex height="100vh" bg="white" color="black" width="100%">
-      <Box width="397px" borderRight="1px solid" borderColor="gray.200">
-        <ChatList 
-          chats={mockChats} 
-          onSelectChat={setActiveChatId} 
-          activeChatId={activeChatId} 
-        />
-      </Box>
+      <ChatList 
+        chats={displayedChats} 
+        onSelectChat={setActiveChatId} 
+        activeChatId={activeChatId}
+        currentView={view}
+        onViewChange={(newView) => { setView(newView); setActiveChatId(null); }}
+        requestCount={messageRequests.length}
+      />
 
       <Flex flex={1}>
         <ChatWindow activeChat={activeChat} />

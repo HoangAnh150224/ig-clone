@@ -1,50 +1,84 @@
-import { allUsers, currentUser } from './dummyData';
+import { allUsers, currentUser, contentDB, userRelationsDB, commentsDB, usersDB } from './dummyData';
 
 const profileService = {
   getUserProfile: async (username) => {
     return new Promise((resolve) => {
-      const user = allUsers.find(u => u.username === username) || 
-                   (username === currentUser.username ? currentUser : null);
+      // Tìm User gốc trong usersDB để lấy dữ liệu Stories chi tiết (views, replies)
+      const rawUser = Object.values(usersDB).find(u => u.username === username) || 
+                      (username === currentUser.username ? usersDB[currentUser.id] : null);
 
       setTimeout(() => {
-        if (!user) {
+        if (!rawUser) {
           resolve({ data: null });
           return;
         }
+
+        const relations = userRelationsDB[rawUser.id] || { followers: [], following: [] };
+        const myRelations = userRelationsDB[currentUser.id] || { following: [] };
+        const isFollowing = myRelations.following.some(u => u.id === rawUser.id);
+        const userPosts = contentDB.posts.filter(p => p.userId === rawUser.id);
+
         resolve({
           data: {
-            ...user,
-            isFollowing: currentUser.following.includes(user.username),
-            isOwnProfile: user.username === currentUser.username,
-            postCount: user.postCount || 0,
-            followerCount: user.followerCount || 0,
-            followingCount: user.followingCount || 0,
-            bio: user.bio || '',
-            website: user.website || '',
-            highlights: user.highlights || []
+            ...rawUser, // Chứa mảng stories có đầy đủ views và replies
+            isFollowing: isFollowing,
+            isOwnProfile: rawUser.id === currentUser.id,
+            postCount: userPosts.length, 
+            followerCount: relations.followers.length,
+            followingCount: relations.following.length,
+            bio: rawUser.bio || '',
+            website: rawUser.website || '',
+            highlights: rawUser.highlights || [],
+            settings: rawUser.id === currentUser.id ? {
+              privacy: currentUser.privacy || {},
+              notifications: currentUser.notifications || {},
+              blockedUsers: currentUser.social?.blockedUsers || []
+            } : null
           }
         });
       }, 500);
     });
   },
 
-  getUserPosts: async (username) => {
+  getSuggestions: async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const posts = Array.from({ length: 12 }).map((_, i) => ({
-          id: `p${i}-${username}`,
-          images: [
-            `https://picsum.photos/1080/1350?random=${i + 100}`,
-            `https://picsum.photos/1080/1350?random=${i + 200}`
-          ],
-          imageUrl: `https://picsum.photos/1080/1350?random=${i + 100}`,
-          likeCount: Math.floor(Math.random() * 5000),
-          commentCount: Math.floor(Math.random() * 500),
-          user: { username },
-          caption: `Post #${i} by ${username}`,
-          timeAgo: '2 HOURS AGO',
-          createdAt: new Date().toISOString()
-        }));
+        const myId = currentUser.id;
+        const myFollowingList = userRelationsDB[myId]?.following || [];
+        const myFollowingIds = myFollowingList.map(u => u.id);
+        
+        const filteredUsers = allUsers.filter(user => 
+          user.id !== myId && 
+          !myFollowingIds.includes(user.id)
+        );
+
+        resolve({ data: filteredUsers });
+      }, 600);
+    });
+  },
+
+  getUserPosts: async (username) => {
+    return new Promise((resolve) => {
+      const user = allUsers.find(u => u.username === username) || 
+                   (username === currentUser.username ? currentUser : null);
+      
+      setTimeout(() => {
+        if (!user) {
+          resolve({ data: [] });
+          return;
+        }
+        const posts = contentDB.posts
+          .filter(p => p.userId === user.id)
+          .map(p => ({
+            ...p,
+            user: user,
+            imageUrl: p.media[0].url,
+            images: p.media.map(m => m.url),
+            commentCount: commentsDB[p.id]?.length || 0,
+            likeCount: p.likedBy?.length || 0,
+            likedBy: p.likedBy || [],
+            timeAgo: '2 HOURS AGO'
+          }));
         resolve({ data: posts });
       }, 800);
     });

@@ -3,7 +3,7 @@ import { Box, HStack, Text, VStack } from '@chakra-ui/react';
 import UserAvatar from '../common/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 import StoryModal from '../modals/StoryModal';
-import { allUsers, currentUser } from '../../api/dummyData';
+import { allUsers, currentUser, userRelationsDB } from '../../api/dummyData';
 
 const Stories = () => {
   const scrollRef = useRef(null);
@@ -19,11 +19,18 @@ const Stories = () => {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // Lọc Stories từ danh sách Following
-  const followingUsers = allUsers.filter(user => currentUser.following.includes(user.username) && user.hasStory);
+  // Lọc Stories từ danh sách Following trong userRelations
+  const myFollowingList = userRelationsDB[currentUser.id]?.following || [];
+  const followingUsernames = myFollowingList.map(u => u.username);
+  
+  const followingWithStories = allUsers.filter(user => 
+    followingUsernames.includes(user.username) && user.hasStory
+  );
+
+  // SỬA LỖI: Lấy đúng stories từ currentUser (chứa views và replies)
   const mockStories = [
-    { ...currentUser, hasStory: true, isOwn: true, stories: [{ id: 's0-1', url: 'https://picsum.photos/1080/1920?random=0' }] },
-    ...followingUsers
+    { ...currentUser, isOwn: true }, 
+    ...followingWithStories
   ];
 
   const handleScroll = () => {
@@ -76,7 +83,7 @@ const Stories = () => {
 
   return (
     <>
-      <Box position="relative" width="100%" maxW="800px" mx="auto" mb={4} userSelect="none">
+      <Box position="relative" width="100%" maxW="630px" mx="auto" mb={4} userSelect="none">
         {showLeft && (
           <Box
             position="absolute" left={2} top="48px" zIndex={10}
@@ -106,7 +113,7 @@ const Stories = () => {
         <Box 
           ref={scrollRef} width="100%" py={4} bg="white" overflowX="auto" 
           cursor={isDragging ? "grabbing" : "pointer"}
-          css={{ '&::-webkit-scrollbar': { display: 'none' } }}
+          css={{ '&::-webkit-scrollbar': { display: 'none' }, 'scrollbarWidth': 'none', 'msOverflowStyle': 'none' }}
           onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseUp} onMouseMove={onMouseMove} onScroll={handleScroll}
         >
           <HStack gap={4} px={4}>
@@ -133,13 +140,13 @@ const Stories = () => {
         </Box>
       </Box>
 
-      {/* Story Player - Truyền dữ liệu User vào từng highlight */}
+      {/* Story Player */}
       <StoryModal 
         isOpen={isStoryOpen} 
         onClose={() => setIsStoryOpen(false)} 
         highlights={mockStories.map(s => ({ 
           title: 'Story', 
-          user: s, // Truyền thông tin User
+          user: s,
           stories: s.stories || [{ id: s.id, url: `https://picsum.photos/1080/1920?random=${s.id}` }] 
         }))}
         initialHighlightIndex={mockStories.findIndex(s => s.id === selectedUser?.id)}

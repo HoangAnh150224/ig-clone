@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { Box, Flex, Text, HStack, Input, VStack } from '@chakra-ui/react';
-import { AiOutlineClose, AiOutlineHeart } from 'react-icons/ai';
+import { AiOutlineClose, AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 import { BsEmojiSmile } from 'react-icons/bs';
+import { useSelector } from 'react-redux';
 import UserAvatar from '../common/UserAvatar';
 import { commentsDB } from '../../api/dummyData';
 
 const ReelCommentCard = ({ comment }) => {
+  const authUser = useSelector((state) => state.auth.user);
   const [showReplies, setShowReplies] = useState(false);
+  const [isLiked, setIsLiked] = useState(comment.likedBy?.some(u => u.id === authUser?.id) || false);
+
+  const handleLike = () => setIsLiked(!isLiked);
+
+  // Tính toán like count dựa trên likedBy và trạng thái isLiked hiện tại
+  const baseLikes = comment.likedBy || [];
+  const alreadyLikedInDB = baseLikes.some(u => u.id === authUser?.id);
+  const currentLikeCount = baseLikes.length + (isLiked ? (alreadyLikedInDB ? 0 : 1) : (alreadyLikedInDB ? -1 : 0));
 
   return (
     <Box mb={6} width="100%">
@@ -21,13 +31,13 @@ const ReelCommentCard = ({ comment }) => {
             {comment.content}
           </Text>
           <HStack gap={4} fontSize="12px" color="gray.500" fontWeight="bold">
-            <Text cursor="pointer">{comment.likeCount?.toLocaleString()} likes</Text>
+            <Text cursor="pointer">{currentLikeCount.toLocaleString()} likes</Text>
             <Text cursor="pointer">Reply</Text>
             <Text cursor="pointer">See translation</Text>
           </HStack>
         </Box>
-        <Box pt={1} cursor="pointer" color="gray.400" _hover={{ color: "#ff3040" }}>
-          <AiOutlineHeart size={14} />
+        <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={handleLike}>
+          {isLiked ? <AiFillHeart size={14} /> : <AiOutlineHeart size={14} />}
         </Box>
       </Flex>
 
@@ -50,31 +60,38 @@ const ReelCommentCard = ({ comment }) => {
                 ——— Hide replies
               </Text>
               {comment.replies.map((reply) => (
-                <Flex key={reply.id} gap={3} align="start">
-                  <UserAvatar src={reply.user.avatar} size="24px" />
-                  <Box flex={1}>
-                    <Flex align="center" gap={2} mb={1}>
-                      <Text fontWeight="bold" fontSize="13px" color="black">{reply.user.username}</Text>
-                      <Text color="gray.500" fontSize="12px">{reply.timeAgo}</Text>
-                    </Flex>
-                    <Text fontSize="14px" color="black" lineHeight="1.4" mb={1}>
-                      {reply.content}
-                    </Text>
-                    <HStack gap={4} fontSize="12px" color="gray.500" fontWeight="bold">
-                      <Text cursor="pointer">{reply.likeCount} likes</Text>
-                      <Text cursor="pointer">Reply</Text>
-                    </HStack>
-                  </Box>
-                  <Box pt={1} cursor="pointer" color="gray.400">
-                    <AiOutlineHeart size={12} />
-                  </Box>
-                </Flex>
+                <ReplyItem key={reply.id} reply={reply} authUser={authUser} />
               ))}
             </VStack>
           )}
         </Box>
       )}
     </Box>
+  );
+};
+
+const ReplyItem = ({ reply, authUser }) => {
+  const [isLiked, setIsLiked] = useState(reply.likedBy?.some(u => u.id === authUser?.id) || false);
+  return (
+    <Flex gap={3} align="start">
+      <UserAvatar src={reply.user.avatar} size="24px" />
+      <Box flex={1}>
+        <Flex align="center" gap={2} mb={1}>
+          <Text fontWeight="bold" fontSize="13px" color="black">{reply.user.username}</Text>
+          <Text color="gray.500" fontSize="12px">{reply.timeAgo}</Text>
+        </Flex>
+        <Text fontSize="14px" color="black" lineHeight="1.4" mb={1}>
+          {reply.content}
+        </Text>
+        <HStack gap={4} fontSize="12px" color="gray.500" fontWeight="bold">
+          <Text cursor="pointer">{reply.likeCount} likes</Text>
+          <Text cursor="pointer">Reply</Text>
+        </HStack>
+      </Box>
+      <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={() => setIsLiked(!isLiked)}>
+        {isLiked ? <AiFillHeart size={12} /> : <AiOutlineHeart size={12} />}
+      </Box>
+    </Flex>
   );
 };
 

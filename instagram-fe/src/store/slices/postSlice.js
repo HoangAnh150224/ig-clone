@@ -33,13 +33,14 @@ const postSlice = createSlice({
     toggleLikePost: (state, action) => {
       const { postId, userId } = action.payload;
       const post = state.entities[postId];
-      if (post) {
-        const index = post.likes.indexOf(userId);
+      if (post && post.likedBy) {
+        const index = post.likedBy.findIndex(u => u.id === userId);
         if (index === -1) {
-          post.likes.push(userId);
+          // Mock: Thêm ID vào mảng (trong thực tế sẽ là object user đầy đủ từ API)
+          post.likedBy.push({ id: userId });
           post.likeCount += 1;
         } else {
-          post.likes.splice(index, 1);
+          post.likedBy.splice(index, 1);
           post.likeCount -= 1;
         }
       }

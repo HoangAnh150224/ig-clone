@@ -13,8 +13,17 @@ export const login = createAsyncThunk(
   }
 );
 
+const getStoredUser = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user && user.id === '1') {
+    user.id = 'u-001';
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+  return user;
+};
+
 const initialState = {
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  user: getStoredUser() || null,
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
   loading: false,

@@ -9,6 +9,7 @@ import { toggleLikePost } from '../../store/slices/postSlice';
 import { useNavigate } from 'react-router-dom';
 import CommentModal from '../Comment/CommentModal';
 import ImageCarousel from '../common/ImageCarousel';
+import UserListModal from '../modals/UserListModal';
 
 const PostCard = ({ post }) => {
   const dispatch = useDispatch();
@@ -19,8 +20,9 @@ const PostCard = ({ post }) => {
   const [comment, setComment] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [isLikeListOpen, setIsLikeListOpen] = useState(false);
 
-  const isLiked = post.likes?.includes(authUser?.id) || false;
+  const isLiked = post.likedBy?.some(u => u.id === authUser?.id) || false;
 
   const handleLike = () => {
     dispatch(toggleLikePost({ postId: post.id, userId: authUser?.id || 'guest' }));
@@ -31,6 +33,9 @@ const PostCard = ({ post }) => {
     setShowHeartAnim(true);
     setTimeout(() => setShowHeartAnim(false), 800);
   };
+
+  // Lấy danh sách người thích thực tế từ dữ liệu bài viết
+  const likedUsers = post.likedBy || [];
 
   return (
     <>
@@ -51,16 +56,8 @@ const PostCard = ({ post }) => {
           <Box cursor="pointer" color="black"><BsThreeDots size={18} /></Box>
         </Flex>
 
-        {/* Post Image Container with Aspect Ratio (4:5) */}
-        <Box 
-          className="post-image-container" 
-          onDoubleClick={handleDoubleLike} 
-          bg="white" 
-          position="relative" 
-          width="100%"
-          paddingBottom="125%" // 4:5 Aspect Ratio (100 / 0.8)
-          overflow="hidden"
-        >
+        {/* Post Image */}
+        <Box className="post-image-container" onDoubleClick={handleDoubleLike} bg="white" position="relative" width="100%" paddingBottom="125%" overflow="hidden">
           <Box position="absolute" top={0} left={0} right={0} bottom={0}>
             {showHeartAnim && (
               <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" zIndex={10}>
@@ -86,24 +83,24 @@ const PostCard = ({ post }) => {
             </Box>
           </Flex>
 
-          <Text fontSize="14px" fontWeight="600" mb={2} color="black">{post.likeCount} likes</Text>
+          {/* NHẤN VÀO ĐỂ XEM DANH SÁCH NGƯỜI LIKE */}
+          <Text 
+            fontSize="14px" fontWeight="600" mb={2} color="black" cursor="pointer" 
+            onClick={() => setIsLikeListOpen(true)}
+          >
+            {post.likeCount?.toLocaleString()} likes
+          </Text>
 
           <Box mb={2}>
             <Text fontSize="14px" lineHeight="1.4" color="black">
-              <Text 
-                as="span" fontWeight="600" mr={2} cursor="pointer" 
-                onClick={() => navigate(`/${post.user?.username}`)}
-              >
+              <Text as="span" fontWeight="600" mr={2} cursor="pointer" onClick={() => navigate(`/${post.user?.username}`)}>
                 {post.user?.username}
               </Text>
               {post.caption}
             </Text>
           </Box>
 
-          <Text 
-            fontSize="14px" color="gray.500" cursor="pointer" mb={2}
-            onClick={() => setIsCommentModalOpen(true)}
-          >
+          <Text fontSize="14px" color="gray.500" cursor="pointer" mb={2} onClick={() => setIsCommentModalOpen(true)}>
             View all {post.commentCount} comments
           </Text>
 
@@ -112,37 +109,20 @@ const PostCard = ({ post }) => {
           </Text>
         </Box>
 
-        {/* Comment Input */}
         <Box borderTop="1px solid" borderColor="gray.100" px={3} py={3} bg="white" display={{ base: "none", md: "block" }}>
           <HStack gap={3} bg="white">
             <FaRegSmile size={20} cursor="pointer" color="black" />
-            <Input 
-              placeholder="Add a comment..." variant="unstyled" fontSize="14px" 
-              value={comment} onChange={(e) => setComment(e.target.value)} 
-              _placeholder={{ color: "gray.500" }}
-              color="black"
-              bg="white"
-            />
-            <Text 
-              as="button" color="#0095f6" fontSize="14px" fontWeight="600" 
-              opacity={comment.trim() ? 1 : 0.3} cursor={comment.trim() ? "pointer" : "default"}
-            >
-              Post
-            </Text>
+            <Input placeholder="Add a comment..." variant="unstyled" fontSize="14px" value={comment} onChange={(e) => setComment(e.target.value)} _placeholder={{ color: "gray.500" }} color="black" bg="white" />
+            <Text as="button" color="#0095f6" fontSize="14px" fontWeight="600" opacity={comment.trim() ? 1 : 0.3} cursor={comment.trim() ? "pointer" : "default"}>Post</Text>
           </HStack>
         </Box>
       </Box>
 
-      {/* Post Detail Modal */}
-      <CommentModal 
-        isOpen={isCommentModalOpen}
-        onClose={() => setIsCommentModalOpen(false)}
-        post={post}
-        isLiked={isLiked}
-        handleLike={handleLike}
-        isSaved={isSaved}
-        handleSave={() => setIsSaved(!isSaved)}
-      />
+      {/* Modal chi tiết bài viết */}
+      <CommentModal isOpen={isCommentModalOpen} onClose={() => setIsCommentModalOpen(false)} post={post} isLiked={isLiked} handleLike={handleLike} isSaved={isSaved} handleSave={() => setIsSaved(!isSaved)} />
+      
+      {/* Modal danh sách người thích bài viết */}
+      <UserListModal isOpen={isLikeListOpen} onClose={() => setIsLikeListOpen(false)} title="Likes" users={likedUsers} />
     </>
   );
 };
