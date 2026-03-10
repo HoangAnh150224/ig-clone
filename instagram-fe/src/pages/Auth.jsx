@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Flex, Image, VStack, Text, Input, Button, HStack, Link } from '@chakra-ui/react';
-
-const Divider = () => <Box h="1px" bg="gray.200" flex={1} />;
+import { Box, Flex, Image, VStack, Text, Input, Button, HStack } from '@chakra-ui/react';
 import { AiFillFacebook } from 'react-icons/ai';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../store/slices/authSlice';
+import { login, signup, clearError } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import InstagramAlert from '../components/common/InstagramAlert';
+
+const Divider = () => <Box h="1px" bg="gray.200" flex={1} />;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,6 +16,9 @@ const Auth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
+
+  // Alert for general system errors
+  const [alertConfig, setAlertConfig] = useState({ isOpen: false, message: '' });
 
   const authImages = [
     'https://www.instagram.com/static/images/homepage/screenshots/screenshot1-2x.png/cfd999368de3.png',
@@ -31,6 +35,10 @@ const Auth = () => {
   }, []);
 
   useEffect(() => {
+    dispatch(clearError());
+  }, [isLogin, dispatch]);
+
+  useEffect(() => {
     if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
 
@@ -39,16 +47,22 @@ const Auth = () => {
     if (isLogin) {
       dispatch(login({ username: formData.username, password: formData.password }));
     } else {
-      // Logic for SignUp will be added later
-      console.log("Sign Up Data:", formData);
-      alert("Sign Up successful! (Mockup logic)");
-      setIsLogin(true);
+      dispatch(signup(formData));
     }
   };
 
+  const getFieldError = (fieldName) => {
+    if (typeof error === 'object' && error?.errors) {
+      return error.errors.find(err => err.field === fieldName)?.message;
+    }
+    return null;
+  };
+
+  const generalErrorMessage = typeof error === 'string' ? error : error?.message;
+
   return (
     <Flex h="100vh" align="center" justify="center" bg="white" gap={8}>
-      {/* Left side: Phone Mockup (Desktop only) */}
+      {/* Phone Mockup */}
       <Box 
         display={{ base: "none", md: "block" }} 
         position="relative" 
@@ -61,16 +75,15 @@ const Auth = () => {
         <Box position="absolute" top="26px" right="21px">
           <Image 
             src={authImages[currentImageIndex]} 
-            alt="Instagram app screenshot" 
+            alt="Instagram" 
             width="250px" 
             transition="all 1s ease-in-out"
           />
         </Box>
       </Box>
 
-      {/* Right side: Auth Forms */}
+      {/* Auth Forms */}
       <VStack gap={3} width="350px">
-        {/* Main Form Box */}
         <VStack 
           bg="white" 
           p={10} 
@@ -91,52 +104,63 @@ const Auth = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <VStack gap={2}>
+            <VStack gap={2} align="stretch">
               {!isLogin && (
+                <Box>
+                  <Input 
+                    placeholder="Email" 
+                    fontSize="xs" 
+                    bg="gray.50" 
+                    borderColor={getFieldError('email') ? 'red.400' : 'gray.200'}
+                    _placeholder={{ color: "gray.400" }}
+                    color="black"
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  />
+                  {getFieldError('email') && <Text fontSize="10px" color="red.500" mt={1}>{getFieldError('email')}</Text>}
+                </Box>
+              )}
+              {!isLogin && (
+                <Box>
+                  <Input 
+                    placeholder="Full Name" 
+                    fontSize="xs" 
+                    bg="gray.50" 
+                    borderColor="gray.200"
+                    _placeholder={{ color: "gray.400" }}
+                    color="black"
+                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  />
+                </Box>
+              )}
+              <Box>
                 <Input 
-                  placeholder="Email" 
+                  placeholder="Username" 
+                  fontSize="xs" 
+                  bg="gray.50" 
+                  borderColor={getFieldError('username') ? 'red.400' : 'gray.200'}
+                  _placeholder={{ color: "gray.400" }}
+                  color="black"
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                />
+                {getFieldError('username') && <Text fontSize="10px" color="red.500" mt={1}>{getFieldError('username')}</Text>}
+              </Box>
+              <Box>
+                <Input 
+                  placeholder="Password" 
+                  type="password" 
                   fontSize="xs" 
                   bg="gray.50" 
                   borderColor="gray.200"
                   _placeholder={{ color: "gray.400" }}
                   color="black"
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
-              )}
-              {!isLogin && (
-                <Input 
-                  placeholder="Full Name" 
-                  fontSize="xs" 
-                  bg="gray.50" 
-                  borderColor="gray.200"
-                  _placeholder={{ color: "gray.400" }}
-                  color="black"
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                />
-              )}
-              <Input 
-                placeholder="Username" 
-                fontSize="xs" 
-                bg="gray.50" 
-                borderColor="gray.200"
-                _placeholder={{ color: "gray.400" }}
-                color="black"
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-              />
-              <Input 
-                placeholder="Password" 
-                type="password" 
-                fontSize="xs" 
-                bg="gray.50" 
-                borderColor="gray.200"
-                _placeholder={{ color: "gray.400" }}
-                color="black"
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-              />
+              </Box>
               <Button 
                 type="submit"
-                colorScheme="blue" 
                 bg="#0095f6"
+                _hover={{ bg: "#1877f2" }}
+                color="white"
                 width="full" 
                 size="sm" 
                 fontSize="sm"
@@ -156,11 +180,11 @@ const Auth = () => {
           </HStack>
 
           <Button 
-            variant="link" 
-            leftIcon={<AiFillFacebook size={20} />} 
+            variant="ghost" 
             color="#385185" 
             fontSize="sm" 
             fontWeight="bold"
+            _hover={{ bg: 'transparent' }}
           >
             {isLogin ? 'Log in with Facebook' : 'Sign up with Facebook'}
           </Button>
@@ -171,14 +195,13 @@ const Auth = () => {
             </Text>
           )}
 
-          {error && (
+          {generalErrorMessage && !getFieldError('username') && !getFieldError('email') && (
             <Text fontSize="xs" color="red.500" textAlign="center" mt={2}>
-              {error}
+              {generalErrorMessage}
             </Text>
           )}
         </VStack>
 
-        {/* Toggle Box */}
         <Box bg="white" p={6} border="1px solid" borderColor="gray.200" width="full" textAlign="center">
           <Text fontSize="sm" color="black">
             {isLogin ? "Don't have an account? " : "Have an account? "}
@@ -188,15 +211,21 @@ const Auth = () => {
           </Text>
         </Box>
 
-        {/* App Links */}
         <VStack gap={4} mt={2}>
           <Text fontSize="sm" color="black">Get the app.</Text>
           <HStack gap={2}>
-            <Image src="https://static.cdninstagram.com/rsrc.php/v3/yt/r/Y23_5k_bt99.png" h="40px" cursor="pointer" />
-            <Image src="https://static.cdninstagram.com/rsrc.php/v3/yz/r/c5Rp7Ym_f0n.png" h="40px" cursor="pointer" />
+            <Image src="https://static.cdninstagram.com/rsrc.php/v3/yt/r/Y23_5k_bt99.png" h="40px" />
+            <Image src="https://static.cdninstagram.com/rsrc.php/v3/yz/r/c5Rp7Ym_f0n.png" h="40px" />
           </HStack>
         </VStack>
       </VStack>
+
+      <InstagramAlert 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+        title="Error"
+        message={alertConfig.message}
+      />
     </Flex>
   );
 };

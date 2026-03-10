@@ -21,7 +21,7 @@ const Stories = () => {
   useEffect(() => {
     const fetchStories = async () => {
       const response = await storyService.getStoriesForFeed();
-      setStories(response.data);
+      setStories(response);
     };
     fetchStories();
   }, []);

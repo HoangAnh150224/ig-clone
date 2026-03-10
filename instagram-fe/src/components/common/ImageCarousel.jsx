@@ -34,7 +34,7 @@ const ImageCarousel = ({ images, height = "100%" }) => {
 
       {images.length > 1 && (
         <>
-          {/* Nút mũi tên TRÁI - Dùng Box để đảm bảo hiển thị */}
+          {/* LEFT arrow button - Use Box to ensure display */}
           {currentIndex > 0 && (
             <Box
               position="absolute" left={2} zIndex={10}
@@ -48,7 +48,7 @@ const ImageCarousel = ({ images, height = "100%" }) => {
             </Box>
           )}
 
-          {/* Nút mũi tên PHẢI - Dùng Box để đảm bảo hiển thị */}
+          {/* RIGHT arrow button - Use Box to ensure display */}
           {currentIndex < images.length - 1 && (
             <Box
               position="absolute" right={2} zIndex={10}

@@ -3,7 +3,7 @@ import { allUsers, currentUser, userRelationsDB, usersDB } from '../api/dummyDat
 const storyService = {
   /**
    * Get stories for the home feed (own story + following users' stories).
-   * TODO: Replace with API call → GET /api/stories/feed
+   * API: GET /api/stories/feed
    */
   getStoriesForFeed: async () => {
     return new Promise((resolve) => {
@@ -21,7 +21,7 @@ const storyService = {
           ...followingWithStories
         ];
 
-        resolve({ data: stories });
+        resolve(stories);
       }, 300);
     });
   },

@@ -6,7 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import UserListModal from '../modals/UserListModal';
 import { useSelector } from 'react-redux';
 
-const CommentCard = ({ comment, onClose }) => {
+import commentService from '../../services/commentService';
+
+const CommentCard = ({ comment, onClose, onReply }) => {
   const authUser = useSelector((state) => state.auth.user);
   const [showReplies, setShowReplies] = useState(false);
   const [isLiked, setIsLiked] = useState(comment.likedBy?.some(u => u.id === authUser?.id) || false);
@@ -20,16 +22,28 @@ const CommentCard = ({ comment, onClose }) => {
     navigate(`/${username}`);
   };
 
-  const handleLike = () => setIsLiked(!isLiked);
+  const handleLike = async () => {
+    const previousState = isLiked;
+    setIsLiked(!isLiked);
+    try {
+      await commentService.toggleLikeComment(comment.id);
+    } catch (error) {
+      setIsLiked(previousState);
+    }
+  };
 
-  // Tính toán mảng người thích động dựa trên trạng thái like
+  const handleReplyClick = () => {
+    if (onReply) onReply(comment);
+  };
+
+  // Calculate the dynamic list of likers based on the like status
   const likedUsers = (() => {
     const baseList = comment.likedBy || [];
     const alreadyLikedInDB = baseList.some(u => u.id === authUser?.id);
 
     if (isLiked) {
       if (alreadyLikedInDB) return baseList;
-      return [...baseList, { ...authUser, fullName: 'You' }];
+      return [...baseList, { id: authUser?.id, username: authUser?.username, avatar: authUser?.avatar, fullName: 'You' }];
     } else {
       return baseList.filter(u => u.id !== authUser?.id);
     }
@@ -60,7 +74,7 @@ const CommentCard = ({ comment, onClose }) => {
                 {likeCount.toLocaleString()} likes
               </Text>
             )}
-            <Text fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer">Reply</Text>
+            <Text fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer" onClick={handleReplyClick}>Reply</Text>
           </HStack>
         </Box>
         <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={handleLike}>
@@ -81,14 +95,14 @@ const CommentCard = ({ comment, onClose }) => {
                 ——— Hide replies
               </Text>
               {comment.replies.map((reply) => (
-                <ReplyItem key={reply.id} reply={reply} onNavigate={handleNavigate} />
+                <ReplyItem key={reply.id} reply={reply} onNavigate={handleNavigate} onReply={onReply} parentComment={comment} />
               ))}
             </VStack>
           )}
         </Box>
       )}
 
-      {/* Modal hiển thị những người đã like bình luận */}
+      {/* Modal displaying people who liked the comment */}
       <UserListModal 
         isOpen={isLikeListOpen} 
         onClose={() => setIsListOpen(false)} 
@@ -99,18 +113,32 @@ const CommentCard = ({ comment, onClose }) => {
   );
 };
 
-const ReplyItem = ({ reply, onNavigate }) => {
+const ReplyItem = ({ reply, onNavigate, onReply, parentComment }) => {
   const authUser = useSelector((state) => state.auth.user);
   const [isLiked, setIsLiked] = useState(reply.likedBy?.some(u => u.id === authUser?.id) || false);
   const [isListOpen, setIsListOpen] = useState(false);
   
+  const handleLike = async () => {
+    const previousState = isLiked;
+    setIsLiked(!isLiked);
+    try {
+      await commentService.toggleLikeComment(reply.id);
+    } catch (error) {
+      setIsLiked(previousState);
+    }
+  };
+
+  const handleReplyClick = () => {
+    if (onReply) onReply(parentComment || reply);
+  };
+
   const likedUsers = (() => {
     const baseList = reply.likedBy || [];
     const alreadyLikedInDB = baseList.some(u => u.id === authUser?.id);
     
     if (isLiked) {
       if (alreadyLikedInDB) return baseList;
-      return [...baseList, { ...authUser, fullName: 'You' }];
+      return [...baseList, { id: authUser?.id, username: authUser?.username, avatar: authUser?.avatar, fullName: 'You' }];
     } else {
       return baseList.filter(u => u.id !== authUser?.id);
     }
@@ -140,10 +168,10 @@ const ReplyItem = ({ reply, onNavigate }) => {
               {likeCount.toLocaleString()} likes
             </Text>
           )}
-          <Text fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer">Reply</Text>
+          <Text fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer" onClick={handleReplyClick}>Reply</Text>
         </HStack>
       </Box>
-      <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={() => setIsLiked(!isLiked)}>
+      <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={handleLike}>
         {isLiked ? <AiFillHeart size={10} /> : <AiOutlineHeart size={10} />}
       </Box>
 

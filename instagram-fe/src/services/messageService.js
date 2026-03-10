@@ -2,8 +2,8 @@ import { allUsers, chatMessages, messageRequests } from '../api/dummyData';
 
 const messageService = {
   /**
-   * Get primary chat list (first 3 users with their chat history).
-   * TODO: Replace with API call → GET /api/messages/primary
+   * BACKEND SETUP: Get primary conversation list
+   * API: GET /api/messages/primary
    */
   getPrimaryChats: async () => {
     return new Promise((resolve) => {
@@ -16,14 +16,55 @@ const messageService = {
           unread: false,
           messages: chatMessages[user.username] || []
         }));
-        resolve({ data: chats });
+        resolve(chats);
       }, 300);
     });
   },
 
   /**
+   * BACKEND SETUP: Get chat messages for a conversation
+   * API: GET /api/messages/{chatId}
+   */
+  getChatMessages: async (chatId) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simulate finding messages by chatId (using username as key here)
+        const user = allUsers.find(u => u.id === chatId);
+        const messages = chatMessages[user?.username] || [];
+        resolve(messages);
+      }, 200);
+    });
+  },
+
+  /**
+   * BACKEND SETUP: Send new message
+   * API: POST /api/messages/send
+   */
+  sendMessage: async (recipientId, text) => {
+    return new Promise((resolve) => {
+      console.log(`Backend Action: SENDING MESSAGE to ${recipientId}: ${text}`);
+      setTimeout(() => {
+        const newMessage = {
+          id: Date.now(),
+          sender: 'me',
+          text: text,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        // Update local dummy data
+        const user = allUsers.find(u => u.id === recipientId);
+        if (user && chatMessages[user.username]) {
+          chatMessages[user.username].push(newMessage);
+        }
+
+        resolve(newMessage);
+      }, 400);
+    });
+  },
+
+  /**
    * Get message request list.
-   * TODO: Replace with API call → GET /api/messages/requests
+   * API: GET /api/messages/requests
    */
   getRequestChats: async () => {
     return new Promise((resolve) => {
@@ -32,19 +73,19 @@ const messageService = {
           ...req,
           messages: chatMessages[req.user.username] || []
         }));
-        resolve({ data: requests });
+        resolve(requests);
       }, 300);
     });
   },
 
   /**
    * Get total message request count.
-   * TODO: Replace with API call → GET /api/messages/requests/count
+   * API: GET /api/messages/requests/count
    */
   getRequestCount: async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({ data: messageRequests.length });
+        resolve(messageRequests.length);
       }, 100);
     });
   },

@@ -13,7 +13,7 @@ const ReelCommentCard = ({ comment }) => {
 
   const handleLike = () => setIsLiked(!isLiked);
 
-  // Tính toán like count dựa trên likedBy và trạng thái isLiked hiện tại
+  // Calculate like count based on likedBy and current isLiked status
   const baseLikes = comment.likedBy || [];
   const alreadyLikedInDB = baseLikes.some(u => u.id === authUser?.id);
   const currentLikeCount = baseLikes.length + (isLiked ? (alreadyLikedInDB ? 0 : 1) : (alreadyLikedInDB ? -1 : 0));

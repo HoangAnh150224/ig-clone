@@ -1,69 +1,56 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import { useSelector } from 'react-redux';
+import { Box } from '@chakra-ui/react';
 
+// Pages
 const Home = lazy(() => import('./pages/Home'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Auth = lazy(() => import('./pages/Auth'));
 const Explore = lazy(() => import('./pages/Explore'));
-const Messages = lazy(() => import('./pages/Messages'));
 const Reels = lazy(() => import('./pages/Reels'));
+const Auth = lazy(() => import('./pages/Auth'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Messages = lazy(() => import('./pages/Messages'));
+const Profile = lazy(() => import('./pages/Profile'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
 
-// Component bảo vệ các route yêu cầu đăng nhập
+// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  
-  if (!isAuthenticated) {
-    // Nếu chưa đăng nhập, redirect về trang login
-    return <Navigate to="/accounts/login" replace />;
-  }
-  
+  if (!isAuthenticated) return <Navigate to="/accounts/login" replace />;
   return children;
 };
 
-// Component ngăn người đã đăng nhập truy cập lại trang login
+// Public Route Component
 const PublicRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  
-  if (isAuthenticated) {
-    // Nếu đã đăng nhập, redirect về trang chủ
-    return <Navigate to="/" replace />;
-  }
-  
+  if (isAuthenticated) return <Navigate to="/" replace />;
   return children;
 };
 
-function App() {
+const App = () => {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>}>
+    <Box minH="100vh" bg="white">
+      <Suspense fallback={<Box display="flex" justifyContent="center" alignItems="center" height="100vh">Loading...</Box>}>
         <Routes>
-          {/* Route công khai (Login/Register) */}
-          <Route 
-            path="/accounts/login" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
-          
-          {/* Các Route yêu cầu bảo mật */}
+          {/* Public Routes */}
+          <Route path="/accounts/login" element={<PublicRoute><Auth /></PublicRoute>} />
+
+          {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><MainLayout><Home /></MainLayout></ProtectedRoute>} />
           <Route path="/explore" element={<ProtectedRoute><MainLayout><Explore /></MainLayout></ProtectedRoute>} />
           <Route path="/reels" element={<ProtectedRoute><MainLayout><Reels /></MainLayout></ProtectedRoute>} />
           <Route path="/direct/inbox" element={<ProtectedRoute><MainLayout><Messages /></MainLayout></ProtectedRoute>} />
           <Route path="/accounts/edit" element={<ProtectedRoute><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
           <Route path="/:username" element={<ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>} />
+          <Route path="/p/:postId" element={<ProtectedRoute><MainLayout><PostDetail /></MainLayout></ProtectedRoute>} />
 
-          {/* Catch all - Redirect về trang chủ */}
+          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </Box>
   );
-}
+};
 
 export default App;

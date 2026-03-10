@@ -6,9 +6,15 @@ import { BsEmojiSmile } from 'react-icons/bs';
 import UserAvatar from '../common/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 
-const ChatWindow = ({ activeChat }) => {
+const ChatWindow = ({ activeChat, onSendMessage }) => {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  const handleSend = () => {
+    if (!message.trim()) return;
+    onSendMessage(message);
+    setMessage('');
+  };
 
   if (!activeChat) {
     return (
@@ -72,12 +78,13 @@ const ChatWindow = ({ activeChat }) => {
           <Input 
             variant="unstyled" placeholder="Message..." flex={1} py={2}
             value={message} onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             color="black"
             bg="white"
             _placeholder={{ color: "gray.500" }}
           />
           {message.length > 0 ? (
-            <Text fontWeight="bold" color="#0095f6" cursor="pointer">Send</Text>
+            <Text fontWeight="bold" color="#0095f6" cursor="pointer" onClick={handleSend}>Send</Text>
           ) : (
             <HStack gap={4}>
               <HiOutlineMicrophone size={24} cursor="pointer" color="black" />

@@ -68,7 +68,7 @@ const UserListModal = ({ isOpen, onClose, title, users, isOwnContext = false }) 
                         </VStack>
                       </HStack>
 
-                      {/* Logic hiển thị nút điều khiển */}
+                      {/* Logic for displaying control buttons */}
                       {((isLikesList && isMe) || (isFollowersList && isOwnContext)) && (
                         <Box 
                           as="button" bg="#efefef" px={4} py={1.5} borderRadius="8px" 

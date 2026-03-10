@@ -1,24 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, VStack, Flex, Image, Center } from '@chakra-ui/react';
 import { AiOutlineHeart } from 'react-icons/ai';
 import UserAvatar from '../../common/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 import { notifications } from '../../../api/dummyData';
-
-const Button = ({ children, bg, color, px, py, borderRadius, fontSize, fontWeight, ...props }) => (
-  <Box 
-    as="button" bg={bg} color={color} px={px} py={py} 
-    borderRadius={borderRadius} fontSize={fontSize} fontWeight={fontWeight} 
-    _hover={{ opacity: 0.8 }} transition="all 0.2s" {...props}
-  >
-    {children}
-  </Box>
-);
+import NotificationSkeleton from '../../skeletons/NotificationSkeleton';
 
 const NotificationPanel = ({ isOpen }) => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
-  // Group notifications by section
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      const timer = setTimeout(() => setLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   const sections = ['Today', 'Yesterday', 'Earlier'];
   const groupedNotifications = sections.reduce((acc, section) => {
     acc[section] = notifications.filter(n => n.section === section);
@@ -32,14 +31,16 @@ const NotificationPanel = ({ isOpen }) => {
       transform={isOpen ? "translateX(0)" : "translateX(-100%)"}
       opacity={isOpen ? 1 : 0}
       visibility={isOpen ? "visible" : "hidden"}
-      transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+      transition="all(0.3s cubic-bezier(0.4, 0, 0.2, 1))"
       boxShadow="20px 0 20px -20px rgba(0,0,0,0.1)"
       borderRight="1px solid" borderColor="gray.100"
     >
       <Text fontSize="24px" fontWeight="bold" mb={6} mt={2} color="black">Notifications</Text>
       
-      <VStack align="stretch" gap={0} overflowY="auto" maxH="calc(100vh - 80px)" css={{ '&::-webkit-scrollbar': { width: '0px' } }}>
-        {notifications.length === 0 ? (
+      <Box overflowY="auto" maxH="calc(100vh - 80px)" css={{ '&::-webkit-scrollbar': { width: '0px' } }}>
+        {loading ? (
+          <NotificationSkeleton />
+        ) : notifications.length === 0 ? (
           <Center h="200px" flexDirection="column" gap={4}>
             <Box p={4} borderRadius="full" border="2px solid black">
               <AiOutlineHeart size={32} />
@@ -63,13 +64,11 @@ const NotificationPanel = ({ isOpen }) => {
                       </Text>
                     </Box>
                     
-                    {notif.type === 'follow' && (
-                      <Button bg="#0095f6" color="white" px={4} py={1.5} borderRadius="8px" fontSize="12px" fontWeight="bold">
+                    {notif.type === 'follow' ? (
+                      <Box bg="#0095f6" color="white" px={4} py={1.5} borderRadius="8px" fontSize="12px" fontWeight="bold" _hover={{ opacity: 0.8 }}>
                         Follow
-                      </Button>
-                    )}
-
-                    {(notif.type === 'like' || notif.type === 'comment' || notif.type === 'mention') && notif.postImage && (
+                      </Box>
+                    ) : (notif.type === 'like' || notif.type === 'comment' || notif.type === 'mention') && notif.postImage && (
                        <Box boxSize="40px" flexShrink={0}>
                          <Image src={notif.postImage} borderRadius="2px" objectFit="cover" w="100%" h="100%" />
                        </Box>
@@ -81,7 +80,7 @@ const NotificationPanel = ({ isOpen }) => {
             </Box>
           ))
         )}
-      </VStack>
+      </Box>
     </Box>
   );
 };

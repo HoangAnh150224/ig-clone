@@ -6,8 +6,9 @@ import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileTabs from '../components/profile/ProfileTabs';
 import PostGrid from '../components/profile/PostGrid';
 import ProfileHighlights from '../components/profile/ProfileHighlights';
+import ProfileSkeleton from '../components/profile/ProfileSkeleton';
 import profileService from '../services/profileService';
-import { setUserProfile, setProfilePosts, setLoading } from '../store/slices/userSlice';
+import { setUserProfile, setProfilePosts, setLoading, resetProfile } from '../store/slices/userSlice';
 
 const Profile = () => {
   const { username } = useParams();
@@ -20,14 +21,15 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchProfileData = async () => {
+      dispatch(resetProfile()); // RESET PREVIOUS DATA BEFORE FETCHING NEW
       dispatch(setLoading(true));
       try {
         const [profileRes, postsRes] = await Promise.all([
           profileService.getUserProfile(username),
           profileService.getUserPosts(username)
         ]);
-        dispatch(setUserProfile(profileRes.data));
-        dispatch(setProfilePosts(postsRes.data));
+        dispatch(setUserProfile(profileRes));
+        dispatch(setProfilePosts(postsRes));
       } catch (error) {
         console.error("Failed to fetch profile data", error);
       } finally {
@@ -38,12 +40,8 @@ const Profile = () => {
     fetchProfileData();
   }, [username, dispatch]);
 
-  if (loading && !userProfile) {
-    return (
-      <Center h="50vh">
-        <Spinner size="xl" color="gray.400" thickness="3px" />
-      </Center>
-    );
+  if (loading) {
+    return <ProfileSkeleton />;
   }
 
   if (!userProfile && !loading) {
@@ -67,14 +65,10 @@ const Profile = () => {
 
       <Box py={4}>
         {activeTab === 'posts' && <PostGrid posts={posts} loading={loading} />}
+        {activeTab === 'reels' && <PostGrid posts={posts.filter(p => p.type === 'reel')} loading={loading} />}
         {activeTab === 'saved' && (
           <Center py={20} color="gray.500">
             Saved posts are only visible to you.
-          </Center>
-        )}
-        {activeTab === 'tagged' && (
-          <Center py={20} color="gray.500">
-            No photos of you.
           </Center>
         )}
       </Box>

@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   isCreatePostModalOpen: false,
+  isMuted: true, // Default to mute per Instagram standard
 };
 
 const uiSlice = createSlice({
@@ -14,8 +15,11 @@ const uiSlice = createSlice({
     closeCreatePostModal: (state) => {
       state.isCreatePostModalOpen = false;
     },
+    toggleMute: (state) => {
+      state.isMuted = !state.isMuted;
+    }
   },
 });
 
-export const { openCreatePostModal, closeCreatePostModal } = uiSlice.actions;
+export const { openCreatePostModal, closeCreatePostModal, toggleMute } = uiSlice.actions;
 export default uiSlice.reducer;

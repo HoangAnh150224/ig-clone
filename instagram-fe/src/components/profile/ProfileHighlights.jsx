@@ -7,7 +7,7 @@ const ProfileHighlights = ({ isOwnProfile, user }) => {
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [selectedHighlightIndex, setSelectedHighlightIndex] = useState(0);
 
-  // Lấy highlights từ dữ liệu user truyền vào
+  // Get highlights from the passed user data
   const highlights = user?.highlights || [];
 
   const handleHighlightClick = (index) => {

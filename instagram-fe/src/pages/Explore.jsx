@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, Spinner, Center } from '@chakra-ui/react';
 import ExploreGrid from '../components/profile/ExploreGrid';
+import ExploreSkeleton from '../components/skeletons/ExploreSkeleton';
 import { useSelector } from 'react-redux';
 import postService from '../services/postService';
 
@@ -14,7 +15,7 @@ const Explore = () => {
       if (authUser) {
         setLoading(true);
         const response = await postService.getExplorePosts(authUser.id);
-        setPosts(response.data);
+        setPosts(response);
         setLoading(false);
       }
     };
@@ -24,9 +25,7 @@ const Explore = () => {
   return (
     <Container maxW="935px" p={0} py={8} bg="white">
       {loading ? (
-        <Center py={20}>
-          <Spinner size="xl" color="gray.400" />
-        </Center>
+        <ExploreSkeleton />
       ) : (
         <Box>
           <ExploreGrid posts={posts} />

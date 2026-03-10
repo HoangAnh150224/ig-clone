@@ -59,7 +59,7 @@ const ChatList = ({ chats, onSelectChat, activeChatId, currentView, onViewChange
                 {chat.user.username}
               </Text>
               <Text fontSize="12px" color={chat.unread ? "black" : "gray.500"} isTruncated>
-                {chat.lastMessage} • {chat.time}
+                {typeof chat.lastMessage === 'object' ? chat.lastMessage.text : chat.lastMessage} • {chat.time}
               </Text>
             </Box>
             {chat.unread && <Box boxSize="8px" bg="#0095f6" borderRadius="full" ml="auto" />}

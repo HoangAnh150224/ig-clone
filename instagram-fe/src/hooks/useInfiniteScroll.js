@@ -9,13 +9,13 @@ const useInfiniteScroll = (callback, hasMore, isLoading) => {
       if (observer.current) observer.current.disconnect();
 
       observer.current = new IntersectionObserver((entries) => {
-        // threshold: 0.1 và rootMargin giúp trigger sớm hơn
+        // threshold: 0.1 and rootMargin help trigger earlier
         if (entries[0].isIntersecting && hasMore) {
           callback();
         }
       }, {
         threshold: 0.1,
-        rootMargin: '500px', // Tải trước khi người dùng chạm tới 500px cuối cùng
+        rootMargin: '500px', // Preload before the user reaches the last 500px
       });
 
       if (node) observer.current.observe(node);
