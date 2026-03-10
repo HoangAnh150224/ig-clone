@@ -1,22 +1,17 @@
-import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.jsx";
-import { BrowserRouter } from "react-router-dom";
-import { ChakraProvider } from "@chakra-ui/react";
-import { createSystem, defaultConfig } from "@chakra-ui/react";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Provider as ReduxProvider } from 'react-redux'
+import { Provider as ChakraProvider } from "@/components/ui/provider"
+import { store } from './store'
+import App from './App.jsx'
+import './index.css'
 
-const system = createSystem(defaultConfig, {
-  preflight: false,
-});
-
-const root = createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-    <ChakraProvider value={system}>
-      <App />
-    </ChakraProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-);
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <ReduxProvider store={store}>
+      <ChakraProvider>
+        <App />
+      </ChakraProvider>
+    </ReduxProvider>
+  </StrictMode>,
+)

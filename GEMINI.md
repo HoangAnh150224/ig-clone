@@ -54,9 +54,29 @@ Vui lòng sử dụng các kỹ năng phù hợp nhất cho **Phát triển chun
 12. **UI/UX Pro Max**: Tương tác nâng cao.
 13. **Vitals Templates**: Tiêu chuẩn Hiệu năng.
 
-## Hướng dẫn tùy chỉnh
+## 📑 Nhật ký Tiến độ (Cập nhật: 09/03/2026)
 
-Thêm các hướng dẫn cụ thể cho dự án của bạn tại đây.
+### ✅ Các mục đã hoàn thành:
+1.  **Infinite Scroll**: Sửa logic tải bài cũ hơn xuống cuối trang (Pagination), giữ bài mới ở đầu.
+2.  **UI Core**: Ép chế độ **Light Mode thuần túy** (Nền trắng #FFFFFF, Chữ đen #000000). Xóa bỏ hoàn toàn các vạch đen/trắng bất thường.
+3.  **Layout & Scaling**:
+    *   Nới rộng Bài viết (PostCard) lên **630px**.
+    *   Nới rộng Stories lên **800px** (Avatar 66px/82px).
+    *   Căn giữa tuyệt đối khối nội dung trung tâm, cân bằng lề trái/phải.
+4.  **Tính năng mới**:
+    *   **Explore**: Đã tạo trang `/explore` với lưới bài viết ngẫu nhiên.
+    *   **Auth**: Nâng cấp UI Login/Signup mượt mà, đồng bộ Light Mode.
+    *   **Profile**: Sửa lỗi điều hướng theo username và lỗi crash component.
+5.  **Refactor**: Dọn dẹp "Zombie Code" (Sidebar trùng lặp), đồng nhất Sidebar tại `components/layout/Sidebar.jsx`.
+
+### 🚀 Công việc tiếp theo:
+*   Hoàn thiện menu **"More"** (Logout, Switch Account).
+*   Kết nối API Sign Up thực tế.
+*   Xử lý Responsive cho Mobile (hiện tại đang ưu tiên Desktop).
+*   Thêm tính năng Comment và Like thực tế (hiện tại đang là Mockup).
+
+---
+*Ghi chú cho Agent: Luôn ưu tiên Light Mode và giữ vững tỷ lệ khung hình đã thiết lập.*
 
 ---
 *Được tạo bởi Google Antigravity*

@@ -1,2 +1,28 @@
-@import "tailwindcss" layer(utilities);
-@import "tailwindcss/theme" layer(theme);
+@keyframes heart-pop {
+  0% { transform: scale(0); opacity: 0; }
+  15% { transform: scale(1.2); opacity: 0.9; }
+  30% { transform: scale(1); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.heart-animation {
+  animation: heart-pop 0.8s ease-out forwards;
+  color: white;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));
+}
+
+.post-image-container {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.post-image-container .overlay-heart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+}
