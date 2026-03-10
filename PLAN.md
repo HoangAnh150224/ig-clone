@@ -93,22 +93,22 @@
 
 ---
 
-## Phase 0 — Infrastructure Fixup
+### Phase 0 — Infrastructure Fixup ✅
 
 **Goal:** Remove Keycloak, wire up JWT deps, fix URL mismatch.
 
 ### Backend Tasks
 
-| Task | File(s) | Notes |
-|---|---|---|
-| Add JWT dependency | `pom.xml` | Add `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (io.jsonwebtoken 0.12.x) |
-| Add WebSocket dependency | `pom.xml` | Add `spring-boot-starter-websocket` |
-| Add Cloudinary SDK | `pom.xml` | Add `cloudinary-http44` |
-| Remove Keycloak dependency | `pom.xml` | Remove `keycloak-admin-client`, `spring-boot-starter-webflux` |
-| Remove Keycloak config | `application.yml` | Remove `spring.security.oauth2` and `app.keycloak` sections |
-| Add JWT + Cloudinary config | `application.yml` | Add `app.jwt.secret`, `app.jwt.expiration`, `app.cloudinary.*` |
-| Delete Keycloak files | `integration/keycloak/` | Delete `KeycloakConfig`, `KeycloakService`, `KeycloakRequest` |
-| Disable SecurityConfig | `config/SecurityConfig.java` | Temporarily permit all requests until JWT filter is added in Phase 1 |
+| Task | File(s) | Notes | Status |
+|---|---|---|---|
+| Add JWT dependency | `pom.xml` | Add `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (0.12.x) | ✅ |
+| Add WebSocket dependency | `pom.xml` | Add `spring-boot-starter-websocket` | ✅ |
+| Add Cloudinary SDK | `pom.xml` | Add `cloudinary-http44` | ✅ |
+| Remove Keycloak dependency | `pom.xml` | Removed | ✅ |
+| Remove Keycloak config | `application.yml` | Removed | ✅ |
+| Add JWT + Cloudinary config | `application.yml` | Added placeholders | ✅ |
+| Delete Keycloak files | `integration/keycloak/` | Deleted | ✅ |
+| Disable SecurityConfig | `config/SecurityConfig.java` | Permit all requests | ✅ |
 
 ### Frontend Tasks
 
