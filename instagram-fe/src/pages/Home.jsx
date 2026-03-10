@@ -6,6 +6,7 @@ import Stories from '../components/feed/Stories';
 import RightSidebar from '../components/layout/RightSidebar';
 import { setMockPosts, addMockPosts, selectAllPosts } from '../store/slices/postSlice';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import { allPosts } from '../api/dummyData';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -13,13 +14,9 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // Khóa cuộn và cuộn nhẹ để hiện Spinner
   useEffect(() => {
     if (loading) {
-      // Cuộn xuống thêm một chút để Spinner lọt vào view trước khi khóa
       window.scrollBy({ top: 120, behavior: 'smooth' });
-      
-      // Đợi hiệu ứng cuộn mượt xong rồi mới khóa cứng
       const timer = setTimeout(() => {
         document.body.style.overflow = 'hidden';
       }, 300);
@@ -33,31 +30,7 @@ const Home = () => {
   }, [loading]);
 
   useEffect(() => {
-    const initialPosts = [
-      {
-        id: '1',
-        user: { username: 'antigravity_dev', avatar: 'https://bit.ly/dan-abramov' },
-        imageUrl: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba',
-        caption: 'Vibe coding với Instagram Clone cực mượt! #react #redux #igclone',
-        likeCount: 1240,
-        likes: [],
-        commentCount: 45,
-        timeAgo: '2 HOURS AGO',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        user: { username: 'pixel_perfect', avatar: 'https://bit.ly/tioluwani-kolawole' },
-        imageUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05',
-        caption: 'Nature is the best designer. 🌿✨',
-        likeCount: 850,
-        likes: [],
-        commentCount: 12,
-        timeAgo: '5 HOURS AGO',
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-      }
-    ];
-    dispatch(setMockPosts(initialPosts));
+    dispatch(setMockPosts(allPosts));
   }, [dispatch]);
 
   const loadMorePosts = () => {
@@ -66,24 +39,24 @@ const Home = () => {
 
     setTimeout(() => {
       const nextId = posts.length + 1;
-      const daysAgo = Math.floor(nextId / 2) + 1;
       const newPosts = [
         {
-          id: String(nextId),
-          user: { username: `user_${nextId}`, avatar: `https://i.pravatar.cc/150?u=${nextId}` },
-          imageUrl: `https://picsum.photos/600/600?random=${nextId + 100}`,
-          caption: `Tải xong bài viết số ${nextId}.`,
+          id: `extra-${nextId}`,
+          user: { username: `explorer_${nextId}`, avatar: `https://i.pravatar.cc/150?u=${nextId}` },
+          images: [
+            `https://picsum.photos/1080/1350?random=${nextId + 100}`,
+            `https://picsum.photos/1080/1350?random=${nextId + 200}`
+          ],
+          imageUrl: `https://picsum.photos/1080/1350?random=${nextId + 100}`,
+          caption: `Discovering new vibes! ✨`,
           likeCount: Math.floor(Math.random() * 1000),
-          likes: [],
           commentCount: Math.floor(Math.random() * 50),
-          timeAgo: `${daysAgo} DAYS AGO`,
-          createdAt: new Date(Date.now() - 86400000 * daysAgo).toISOString(),
+          timeAgo: '1 DAY AGO',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
         }
       ];
-      
       dispatch(addMockPosts(newPosts));
       setLoading(false);
-      
       if (posts.length > 30) setHasMore(false);
     }, 1500);
   };
@@ -91,34 +64,27 @@ const Home = () => {
   const { lastElementRef } = useInfiniteScroll(loadMorePosts, hasMore, loading);
 
   return (
-    <Flex justify="center" gap={16} bg="white" minH="100vh" width="100%">
-      <Box width="100%" maxW="800px" bg="white">
+    <Flex justify="center" gap={16} py={8} bg="white" minH="100vh">
+      <Box width="100%" maxW="630px">
         <Stories />
-        
-        <VStack gap={8} align="center" py={4} width="100%">
+        <VStack gap={8} align="center" width="100%">
           {posts.map((post) => (
-            <Box key={post.id} width="100%" maxW="630px">
+            <Box key={post.id} width="100%">
               <PostCard post={post} />
             </Box>
           ))}
-          
-          {/* Sentinel */}
           {!loading && hasMore && <Box ref={lastElementRef} height="20px" width="100%" />}
-
-          {/* Chỉ hiển thị Spinner, xóa text, thêm padding lớn */}
           {loading && (
             <Center py={20} width="100%">
               <Spinner size="xl" color="gray.400" thickness="4px" />
             </Center>
           )}
-
-          {!hasMore && (
-            <Box py={10} />
-          )}
         </VStack>
       </Box>
 
-      <RightSidebar />
+      <Box width="320px" display={{ base: "none", lg: "block" }}>
+        <RightSidebar />
+      </Box>
     </Flex>
   );
 };

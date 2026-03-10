@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Text, VStack, Flex } from '@chakra-ui/react';
 import UserAvatar from '../../common/UserAvatar';
+import { useNavigate } from 'react-router-dom';
+import { notifications } from '../../../api/dummyData'; // Sửa đường dẫn
 
 const Button = ({ children, bg, color, px, py, borderRadius, fontSize, fontWeight, ...props }) => (
   <Box 
@@ -15,26 +17,16 @@ const Button = ({ children, bg, color, px, py, borderRadius, fontSize, fontWeigh
 );
 
 const NotificationPanel = ({ isOpen }) => {
-  const mockNotifications = [
-    { id: 1, type: 'like', user: 'cristiano', content: 'liked your photo.', time: '2h', avatar: 'https://bit.ly/dan-abramov' },
-    { id: 2, type: 'follow', user: 'leomessi', content: 'started following you.', time: '5h', avatar: 'https://bit.ly/kent-c-dodds', isFollowing: false },
-    { id: 3, type: 'comment', user: 'selenagomez', content: 'commented: "Amazing! ❤️"', time: '1d', avatar: 'https://bit.ly/ryan-florence' },
-  ];
+  const navigate = useNavigate();
+
+  const handleNavigate = (username) => {
+    navigate(`/${username}`);
+  };
 
   return (
     <Box
-      position="fixed"
-      left="72px"
-      top={0}
-      height="100vh"
-      width="397px"
-      bg="white"
-      borderRight="1px solid"
-      borderColor="gray.200"
-      zIndex={90}
-      p={4}
-      boxShadow="xl"
-      color="black"
+      position="fixed" left="72px" top={0} height="100vh" width="397px" bg="white"
+      zIndex={90} p={4} color="black"
       transform={isOpen ? "translateX(0)" : "translateX(-100%)"}
       opacity={isOpen ? 1 : 0}
       visibility={isOpen ? "visible" : "hidden"}
@@ -43,24 +35,26 @@ const NotificationPanel = ({ isOpen }) => {
       <Text fontSize="24px" fontWeight="bold" mb={6} mt={2} color="black">Notifications</Text>
       
       <VStack align="stretch" gap={5} overflowY="auto" maxH="calc(100vh - 100px)">
-        <Text fontWeight="bold" color="black">This week</Text>
+        <Text fontWeight="bold" color="black">Recent</Text>
         
-        {mockNotifications.map(notif => (
+        {notifications.map(notif => (
           <Flex 
             key={notif.id} align="center" gap={3} cursor="pointer" p={2} 
             borderRadius="md" _hover={{ bg: "gray.50" }} transition="background 0.2s"
+            onClick={() => handleNavigate(notif.user.username)}
           >
-            <UserAvatar src={notif.avatar} size="44px" />
+            <UserAvatar src={notif.user.avatar} size="44px" />
             <Box flex={1}>
               <Text fontSize="sm" color="black">
-                <Text as="span" fontWeight="bold" color="black">{notif.user}</Text> {notif.content}
-                <Text as="span" color="gray.500" ml={1}>{notif.time}</Text>
+                <Text as="span" fontWeight="bold" color="black">{notif.user.username}</Text> {notif.content}
+                <Text as="span" color="gray.500" ml={1}>{notif.timeAgo}</Text>
               </Text>
             </Box>
             {notif.type === 'follow' && (
               <Button 
                 bg="#0095f6" color="white" px={4} py={1} 
                 borderRadius="8px" fontSize="sm" fontWeight="bold"
+                onClick={(e) => e.stopPropagation()}
               >
                 Follow
               </Button>

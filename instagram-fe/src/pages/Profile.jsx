@@ -61,7 +61,7 @@ const Profile = () => {
       <ProfileHeader user={userProfile} />
       
       {/* Profile Highlights Section */}
-      <ProfileHighlights isOwnProfile={isOwnProfile} />
+      <ProfileHighlights isOwnProfile={isOwnProfile} user={userProfile} />
       
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       

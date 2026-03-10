@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Image, Flex, HStack, Text, Grid, GridItem } from '@chakra-ui/react';
 import { AiFillHeart } from 'react-icons/ai';
 import { FaComment } from 'react-icons/fa';
+import CommentModal from '../Comment/CommentModal';
 
-const ExploreItem = ({ post, isLarge }) => {
+const ExploreItem = ({ post, onClick }) => {
   return (
     <Box 
       position="relative" 
@@ -13,9 +14,10 @@ const ExploreItem = ({ post, isLarge }) => {
       role="group"
       overflow="hidden"
       borderRadius="0"
+      onClick={() => onClick(post)}
     >
       <Image 
-        src={post.imageUrl} 
+        src={post.imageUrl || (post.images && post.images[0])} 
         alt="Explore post" 
         w="100%" 
         h="100%" 
@@ -30,11 +32,11 @@ const ExploreItem = ({ post, isLarge }) => {
       >
         <HStack gap={1}>
           <AiFillHeart size={24} />
-          <Text fontWeight="bold">{post.likeCount || Math.floor(Math.random() * 1000)}</Text>
+          <Text fontWeight="bold">{post.likeCount || 0}</Text>
         </HStack>
         <HStack gap={1}>
           <FaComment size={20} />
-          <Text fontWeight="bold">{post.commentCount || Math.floor(Math.random() * 50)}</Text>
+          <Text fontWeight="bold">{post.commentCount || 0}</Text>
         </HStack>
       </Flex>
     </Box>
@@ -42,27 +44,48 @@ const ExploreItem = ({ post, isLarge }) => {
 };
 
 const ExploreGrid = ({ posts }) => {
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePostClick = (post) => {
+    setSelectedPost(post);
+    setIsModalOpen(true);
+  };
+
   return (
-    <Grid
-      templateColumns="repeat(3, 1fr)"
-      gap="4px"
-      autoRows="minmax(300px, auto)"
-    >
-      {posts.map((post, index) => {
-        // Tạo pattern: Cứ mỗi 10 bài viết, bài số 2 và bài số 7 sẽ chiếm 2 hàng và 2 cột
-        const isLarge = index % 10 === 2 || index % 10 === 6;
-        
-        return (
-          <GridItem
-            key={post.id}
-            colSpan={isLarge ? 2 : 1}
-            rowSpan={isLarge ? 2 : 1}
-          >
-            <ExploreItem post={post} isLarge={isLarge} />
-          </GridItem>
-        );
-      })}
-    </Grid>
+    <>
+      <Grid
+        templateColumns="repeat(3, 1fr)"
+        gap="4px"
+        autoRows="minmax(300px, auto)"
+      >
+        {posts.map((post, index) => {
+          const isLarge = index % 10 === 2 || index % 10 === 6;
+          
+          return (
+            <GridItem
+              key={post.id}
+              colSpan={isLarge ? 2 : 1}
+              rowSpan={isLarge ? 2 : 1}
+            >
+              <ExploreItem post={post} onClick={handlePostClick} />
+            </GridItem>
+          );
+        })}
+      </Grid>
+
+      {selectedPost && (
+        <CommentModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          post={selectedPost}
+          isLiked={false}
+          handleLike={() => {}}
+          isSaved={false}
+          handleSave={() => {}}
+        />
+      )}
+    </>
   );
 };
 

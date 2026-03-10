@@ -25,32 +25,43 @@ const Explore = () => {
     }
   }, [loading, isInitialLoad]);
 
+  const generateMockPosts = (count, startId) => {
+    const users = ['cristiano', 'leomessi', 'nasa', 'coding_vibes', 'pixel_art', 'traveler'];
+    return Array.from({ length: count }).map((_, i) => {
+      const id = startId + i;
+      const username = users[id % users.length];
+      return {
+        id: `explore-${id}`,
+        imageUrl: `https://picsum.photos/1080/1350?random=${id + 500}`,
+        images: [
+          `https://picsum.photos/1080/1350?random=${id + 500}`,
+          `https://picsum.photos/1080/1350?random=${id + 1500}`
+        ],
+        user: {
+          username: username,
+          avatar: `https://i.pravatar.cc/150?u=${username}`
+        },
+        caption: `Amazing content discovered in Explore! #${username} #vibecoding`,
+        likeCount: Math.floor(Math.random() * 5000),
+        commentCount: Math.floor(Math.random() * 200),
+        timeAgo: '5 HOURS AGO'
+      };
+    });
+  };
+
   const fetchMorePosts = () => {
     if (loading || !hasMore) return;
     setLoading(true);
-    
     setTimeout(() => {
-      const newPosts = Array.from({ length: 9 }).map((_, i) => ({
-        id: `explore-${posts.length + i}`,
-        imageUrl: `https://picsum.photos/600/600?random=${posts.length + i + 1000}`,
-        likeCount: Math.floor(Math.random() * 5000),
-        commentCount: Math.floor(Math.random() * 200),
-      }));
-      
+      const newPosts = generateMockPosts(9, posts.length);
       setPosts(prev => [...prev, ...newPosts]);
       setLoading(false);
-      
       if (posts.length > 50) setHasMore(false);
     }, 1500);
   };
 
   useEffect(() => {
-    const initialPosts = Array.from({ length: 15 }).map((_, i) => ({
-      id: `explore-${i}`,
-      imageUrl: `https://picsum.photos/600/600?random=${i + 500}`,
-      likeCount: Math.floor(Math.random() * 5000),
-      commentCount: Math.floor(Math.random() * 200),
-    }));
+    const initialPosts = generateMockPosts(15, 0);
     setPosts(initialPosts);
     setLoading(false);
     setIsInitialLoad(false);
@@ -59,7 +70,7 @@ const Explore = () => {
   const { lastElementRef } = useInfiniteScroll(fetchMorePosts, hasMore, loading);
 
   return (
-    <Container maxW="935px" p={0} py={4}>
+    <Container maxW="935px" p={0} py={8} bg="white">
       {isInitialLoad ? (
         <Center py={20}>
           <Spinner size="xl" color="gray.400" />
@@ -67,19 +78,13 @@ const Explore = () => {
       ) : (
         <>
           <ExploreGrid posts={posts} />
-          
           {!loading && hasMore && <Box ref={lastElementRef} height="20px" width="100%" />}
-
-          {/* Spinner trung tâm, không text, padding lớn */}
           {loading && (
             <Center py={24} width="100%">
               <Spinner size="xl" color="gray.400" thickness="4px" />
             </Center>
           )}
-
-          {!hasMore && (
-            <Box py={10} />
-          )}
+          {!hasMore && <Box py={10} />}
         </>
       )}
     </Container>

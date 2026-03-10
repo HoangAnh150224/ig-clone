@@ -1,21 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SimpleGrid, Box, Image, Flex, HStack, Text } from '@chakra-ui/react';
 import { AiFillHeart } from 'react-icons/ai';
 import { FaComment } from 'react-icons/fa';
+import CommentModal from '../Comment/CommentModal';
 
-const PostGridItem = ({ post }) => {
+const PostGridItem = ({ post, onClick }) => {
   return (
     <Box 
       position="relative" 
       width="100%"
-      pb="125%" // Tỉ lệ 4:5 chuẩn IG 2025 (1080x1350)
+      pb="100%" // Square for grid
       cursor="pointer"
       role="group"
       overflow="hidden"
-      borderRadius="0" // Remove rounded corners
+      borderRadius="0"
+      onClick={() => onClick(post)}
     >
       <Image 
-        src={post.imageUrl} 
+        src={post.imageUrl || (post.images && post.images[0])} 
         alt="User post" 
         position="absolute"
         top={0}
@@ -45,15 +47,37 @@ const PostGridItem = ({ post }) => {
 };
 
 const PostGrid = ({ posts, loading }) => {
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePostClick = (post) => {
+    setSelectedPost(post);
+    setIsModalOpen(true);
+  };
+
   if (loading) return <Box textAlign="center" py={10}>Loading posts...</Box>;
   if (!posts || posts.length === 0) return <Box textAlign="center" py={10} fontWeight="bold">No Photos Yet</Box>;
 
   return (
-    <SimpleGrid columns={3} spacing="4px">
-      {posts.map((post) => (
-        <PostGridItem key={post.id} post={post} />
-      ))}
-    </SimpleGrid>
+    <>
+      <SimpleGrid columns={3} spacing="4px">
+        {posts.map((post) => (
+          <PostGridItem key={post.id} post={post} onClick={handlePostClick} />
+        ))}
+      </SimpleGrid>
+
+      {selectedPost && (
+        <CommentModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          post={selectedPost}
+          isLiked={false}
+          handleLike={() => {}}
+          isSaved={false}
+          handleSave={() => {}}
+        />
+      )}
+    </>
   );
 };
 

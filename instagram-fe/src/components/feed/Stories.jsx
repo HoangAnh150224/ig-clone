@@ -1,59 +1,150 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Box, HStack, Text, VStack } from '@chakra-ui/react';
 import UserAvatar from '../common/UserAvatar';
-
-const mockStories = [
-  { id: 1, username: 'your_story', avatar: 'https://i.pravatar.cc/150?u=1', isOwn: true },
-  { id: 2, username: 'messi', avatar: 'https://i.pravatar.cc/150?u=2' },
-  { id: 3, username: 'ronaldo', avatar: 'https://i.pravatar.cc/150?u=3' },
-  { id: 4, username: 'nasa', avatar: 'https://i.pravatar.cc/150?u=4' },
-  { id: 5, username: 'spacex', avatar: 'https://i.pravatar.cc/150?u=5' },
-  { id: 6, username: 'coding_vibes', avatar: 'https://i.pravatar.cc/150?u=6' },
-  { id: 7, username: 'pixel_art', avatar: 'https://i.pravatar.cc/150?u=7' },
-];
+import { useNavigate } from 'react-router-dom';
+import StoryModal from '../modals/StoryModal';
+import { allUsers, currentUser } from '../../api/dummyData';
 
 const Stories = () => {
+  const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(true);
+  
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isStoryOpen, setIsStoryOpen] = useState(false);
+
+  // Mouse Drag Logic
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Lọc Stories từ danh sách Following
+  const followingUsers = allUsers.filter(user => currentUser.following.includes(user.username) && user.hasStory);
+  const mockStories = [
+    { ...currentUser, hasStory: true, isOwn: true, stories: [{ id: 's0-1', url: 'https://picsum.photos/1080/1920?random=0' }] },
+    ...followingUsers
+  ];
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeft(scrollLeft > 0);
+      setShowRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  const onMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const onMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      handleScroll();
+    }
+    return () => scrollContainer?.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const slide = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleStoryClick = (story) => {
+    if (isDragging) return;
+    setSelectedUser(story);
+    setIsStoryOpen(true);
+  };
+
   return (
-    <Box 
-      width="100%" 
-      maxW="800px" 
-      mx="auto" 
-      py={4} 
-      mb={4}
-      bg="white"
-      overflowX="auto" 
-      css={{
-        '&::-webkit-scrollbar': { display: 'none' },
-        'msOverflowStyle': 'none',
-        'scrollbarWidth': 'none',
-      }}
-    >
-      <HStack gap={6} px={4}>
-        {mockStories.map((story) => (
-          <VStack key={story.id} gap={2} cursor="pointer" minW="82px">
-            <Box 
-              p="3px" 
-              borderRadius="full" 
-              bgGradient={story.isOwn ? "none" : "linear(to-tr, #f9ce34, #ee2a7b, #6228d7)"}
-              border={story.isOwn ? "1px solid" : "none"}
-              borderColor="gray.200"
-              width="82px"
-              height="82px"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Box bg="white" borderRadius="full" p="2px">
-                <UserAvatar src={story.avatar} size="66px" />
-              </Box>
+    <>
+      <Box position="relative" width="100%" maxW="800px" mx="auto" mb={4} userSelect="none">
+        {showLeft && (
+          <Box
+            position="absolute" left={2} top="48px" zIndex={10}
+            width="26px" height="26px" borderRadius="full"
+            bg="white" display="flex" alignItems="center" justifyContent="center"
+            cursor="pointer" onClick={() => slide('left')} boxShadow="md"
+          >
+            <Box as="svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
             </Box>
-            <Text fontSize="12px" width="82px" textAlign="center" isTruncated color="black">
-              {story.isOwn ? 'Your story' : story.username}
-            </Text>
-          </VStack>
-        ))}
-      </HStack>
-    </Box>
+          </Box>
+        )}
+
+        {showRight && (
+          <Box
+            position="absolute" right={2} top="48px" zIndex={10}
+            width="26px" height="26px" borderRadius="full"
+            bg="white" display="flex" alignItems="center" justifyContent="center"
+            cursor="pointer" onClick={() => slide('right')} boxShadow="md"
+          >
+            <Box as="svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </Box>
+          </Box>
+        )}
+
+        <Box 
+          ref={scrollRef} width="100%" py={4} bg="white" overflowX="auto" 
+          cursor={isDragging ? "grabbing" : "pointer"}
+          css={{ '&::-webkit-scrollbar': { display: 'none' } }}
+          onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseUp} onMouseMove={onMouseMove} onScroll={handleScroll}
+        >
+          <HStack gap={4} px={4}>
+            {mockStories.map((story) => (
+              <VStack key={story.id} gap={2} cursor="pointer" minW="90px" onClick={() => handleStoryClick(story)}>
+                <Box 
+                  p="3px" borderRadius="full" 
+                  bg={story.hasStory ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)" : "transparent"}
+                  border={!story.hasStory ? "1px solid" : "none"}
+                  borderColor="gray.200" width="90px" height="90px" display="flex" alignItems="center" justifyContent="center"
+                >
+                  <Box bg="white" borderRadius="full" p="2px" width="100%" height="100%">
+                    <Box borderRadius="full" overflow="hidden" width="100%" height="100%">
+                      <UserAvatar src={story.avatar} size="100%" />
+                    </Box>
+                  </Box>
+                </Box>
+                <Text fontSize="12px" width="90px" textAlign="center" isTruncated color="black">
+                  {story.isOwn ? 'Your story' : story.username}
+                </Text>
+              </VStack>
+            ))}
+          </HStack>
+        </Box>
+      </Box>
+
+      {/* Story Player - Truyền dữ liệu User vào từng highlight */}
+      <StoryModal 
+        isOpen={isStoryOpen} 
+        onClose={() => setIsStoryOpen(false)} 
+        highlights={mockStories.map(s => ({ 
+          title: 'Story', 
+          user: s, // Truyền thông tin User
+          stories: s.stories || [{ id: s.id, url: `https://picsum.photos/1080/1920?random=${s.id}` }] 
+        }))}
+        initialHighlightIndex={mockStories.findIndex(s => s.id === selectedUser?.id)}
+      />
+    </>
   );
 };
 

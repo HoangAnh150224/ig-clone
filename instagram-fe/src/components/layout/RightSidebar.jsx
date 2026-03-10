@@ -2,9 +2,11 @@ import React from 'react';
 import { Box, HStack, VStack, Text, Button, Link, Flex } from '@chakra-ui/react';
 import UserAvatar from '../common/UserAvatar';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const RightSidebar = () => {
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   const suggestions = [
     { id: 1, username: 'react_dev', subtitle: 'Followed by ronaldo + 2 more' },
@@ -17,7 +19,7 @@ const RightSidebar = () => {
     <Box width="320px" display={{ base: "none", lg: "block" }} pt={4} bg="white">
       {/* Current User Profile */}
       <HStack justify="space-between" mb={4} bg="white">
-        <HStack gap={3}>
+        <HStack gap={3} cursor="pointer" onClick={() => navigate(`/${user?.username || 'antigravity_dev'}`)}>
           <UserAvatar src={user?.avatar || 'https://i.pravatar.cc/150?u=antigravity'} size="44px" />
           <VStack align="start" gap={0}>
             <Text fontSize="sm" fontWeight="bold" color="black">{user?.username || 'antigravity_dev'}</Text>
@@ -39,7 +41,7 @@ const RightSidebar = () => {
       <VStack gap={3} align="stretch" mb={8}>
         {suggestions.map((s) => (
           <HStack key={s.id} justify="space-between">
-            <HStack gap={3}>
+            <HStack gap={3} cursor="pointer" onClick={() => navigate(`/${s.username}`)}>
               <UserAvatar src={`https://i.pravatar.cc/150?u=${s.username}`} size="32px" />
               <VStack align="start" gap={0}>
                 <Text fontSize="sm" fontWeight="bold" color="black">{s.username}</Text>

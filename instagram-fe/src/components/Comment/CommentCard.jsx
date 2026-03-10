@@ -1,35 +1,50 @@
-import React, { useState } from 'react'
-import { AiFillHeart, AiOutlineHeart } from 'react-icons/ai';
+import React from 'react';
+import { Box, Flex, Text, HStack } from '@chakra-ui/react';
+import UserAvatar from '../common/UserAvatar';
+import { AiOutlineHeart } from 'react-icons/ai';
+import { useNavigate } from 'react-router-dom';
 
-const CommentCard = () => {
-    const [isCommentLiked, setIsCommentLiked] = useState();
+const CommentCard = ({ comment, onClose }) => {
+  const navigate = useNavigate();
+  
+  const data = comment || {
+    username: 'vibe_coder',
+    content: 'This looks absolutely amazing! 🚀',
+    time: '2h',
+    avatar: 'https://i.pravatar.cc/150?u=vibe',
+    likeCount: 2
+  };
 
-    const handleLikeComment = () => {
-        setIsCommentLiked(!isCommentLiked);
-    }
+  const handleNavigate = () => {
+    if (onClose) onClose(); // Đóng modal trước khi chuyển trang
+    navigate(`/${data.username}`);
+  };
+
   return (
-    <div>
-        <div className='flex items-center justify-between py-5'>
-            <div className='flex items-center'>
-                <div>
-                    <img className='w-9 h-9 rounded-full' src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYzEro350kZ_IIV-7C0jbrfb3GIwZ20JJC32LPCrPMcQ&s" alt="" />
-                </div>
-                <div className='ml-3'>
-                    <p>
-                        <span className='font-semibold'>username</span>
-                        <span className='ml-2'>nice post</span>
-                    </p>
-                    <div className='flex items-center space-x-3 text-xs opacity-60 pt-2'>
-                        <span>1 min ago</span>
-                        <span>23 likes</span>
-                    </div>
-                </div>
-            </div>
-            {isCommentLiked ? <AiFillHeart onClick={handleLikeComment} className='text-xs hover:opacity-50 cursor-pointer text-red-600'/> : <AiOutlineHeart className='text-xs hover:opacity-50 cursor-pointer' />}
-        </div>
-      
-    </div>
-  )
-}
+    <Flex gap={3} mb={4} align="start" width="100%">
+      <Box cursor="pointer" onClick={handleNavigate}>
+        <UserAvatar src={data.avatar} size="32px" />
+      </Box>
+      <Box flex={1}>
+        <Text fontSize="14px" lineHeight="1.4" color="black">
+          <Text as="span" fontWeight="bold" mr={2} cursor="pointer" onClick={handleNavigate} _hover={{ opacity: 0.7 }}>
+            {data.username}
+          </Text>
+          {data.content}
+        </Text>
+        <HStack gap={4} mt={2}>
+          <Text fontSize="12px" color="gray.500">{data.time}</Text>
+          {data.likeCount > 0 && (
+            <Text fontSize="12px" color="gray.500" fontWeight="bold">{data.likeCount} likes</Text>
+          )}
+          <Text fontSize="12px" color="gray.500" fontWeight="bold" cursor="pointer">Reply</Text>
+        </HStack>
+      </Box>
+      <Box pt={1} cursor="pointer" color="gray.500" _hover={{ color: "gray.300" }}>
+        <AiOutlineHeart size={12} />
+      </Box>
+    </Flex>
+  );
+};
 
-export default CommentCard
+export default CommentCard;

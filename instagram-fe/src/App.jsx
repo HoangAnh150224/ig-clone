@@ -1,18 +1,16 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import { useSelector } from 'react-redux';
 
-// Lazy load các trang để tối ưu hiệu năng
 const Home = lazy(() => import('./pages/Home'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Auth = lazy(() => import('./pages/Auth'));
 const Explore = lazy(() => import('./pages/Explore'));
+const Messages = lazy(() => import('./pages/Messages'));
+const Reels = lazy(() => import('./pages/Reels'));
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
-  // Tạm thời cho phép truy cập để vibe code nhanh, sau này sẽ uncomment
-  // if (!isAuthenticated) return <Navigate to="/accounts/login" />;
   return children;
 };
 
@@ -21,10 +19,8 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          {/* Auth Routes */}
           <Route path="/accounts/login" element={<Auth />} />
           
-          {/* Main App Routes */}
           <Route
             path="/"
             element={
@@ -41,6 +37,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <Explore />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reels"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Reels />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/direct/inbox"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Messages />
                 </MainLayout>
               </ProtectedRoute>
             }
