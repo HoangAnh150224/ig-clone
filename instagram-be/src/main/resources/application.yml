@@ -32,23 +32,10 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9090/realms/instagram}
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:9090/realms/instagram/protocol/openid-connect/certs}
-
 app:
-  keycloak:
-    server-url: ${KEYCLOAK_SERVER_URL:http://localhost:9090}
-    realm: ${KEYCLOAK_REALM:instagram}
-    client-id: ${KEYCLOAK_CLIENT_ID:instagram-api}
-    client-secret: ${KC_CLIENT_SECRET:}
-    admin:
-      username: ${KEYCLOAK_ADMIN:admin}
-      password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
-      client-id: admin-cli
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-32-chars}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 server:
   port: ${SERVER_PORT:8080}
