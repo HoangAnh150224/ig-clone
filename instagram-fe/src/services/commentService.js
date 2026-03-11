@@ -1,71 +1,48 @@
-import { commentsDB } from "../api/dummyData";
+import axiosClient from "../api/axiosClient";
 
+/**
+ * CommentService handles all comment-related API calls.
+ */
 const commentService = {
     /**
-     * Get comments by post ID or reel ID.
-     * API: GET /api/comments?postId={postId}
+     * Get comments by post ID.
+     * API: GET /posts/{postId}/comments
      */
-    getCommentsByPostId: (postId) => {
-        return commentsDB[postId] || [];
+    getCommentsByPostId: async (postId) => {
+        return axiosClient.get(`/posts/${postId}/comments`);
     },
 
     /**
-     * BACKEND SETUP: Add new comment
-     * API: POST /api/posts/{postId}/comments
+     * Add new comment to a post.
+     * API: POST /posts/{postId}/comments
      */
     addComment: async (postId, content) => {
-        return new Promise((resolve) => {
-            console.log(
-                `Backend Action: ADDING COMMENT to post ${postId}: ${content}`,
-            );
-            setTimeout(() => {
-                // TODO: Send POST request via axiosClient
-                const newComment = {
-                    id: `c-new-${Date.now()}`,
-                    content,
-                    timeAgo: "1m",
-                    likedBy: [],
-                    replies: [],
-                };
-                resolve(newComment);
-            }, 500);
-        });
+        return axiosClient.post(`/posts/${postId}/comments`, { content });
     },
 
     /**
-     * BACKEND SETUP: Reply to a comment
-     * API: POST /api/comments/{commentId}/replies
+     * Reply to a specific comment.
+     * API: POST /comments/{commentId}/replies
      */
     addReply: async (commentId, content) => {
-        return new Promise((resolve) => {
-            console.log(
-                `Backend Action: REPLYING to comment ${commentId}: ${content}`,
-            );
-            setTimeout(() => {
-                // TODO: Send POST request via axiosClient
-                const newReply = {
-                    id: `cr-new-${Date.now()}`,
-                    content,
-                    timeAgo: "1m",
-                    likedBy: [],
-                };
-                resolve(newReply);
-            }, 500);
-        });
+        return axiosClient.post(`/comments/${commentId}/replies`, { content });
     },
 
     /**
-     * BACKEND SETUP: Like a comment
-     * API: POST /api/comments/{commentId}/like
+     * Toggle Like on a comment.
+     * API: POST /comments/{commentId}/like
      */
     toggleLikeComment: async (commentId) => {
-        return new Promise((resolve) => {
-            console.log(`Backend Action: TOGGLE LIKE for comment ${commentId}`);
-            setTimeout(() => {
-                resolve();
-            }, 300);
-        });
+        return axiosClient.post(`/comments/${commentId}/like`);
     },
+
+    /**
+     * Delete a comment.
+     * API: DELETE /comments/{commentId}
+     */
+    deleteComment: async (commentId) => {
+        return axiosClient.delete(`/comments/${commentId}`);
+    }
 };
 
 export default commentService;

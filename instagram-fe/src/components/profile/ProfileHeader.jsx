@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import {
     Box,
-    Flex,
-    VStack,
     HStack,
+    VStack,
     Text,
     Button,
     Image,
@@ -16,8 +15,8 @@ import { useDispatch } from "react-redux";
 import StoryModal from "../modals/StoryModal";
 import UserListModal from "../modals/UserListModal";
 import MoreOptionsModal from "../modals/MoreOptionsModal";
-import userService from "../../services/userService";
-import { updateUserProfile } from "../../store/slices/userSlice";
+import profileService from "../../services/profileService";
+import { toggleFollow } from "../../store/slices/userSlice";
 
 const ProfileHeader = ({ user }) => {
     const navigate = useNavigate();
@@ -30,32 +29,8 @@ const ProfileHeader = ({ user }) => {
 
     if (!user) return null;
 
-    const handleFollow = async () => {
-        try {
-            await userService.followUser(user.id);
-            dispatch(
-                updateUserProfile({
-                    isFollowing: true,
-                    followerCount: user.followerCount + 1,
-                }),
-            );
-        } catch (error) {
-            console.error("Follow failed", error);
-        }
-    };
-
-    const handleUnfollow = async () => {
-        try {
-            await userService.unfollowUser(user.id);
-            dispatch(
-                updateUserProfile({
-                    isFollowing: false,
-                    followerCount: user.followerCount - 1,
-                }),
-            );
-        } catch (error) {
-            console.error("Unfollow failed", error);
-        }
+    const handleFollowToggle = async () => {
+        dispatch(toggleFollow(user.id));
     };
 
     const handleAvatarClick = () => {
@@ -69,11 +44,12 @@ const ProfileHeader = ({ user }) => {
         try {
             if (type === "followers") {
                 setListTitle("Followers");
-                const followers = await userService.getFollowersList(user.id);
+                // Note: Ensure these methods exist in profileService or are added as per Task 2.2
+                const followers = await profileService.getUserFollowers?.(user.id) || [];
                 setListUsers(followers);
             } else {
                 setListTitle("Following");
-                const following = await userService.getFollowingList(user.id);
+                const following = await profileService.getUserFollowing?.(user.id) || [];
                 setListUsers(following);
             }
             setIsListOpen(true);
@@ -100,18 +76,12 @@ const ProfileHeader = ({ user }) => {
 
     return (
         <>
-            <Flex
-                direction={{ base: "column", md: "row" }}
-                gap={{ base: 8, md: 20 }}
-                py={8}
-                px={4}
-                align="center"
-            >
+            <div className="flex flex-col md:flex-row gap-8 md:gap-20 py-8 px-4 items-center">
                 {/* Avatar Section */}
                 <Box flexShrink={0}>
                     <Box
-                        width={{ base: "84px", md: "168px" }}
-                        height={{ base: "84px", md: "168px" }}
+                        width={{ base: "84px", md: "150px" }}
+                        height={{ base: "84px", md: "150px" }}
                         borderRadius="full"
                         display="flex"
                         alignItems="center"
@@ -154,8 +124,8 @@ const ProfileHeader = ({ user }) => {
                 </Box>
 
                 {/* Info Section */}
-                <VStack align="start" gap={6} flex={1}>
-                    <HStack gap={4} wrap="wrap">
+                <VStack align="start" gap={6} flex={1} width="100%">
+                    <HStack gap={4} wrap="wrap" width="100%">
                         <Text fontSize="20px" fontWeight="400" color="black">
                             {user.username}
                         </Text>
@@ -195,33 +165,18 @@ const ProfileHeader = ({ user }) => {
                             </HStack>
                         ) : (
                             <HStack gap={2}>
-                                {user.isFollowing ? (
-                                    <Button
-                                        size="sm"
-                                        bg="#efefef"
-                                        color="black"
-                                        fontWeight="600"
-                                        px={6}
-                                        borderRadius="8px"
-                                        _hover={{ bg: "#dbdbdb" }}
-                                        onClick={handleUnfollow}
-                                    >
-                                        Following
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        size="sm"
-                                        bg="#0095f6"
-                                        color="white"
-                                        fontWeight="600"
-                                        px={6}
-                                        borderRadius="8px"
-                                        _hover={{ bg: "#1877f2" }}
-                                        onClick={handleFollow}
-                                    >
-                                        Follow
-                                    </Button>
-                                )}
+                                <Button
+                                    size="sm"
+                                    bg={user.isFollowing ? "#efefef" : "#0095f6"}
+                                    color={user.isFollowing ? "black" : "white"}
+                                    fontWeight="600"
+                                    px={6}
+                                    borderRadius="8px"
+                                    _hover={{ bg: user.isFollowing ? "#dbdbdb" : "#1877f2" }}
+                                    onClick={handleFollowToggle}
+                                >
+                                    {user.isFollowing ? "Following" : "Follow"}
+                                </Button>
                                 <Button
                                     size="sm"
                                     bg="#efefef"
@@ -300,7 +255,7 @@ const ProfileHeader = ({ user }) => {
                         )}
                     </VStack>
                 </VStack>
-            </Flex>
+            </div>
 
             {/* Story Player ONLY FOR ACTIVE STORIES */}
             <StoryModal

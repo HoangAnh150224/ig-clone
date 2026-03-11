@@ -1,4 +1,17 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import profileService from "../../services/profileService";
+
+export const toggleFollow = createAsyncThunk(
+    "user/toggleFollow",
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await profileService.toggleFollow(userId);
+            return response; // Assume returns { isFollowing: boolean }
+        } catch (error) {
+            return rejectWithValue(error.apiResponse || error.message);
+        }
+    },
+);
 
 const initialState = {
     userProfile: null, // Information of the user being viewed on the Profile page
@@ -28,6 +41,25 @@ const userSlice = createSlice({
                 state.userProfile = { ...state.userProfile, ...action.payload };
             }
         },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(toggleFollow.pending, (state) => {
+                // Optimistic Update: Toggle immediately on UI
+                if (state.userProfile) {
+                    const isFollowing = state.userProfile.isFollowing;
+                    state.userProfile.isFollowing = !isFollowing;
+                    state.userProfile.followerCount += isFollowing ? -1 : 1;
+                }
+            })
+            .addCase(toggleFollow.rejected, (state) => {
+                // Rollback if API fails
+                if (state.userProfile) {
+                    const isFollowing = state.userProfile.isFollowing;
+                    state.userProfile.isFollowing = !isFollowing;
+                    state.userProfile.followerCount += isFollowing ? -1 : 1;
+                }
+            });
     },
 });
 

@@ -5,6 +5,7 @@ import com.instagram.be.userprofile.enums.Gender;
 import com.instagram.be.userprofile.enums.TagPermission;
 import com.instagram.be.userprofile.enums.UserRole;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,15 +60,18 @@ public class UserProfile extends BaseEntity {
     @Column(name = "is_verified", nullable = false)
     private boolean verified = false;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     @Column(name = "is_private", nullable = false)
     private boolean privateAccount = false;
 
+    @Builder.Default
     @Column(name = "show_activity_status", nullable = false)
     private boolean showActivityStatus = true;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "tag_permission", nullable = false)
     private TagPermission tagPermission = TagPermission.EVERYONE;

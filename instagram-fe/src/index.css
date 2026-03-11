@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
     color-scheme: light !important;
 }
@@ -20,4 +22,13 @@ body {
 [data-theme="dark"] {
     --chakra-colors-bg: #ffffff !important;
     --chakra-colors-text: #000000 !important;
+}
+
+/* Central Spinner Animation */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+    animation: spin 2s linear infinite;
 }

@@ -22,7 +22,8 @@ import { FaInstagram, FaUserCircle, FaRegUserCircle } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { openCreatePostModal } from "../../store/slices/uiSlice";
+import { openCreatePostModal, toggleMute } from "../../store/slices/uiSlice";
+import { logout } from "../../store/slices/authSlice";
 import SearchPanel from "./panels/SearchPanel";
 import NotificationPanel from "./panels/NotificationPanel";
 
@@ -264,15 +265,25 @@ const Sidebar = () => {
                                 <AiOutlineClockCircle size={20} />
                                 <Text fontSize="14px">Archive</Text>
                             </HStack>
+                            <HStack
+                                p={3}
+                                borderRadius="8px"
+                                _hover={{ bg: "gray.50" }}
+                                cursor="pointer"
+                                onClick={() => handleNavigate("/accounts/login")}
+                            >
+                                <Text fontSize="14px">Switch accounts</Text>
+                            </HStack>
                             <Box height="1px" bg="gray.100" my={1} />
                             <HStack
                                 p={3}
                                 borderRadius="8px"
                                 _hover={{ bg: "gray.50" }}
                                 cursor="pointer"
-                                onClick={() =>
-                                    handleNavigate("/accounts/login")
-                                }
+                                onClick={() => {
+                                    dispatch(logout());
+                                    handleNavigate("/accounts/login");
+                                }}
                             >
                                 <Text fontSize="14px">Log out</Text>
                             </HStack>

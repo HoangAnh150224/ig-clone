@@ -14,7 +14,7 @@ import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import PostGrid from "../components/profile/PostGrid";
 import ProfileHighlights from "../components/profile/ProfileHighlights";
-import ProfileSkeleton from "../components/profile/ProfileSkeleton";
+import ProfileSkeleton from "../components/skeletons/ProfileSkeleton";
 import profileService from "../services/profileService";
 import {
     setUserProfile,

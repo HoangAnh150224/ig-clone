@@ -29,6 +29,20 @@ export const signup = createAsyncThunk(
     },
 );
 
+export const verifyAuth = createAsyncThunk(
+    "auth/verifyAuth",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await authService.getCurrentUser();
+            return response;
+        } catch (error) {
+            return rejectWithValue(
+                error.apiResponse || error.message || "Session expired",
+            );
+        }
+    },
+);
+
 const getStoredUser = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user && user.id === "1") {
@@ -56,6 +70,10 @@ const authSlice = createSlice({
             state.isAuthenticated = false;
             localStorage.removeItem("token");
             localStorage.removeItem("user");
+        },
+        setUser: (state, action) => {
+            state.user = action.payload;
+            state.isAuthenticated = true;
         },
         clearError: (state) => {
             state.error = null;
@@ -100,9 +118,26 @@ const authSlice = createSlice({
             .addCase(signup.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(verifyAuth.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(verifyAuth.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isAuthenticated = true;
+                state.user = action.payload;
+                localStorage.setItem("user", JSON.stringify(action.payload));
+            })
+            .addCase(verifyAuth.rejected, (state) => {
+                state.loading = false;
+                state.isAuthenticated = false;
+                state.user = null;
+                state.token = null;
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
             });
     },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, setUser, clearError } = authSlice.actions;
 export default authSlice.reducer;

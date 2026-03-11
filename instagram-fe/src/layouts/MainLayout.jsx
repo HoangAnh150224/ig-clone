@@ -1,28 +1,21 @@
 import React from "react";
-import { Box } from "@chakra-ui/react";
 import Sidebar from "../components/layout/Sidebar";
 import CreatePostModal from "../components/modals/CreatePostModal";
 
 const MainLayout = ({ children }) => {
     return (
-        <Box display="flex" bg="white" minHeight="100vh">
+        <div className="flex bg-white min-h-screen">
             {/* Sidebar fixed */}
             <Sidebar />
 
             {/* Main Content Area - Flexible and stretches */}
-            <Box
-                flex={1}
-                bg="white"
-                color="black"
-                display="flex"
-                flexDirection="column"
-            >
+            <main className="flex-1 bg-white text-black flex flex-col">
                 {children}
-            </Box>
+            </main>
 
             {/* Global Modals */}
             <CreatePostModal />
-        </Box>
+        </div>
     );
 };
 

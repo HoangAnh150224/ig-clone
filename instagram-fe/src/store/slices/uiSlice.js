@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     isCreatePostModalOpen: false,
     isMuted: true, // Default to mute per Instagram standard
+    globalError: null,
 };
 
 const uiSlice = createSlice({
@@ -18,9 +19,20 @@ const uiSlice = createSlice({
         toggleMute: (state) => {
             state.isMuted = !state.isMuted;
         },
+        setGlobalError: (state, action) => {
+            state.globalError = action.payload;
+        },
+        clearGlobalError: (state) => {
+            state.globalError = null;
+        },
     },
 });
 
-export const { openCreatePostModal, closeCreatePostModal, toggleMute } =
-    uiSlice.actions;
+export const {
+    openCreatePostModal,
+    closeCreatePostModal,
+    toggleMute,
+    setGlobalError,
+    clearGlobalError,
+} = uiSlice.actions;
 export default uiSlice.reducer;

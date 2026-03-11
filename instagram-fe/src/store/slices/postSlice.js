@@ -3,6 +3,7 @@ import {
     createEntityAdapter,
     createAsyncThunk,
 } from "@reduxjs/toolkit";
+import postService from "../../services/postService";
 
 // Use Entity Adapter to normalize data
 const postsAdapter = createEntityAdapter({
@@ -18,12 +19,22 @@ export const fetchPosts = createAsyncThunk(
     "posts/fetchPosts",
     async ({ page, size }, { rejectWithValue }) => {
         try {
-            // Temporary use dummy data, will call API from Spring Boot later
-            // const response = await postService.getAllPosts(page, size);
-            // return response.data;
-            return [];
+            const response = await postService.getFeedPosts(page, size);
+            return response;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.apiResponse || error.message);
+        }
+    },
+);
+
+export const toggleLike = createAsyncThunk(
+    "posts/toggleLike",
+    async (postId, { rejectWithValue }) => {
+        try {
+            const response = await postService.toggleLikePost(postId);
+            return { postId, ...response }; // response should have isLiked, likeCount
+        } catch (error) {
+            return rejectWithValue({ postId, error: error.apiResponse || error.message });
         }
     },
 );
@@ -41,16 +52,10 @@ const postSlice = createSlice({
         toggleLikePost: (state, action) => {
             const { postId, userId } = action.payload;
             const post = state.entities[postId];
-            if (post && post.likedBy) {
-                const index = post.likedBy.findIndex((u) => u.id === userId);
-                if (index === -1) {
-                    // Mock: Add ID to array (in reality it will be a full user object from API)
-                    post.likedBy.push({ id: userId });
-                    post.likeCount += 1;
-                } else {
-                    post.likedBy.splice(index, 1);
-                    post.likeCount -= 1;
-                }
+            if (post) {
+                const wasLiked = post.isLiked;
+                post.isLiked = !wasLiked;
+                post.likeCount += wasLiked ? -1 : 1;
             }
         },
         // Mock data for UI testing
@@ -74,6 +79,35 @@ const postSlice = createSlice({
             .addCase(fetchPosts.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
+            })
+            .addCase(toggleLike.pending, (state, action) => {
+                const postId = action.meta.arg;
+                const post = state.entities[postId];
+                if (post) {
+                    // Optimistic update
+                    const wasLiked = post.isLiked;
+                    post.isLiked = !wasLiked;
+                    post.likeCount += wasLiked ? -1 : 1;
+                }
+            })
+            .addCase(toggleLike.fulfilled, (state, action) => {
+                const { postId, isLiked, likeCount } = action.payload;
+                const post = state.entities[postId];
+                if (post) {
+                    // Sync with real data from server
+                    post.isLiked = isLiked;
+                    post.likeCount = likeCount;
+                }
+            })
+            .addCase(toggleLike.rejected, (state, action) => {
+                const { postId } = action.payload;
+                const post = state.entities[postId];
+                if (post) {
+                    // Rollback on error
+                    const wasLiked = post.isLiked;
+                    post.isLiked = !wasLiked;
+                    post.likeCount += wasLiked ? -1 : 1;
+                }
             });
     },
 });
