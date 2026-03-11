@@ -2,29 +2,41 @@ import React, { useState, useEffect } from "react";
 import { Box, Text, Input, VStack, Flex } from "@chakra-ui/react";
 import UserAvatar from "../../common/UserAvatar";
 import { useNavigate } from "react-router-dom";
-import { allUsers } from "../../../api/dummyData";
+import userService from "../../../services/userService";
+import SearchSkeleton from "../../skeletons/SearchSkeleton";
 
 const SearchPanel = ({ isOpen }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Logic tìm kiếm thời gian thực
+    // Debounced Search Logic
     useEffect(() => {
-        if (searchTerm.trim() === "") {
-            setSearchResults([]); // Hoặc hiển thị danh sách gợi ý mặc định
-            return;
-        }
+        const fetchResults = async () => {
+            if (searchTerm.trim() === "") {
+                setSearchResults([]);
+                setLoading(false);
+                return;
+            }
 
-        const filtered = allUsers.filter(user => 
-            user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setSearchResults(filtered);
+            setLoading(true);
+            try {
+                const response = await userService.searchUsers(searchTerm);
+                setSearchResults(response.data);
+            } catch (error) {
+                console.error("Search failed:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const timer = setTimeout(fetchResults, 400); // 400ms Debounce
+        return () => clearTimeout(timer);
     }, [searchTerm]);
 
     const handleNavigate = (username) => {
-        setSearchTerm(""); // Reset tìm kiếm sau khi điều hướng
+        setSearchTerm("");
         navigate(`/${username}`);
     };
 
@@ -43,7 +55,7 @@ const SearchPanel = ({ isOpen }) => {
             opacity={isOpen ? 1 : 0}
             visibility={isOpen ? "visible" : "hidden"}
             transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            boxShadow="20px 0 20px -20px rgba(0,0,0,0.1)" // Bóng đổ nhẹ bên phải
+            boxShadow="20px 0 20px -20px rgba(0,0,0,0.1)"
         >
             <Text fontSize="24px" fontWeight="bold" mb={6} mt={2} color="black">
                 Search
@@ -54,7 +66,11 @@ const SearchPanel = ({ isOpen }) => {
                     placeholder="Search"
                     bg="gray.100"
                     border="none"
-                    _focus={{ bg: "gray.100", border: "1px solid", borderColor: "gray.300" }}
+                    _focus={{
+                        bg: "gray.100",
+                        border: "1px solid",
+                        borderColor: "gray.300",
+                    }}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     color="black"
@@ -65,19 +81,33 @@ const SearchPanel = ({ isOpen }) => {
 
             <Box height="1px" bg="gray.200" width="full" mb={4} />
 
-            <VStack align="stretch" gap={4} overflowY="auto" maxH="calc(100vh - 180px)">
+            <VStack
+                align="stretch"
+                gap={4}
+                overflowY="auto"
+                maxH="calc(100vh - 180px)"
+                css={{ "&::-webkit-scrollbar": { width: "0px" } }}
+            >
                 <Flex justify="space-between" align="center" mb={2}>
-                    <Text fontWeight="bold" color="black">
+                    <Text fontWeight="bold" color="black" fontSize="16px">
                         {searchTerm ? "Results" : "Recent"}
                     </Text>
                     {!searchTerm && (
-                        <Text color="blue.500" fontSize="sm" fontWeight="semibold" cursor="pointer">
+                        <Text
+                            color="#0095f6"
+                            fontSize="14px"
+                            fontWeight="bold"
+                            cursor="pointer"
+                            _hover={{ color: "blue.900" }}
+                        >
                             Clear all
                         </Text>
                     )}
                 </Flex>
 
-                {searchResults.length > 0 ? (
+                {loading ? (
+                    <SearchSkeleton />
+                ) : searchResults.length > 0 ? (
                     searchResults.map((user) => (
                         <Flex
                             key={user.id}
@@ -92,7 +122,11 @@ const SearchPanel = ({ isOpen }) => {
                         >
                             <UserAvatar src={user.avatar} size="44px" />
                             <Box>
-                                <Text fontWeight="bold" fontSize="sm" color="black">
+                                <Text
+                                    fontWeight="bold"
+                                    fontSize="sm"
+                                    color="black"
+                                >
                                     {user.username}
                                 </Text>
                                 <Text color="gray.500" fontSize="sm">
@@ -101,16 +135,22 @@ const SearchPanel = ({ isOpen }) => {
                             </Box>
                         </Flex>
                     ))
+                ) : searchTerm ? (
+                    <Text
+                        color="gray.500"
+                        fontSize="sm"
+                        textAlign="center"
+                        mt={10}
+                    >
+                        No results found for "{searchTerm}".
+                    </Text>
                 ) : (
-                    searchTerm && (
-                        <Text color="gray.500" fontSize="sm" textAlign="center" mt={10}>
-                            No results found.
-                        </Text>
-                    )
-                )}
-
-                {!searchTerm && (
-                    <Text color="gray.500" fontSize="sm" textAlign="center" mt={10}>
+                    <Text
+                        color="gray.500"
+                        fontSize="sm"
+                        textAlign="center"
+                        mt={10}
+                    >
                         No recent searches.
                     </Text>
                 )}

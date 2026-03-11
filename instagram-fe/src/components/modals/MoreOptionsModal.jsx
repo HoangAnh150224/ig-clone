@@ -1,0 +1,578 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    DialogRoot,
+    DialogBackdrop,
+    DialogContent,
+    DialogBody,
+    DialogPositioner,
+    VStack,
+    Box,
+    Text,
+} from "@chakra-ui/react";
+import postService from "../../services/postService";
+import userService from "../../services/userService";
+import EditPostModal from "./EditPostModal";
+
+const OptionButton = ({
+    label,
+    color = "black",
+    fontWeight = "normal",
+    onClick,
+}) => (
+    <Box
+        width="100%"
+        py={3.5}
+        textAlign="center"
+        cursor="pointer"
+        _hover={{ bg: "gray.50" }}
+        onClick={onClick}
+    >
+        <Text color={color} fontWeight={fontWeight} fontSize="14px">
+            {label}
+        </Text>
+    </Box>
+);
+
+const MoreOptionsModal = ({
+    isOpen,
+    onClose,
+    isOwnPost,
+    post,
+    isProfile = false,
+    isOwnProfile = false,
+    user,
+    onParentClose,
+    isFavoriteUser = false,
+    isBlocked = false,
+}) => {
+    const navigate = useNavigate();
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [view, setView] = useState("main"); // 'main', 'report', or 'block'
+    const [reportSuccess, setReportSuccess] = useState(false);
+    const [blockSuccess, setBlockSuccess] = useState(false);
+
+    const reportReasons = [
+        "It's spam",
+        "Nudity or sexual activity",
+        "Hate speech or symbols",
+        "Violence or dangerous organizations",
+        "Bullying or harassment",
+        "Intellectual property violation",
+        "Suicide or self-injury",
+        "Eating disorders",
+        "Scams or fraud",
+        "False information",
+    ];
+
+    const handleAction = async (action, extraData = null) => {
+        // HANDLE NAVIGATION FIRST
+        if (action === "settings") {
+            navigate("/accounts/edit");
+            onClose();
+            if (onParentClose) onParentClose();
+            return;
+        } else if (action === "archive") {
+            navigate("/archive/stories");
+            onClose();
+            if (onParentClose) onParentClose();
+            return;
+        } else if (action === "go_to_post") {
+            navigate(`/p/${post?.id}`);
+            onClose();
+            if (onParentClose) onParentClose();
+            return;
+        }
+
+        // HANDLE BACKEND LOGIC
+        try {
+            let response;
+            const targetUserId = isProfile
+                ? user?.id
+                : post?.userId || post?.user?.id;
+
+            switch (action) {
+                case "delete":
+                    response = await postService.deletePost(post.id);
+                    break;
+                case "edit":
+                    setIsEditOpen(true);
+                    return;
+                case "report_init":
+                    setView("report");
+                    return;
+                case "report_submit":
+                    response = await postService.reportPost(
+                        targetUserId,
+                        extraData,
+                    );
+                    if (response?.success) {
+                        setReportSuccess(true);
+                        setTimeout(() => handleClose(), 2000);
+                        return;
+                    }
+                    break;
+                case "block_init":
+                    setView("block");
+                    return;
+                case "block_submit":
+                    response = await userService.blockUser(targetUserId);
+                    if (response?.success) {
+                        setBlockSuccess(true);
+                        setTimeout(() => handleClose(), 2000);
+                        return;
+                    }
+                    break;
+                case "unblock":
+                    response = await userService.unblockUser(targetUserId);
+                    break;
+                case "unfollow":
+                    response = await userService.unfollowUser(targetUserId);
+                    break;
+                case "restrict":
+                    response = await userService.restrictUser(targetUserId);
+                    break;
+                case "toggle_favorite_user":
+                    response =
+                        await userService.toggleFavoriteUser(targetUserId);
+                    break;
+                case "copy_link":
+                    const linkToCopy = isProfile
+                        ? window.location.origin + `/${user.username}`
+                        : post.shareUrl ||
+                          window.location.origin + `/p/${post.id}`;
+                    await navigator.clipboard.writeText(linkToCopy);
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            console.error("Action failed:", error);
+        }
+
+        if (action !== "report_submit" && action !== "block_submit")
+            handleClose();
+    };
+
+    const handleClose = () => {
+        setView("main");
+        setReportSuccess(false);
+        setBlockSuccess(false);
+        onClose();
+    };
+
+    return (
+        <>
+            <DialogRoot
+                size="xs"
+                open={isOpen && !isEditOpen}
+                onOpenChange={(e) => {
+                    if (!e.open) handleClose();
+                }}
+                placement="center"
+            >
+                <DialogBackdrop bg="blackAlpha.600" />
+                <DialogPositioner>
+                    <DialogContent
+                        borderRadius="12px"
+                        overflow="hidden"
+                        bg="white"
+                        p={0}
+                        maxW="400px"
+                        width="90vw"
+                    >
+                        <DialogBody p={0}>
+                            <VStack gap={0}>
+                                {view === "main" ? (
+                                    /* MAIN MENU */
+                                    <>
+                                        {isProfile ? (
+                                            isOwnProfile ? (
+                                                <>
+                                                    <OptionButton
+                                                        label="Settings"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "settings",
+                                                            )
+                                                        }
+                                                    />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="Archive"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "archive",
+                                                            )
+                                                        }
+                                                    />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="QR Code"
+                                                        onClick={() =>
+                                                            handleAction("qr")
+                                                        }
+                                                    />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {isBlocked ? (
+                                                        <OptionButton
+                                                            label="Unblock"
+                                                            color="#0095f6"
+                                                            fontWeight="bold"
+                                                            onClick={() =>
+                                                                handleAction(
+                                                                    "unblock",
+                                                                )
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        <OptionButton
+                                                            label="Block"
+                                                            color="#ed4956"
+                                                            fontWeight="bold"
+                                                            onClick={() =>
+                                                                handleAction(
+                                                                    "block_init",
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="Restrict"
+                                                        color="#ed4956"
+                                                        fontWeight="bold"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "restrict",
+                                                            )
+                                                        }
+                                                    />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="Report"
+                                                        color="#ed4956"
+                                                        fontWeight="bold"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "report_init",
+                                                            )
+                                                        }
+                                                    />
+                                                </>
+                                            )
+                                        ) : isOwnPost ? (
+                                            <>
+                                                <OptionButton
+                                                    label="Delete"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction("delete")
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Edit"
+                                                    onClick={() =>
+                                                        handleAction("edit")
+                                                    }
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <OptionButton
+                                                    label="Report"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "report_init",
+                                                        )
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Unfollow"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction("unfollow")
+                                                    }
+                                                />
+                                            </>
+                                        )}
+
+                                        {!isProfile && (
+                                            <>
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label={
+                                                        isFavoriteUser
+                                                            ? "Remove from favorites"
+                                                            : "Add to favorites"
+                                                    }
+                                                    color={
+                                                        isFavoriteUser
+                                                            ? "#ed4956"
+                                                            : "black"
+                                                    }
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "toggle_favorite_user",
+                                                        )
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Go to post"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "go_to_post",
+                                                        )
+                                                    }
+                                                />
+                                            </>
+                                        )}
+
+                                        <Box
+                                            width="100%"
+                                            height="1px"
+                                            bg="gray.100"
+                                        />
+                                        <OptionButton
+                                            label="Share to..."
+                                            onClick={() =>
+                                                handleAction("share")
+                                            }
+                                        />
+                                        <Box
+                                            width="100%"
+                                            height="1px"
+                                            bg="gray.100"
+                                        />
+                                        <OptionButton
+                                            label="Copy link"
+                                            onClick={() =>
+                                                handleAction("copy_link")
+                                            }
+                                        />
+                                        <Box
+                                            width="100%"
+                                            height="1px"
+                                            bg="gray.100"
+                                        />
+                                        <OptionButton
+                                            label="Cancel"
+                                            onClick={handleClose}
+                                        />
+                                    </>
+                                ) : view === "report" ? (
+                                    /* MENU REPORT */
+                                    <Box width="100%">
+                                        <Box
+                                            py={3}
+                                            borderBottom="1px solid"
+                                            borderColor="gray.100"
+                                            textAlign="center"
+                                        >
+                                            <Text
+                                                fontWeight="600"
+                                                fontSize="16px"
+                                            >
+                                                Report
+                                            </Text>
+                                        </Box>
+                                        {reportSuccess ? (
+                                            <Box p={8} textAlign="center">
+                                                <Text
+                                                    fontSize="14px"
+                                                    color="gray.600"
+                                                >
+                                                    Thanks for letting us know.
+                                                    Your report has been
+                                                    submitted.
+                                                </Text>
+                                            </Box>
+                                        ) : (
+                                            <VStack
+                                                gap={0}
+                                                maxH="400px"
+                                                overflowY="auto"
+                                            >
+                                                <Box p={4} width="100%">
+                                                    <Text
+                                                        fontWeight="600"
+                                                        fontSize="14px"
+                                                        color="gray.600"
+                                                    >
+                                                        Why are you reporting
+                                                        this post?
+                                                    </Text>
+                                                </Box>
+                                                {reportReasons.map(
+                                                    (reason, index) => (
+                                                        <React.Fragment
+                                                            key={reason}
+                                                        >
+                                                            <OptionButton
+                                                                label={reason}
+                                                                onClick={() =>
+                                                                    handleAction(
+                                                                        "report_submit",
+                                                                        reason,
+                                                                    )
+                                                                }
+                                                            />
+                                                            {index <
+                                                                reportReasons.length -
+                                                                    1 && (
+                                                                <Box
+                                                                    width="100%"
+                                                                    height="1px"
+                                                                    bg="gray.100"
+                                                                />
+                                                            )}
+                                                        </React.Fragment>
+                                                    ),
+                                                )}
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Cancel"
+                                                    onClick={() =>
+                                                        setView("main")
+                                                    }
+                                                />
+                                            </VStack>
+                                        )}
+                                    </Box>
+                                ) : (
+                                    /* MENU BLOCK */
+                                    <Box width="100%">
+                                        <Box py={6} px={10} textAlign="center">
+                                            <Text
+                                                fontWeight="600"
+                                                fontSize="18px"
+                                                mb={2}
+                                            >
+                                                Block{" "}
+                                                {isProfile
+                                                    ? user?.username
+                                                    : post?.user?.username}
+                                                ?
+                                            </Text>
+                                            <Text
+                                                fontSize="14px"
+                                                color="gray.500"
+                                            >
+                                                They won't be able to find your
+                                                profile, posts or story on
+                                                Instagram. They won't know you
+                                                blocked them.
+                                            </Text>
+                                        </Box>
+                                        {blockSuccess ? (
+                                            <Box
+                                                p={8}
+                                                textAlign="center"
+                                                borderTop="1px solid"
+                                                borderColor="gray.100"
+                                            >
+                                                <Text
+                                                    fontSize="14px"
+                                                    color="#ed4956"
+                                                    fontWeight="600"
+                                                >
+                                                    User blocked.
+                                                </Text>
+                                            </Box>
+                                        ) : (
+                                            <VStack gap={0}>
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Block"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "block_submit",
+                                                        )
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Cancel"
+                                                    onClick={() =>
+                                                        setView("main")
+                                                    }
+                                                />
+                                            </VStack>
+                                        )}
+                                    </Box>
+                                )}
+                            </VStack>
+                        </DialogBody>
+                    </DialogContent>
+                </DialogPositioner>
+            </DialogRoot>
+
+            {/* EDIT POST/REEL MODAL */}
+            <EditPostModal
+                isOpen={isEditOpen}
+                onClose={() => {
+                    setIsEditOpen(false);
+                    onClose();
+                }}
+                post={post}
+            />
+        </>
+    );
+};
+
+export default MoreOptionsModal;

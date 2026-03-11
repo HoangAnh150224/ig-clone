@@ -1,0 +1,42 @@
+M	instagram-be/pom.xml
+D	instagram-be/src/main/java/com/instagram/be/config/KeycloakRoleConverter.java
+M	instagram-be/src/main/java/com/instagram/be/config/SecurityConfig.java
+D	instagram-be/src/main/java/com/instagram/be/integration/keycloak/KeycloakConfig.java
+D	instagram-be/src/main/java/com/instagram/be/integration/keycloak/KeycloakRequest.java
+D	instagram-be/src/main/java/com/instagram/be/integration/keycloak/KeycloakService.java
+M	instagram-be/src/main/resources/application.yml
+PLAN.md
+changes.txt
+instagram-be/src/main/java/com/instagram/be/block/Block.java
+instagram-be/src/main/java/com/instagram/be/comment/Comment.java
+instagram-be/src/main/java/com/instagram/be/comment/CommentLike.java
+instagram-be/src/main/java/com/instagram/be/favorite/FavoritePost.java
+instagram-be/src/main/java/com/instagram/be/favorite/FavoriteUser.java
+instagram-be/src/main/java/com/instagram/be/follow/Follow.java
+instagram-be/src/main/java/com/instagram/be/follow/enums/FollowStatus.java
+instagram-be/src/main/java/com/instagram/be/hashtag/Hashtag.java
+instagram-be/src/main/java/com/instagram/be/highlight/Highlight.java
+instagram-be/src/main/java/com/instagram/be/message/Conversation.java
+instagram-be/src/main/java/com/instagram/be/message/ConversationParticipant.java
+instagram-be/src/main/java/com/instagram/be/message/Message.java
+instagram-be/src/main/java/com/instagram/be/notification/Notification.java
+instagram-be/src/main/java/com/instagram/be/notification/enums/NotificationType.java
+instagram-be/src/main/java/com/instagram/be/post/Post.java
+instagram-be/src/main/java/com/instagram/be/post/PostLike.java
+instagram-be/src/main/java/com/instagram/be/post/PostMedia.java
+instagram-be/src/main/java/com/instagram/be/post/PostTag.java
+instagram-be/src/main/java/com/instagram/be/post/PostView.java
+instagram-be/src/main/java/com/instagram/be/post/enums/MediaType.java
+instagram-be/src/main/java/com/instagram/be/post/enums/PostType.java
+instagram-be/src/main/java/com/instagram/be/report/Report.java
+instagram-be/src/main/java/com/instagram/be/saved/SavedPost.java
+instagram-be/src/main/java/com/instagram/be/search/SearchHistory.java
+instagram-be/src/main/java/com/instagram/be/story/Story.java
+instagram-be/src/main/java/com/instagram/be/story/StoryMention.java
+instagram-be/src/main/java/com/instagram/be/story/StoryReply.java
+instagram-be/src/main/java/com/instagram/be/story/StoryView.java
+instagram-be/src/main/java/com/instagram/be/userprofile/UserProfile.java
+instagram-be/src/main/java/com/instagram/be/userprofile/enums/Gender.java
+instagram-be/src/main/java/com/instagram/be/userprofile/enums/TagPermission.java
+instagram-be/src/main/java/com/instagram/be/userprofile/enums/UserRole.java
+instagram-be/src/main/resources/db/migration/V2__add_all_entities.sql
