@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Phân Chia Công Việc - Clone Instagram</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #1a1a2e; padding: 40px 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 40px; background: linear-gradient(135deg, #405DE6, #E1306C, #F77737); padding: 30px; border-radius: 16px; color: white; }
+    .header h1 { font-size: 28px; margin-bottom: 8px; }
+    .header p { font-size: 14px; opacity: 0.9; }
+    .summary { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+    .summary-card { background: white; border-radius: 12px; padding: 16px 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); min-width: 140px; }
+    .summary-card .num { font-size: 28px; font-weight: 700; color: #E1306C; }
+    .summary-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+    .person { background: white; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; }
+    .person-header { padding: 20px 24px; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .person-header h2 { font-size: 18px; }
+    .person-header .lines { background: rgba(255,255,255,0.25); padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .p1 .person-header { background: linear-gradient(135deg, #405DE6, #5B51D8); }
+    .p2 .person-header { background: linear-gradient(135deg, #F77737, #FCAF45); }
+    .p3 .person-header { background: linear-gradient(135deg, #E1306C, #F56040); }
+    .p4 .person-header { background: linear-gradient(135deg, #00b894, #00cec9); }
+    .p5 .person-header { background: linear-gradient(135deg, #6c5ce7, #a29bfe); }
+    .person-body { padding: 20px 24px; }
+    .feature-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tag { background: #f0f2f5; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #555; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; background: #f8f9fa; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #eee; }
+    td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    td:last-child { text-align: right; font-weight: 600; color: #555; width: 80px; }
+    tr:hover { background: #fafbfc; }
+    .file-path { font-family: 'Consolas', 'Courier New', monospace; color: #2d3436; font-size: 12.5px; }
+    .total-row td { border-top: 2px solid #ddd; font-weight: 700; font-size: 14px; background: #f8f9fa; }
+    .overview-table { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    .overview-table h3 { margin-bottom: 16px; font-size: 16px; }
+    .overview-table table th { background: #1a1a2e; color: white; }
+    .note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 24px; font-size: 13px; line-height: 1.7; }
+    .note strong { color: #856404; }
+    .footer { text-align: center; margin-top: 36px; color: #aaa; font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>PHAN CHIA CONG VIEC - CLONE INSTAGRAM</h1>
+    <p>SBA FPT - Ky 7 | React + Vite + Chakra UI + Redux Toolkit + Tailwind CSS</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-card"><div class="num">5</div><div class="label">Thanh vien</div></div>
+    <div class="summary-card"><div class="num">66</div><div class="label">Tong file</div></div>
+    <div class="summary-card"><div class="num">4,480</div><div class="label">Tong dong code</div></div>
+    <div class="summary-card"><div class="num">~896</div><div class="label">TB dong/nguoi</div></div>
+  </div>
+
+  <!-- NGUOI 1 -->
+  <div class="person p1">
+    <div class="person-header">
+      <h2>NGUOI 1 - Auth + Sidebar + Search + Notification</h2>
+      <span class="lines">~880 dong</span>
+    </div>
+    <div class="person-body">
+      <div class="feature-tags">
+        <span class="tag">Dang nhap / Dang ky</span>
+        <span class="tag">Sidebar dieu huong</span>
+        <span class="tag">Tim kiem</span>
+        <span class="tag">Thong bao</span>
+        <span class="tag">Routing</span>
+      </div>
+      <table>
+        <tr><th>File</th><th>Dong</th></tr>
+        <tr><td class="file-path">src/pages/Auth.jsx</td><td>204</td></tr>
+        <tr><td class="file-path">src/components/layout/Sidebar.jsx</td><td>126</td></tr>
+        <tr><td class="file-path">src/components/layout/panels/SearchPanel.jsx</td><td>122</td></tr>
+        <tr><td class="file-path">src/components/layout/panels/NotificationPanel.jsx</td><td>89</td></tr>
+        <tr><td class="file-path">src/store/slices/authSlice.js</td><td>70</td></tr>
+        <tr><td class="file-path">src/App.jsx</td><td>69</td></tr>
+        <tr><td class="file-path">src/services/authService.js</td><td>39</td></tr>
+        <tr><td class="file-path">src/api/axiosClient.js</td><td>34</td></tr>
+        <tr><td class="file-path">src/layouts/MainLayout.jsx</td><td>29</td></tr>
+        <tr><td class="file-path">src/index.css</td><td>21</td></tr>
+        <tr><td class="file-path">src/main.jsx</td><td>17</td></tr>
+        <tr><td class="file-path">src/App.css</td><td>0</td></tr>
+        <tr class="total-row"><td>Tong</td><td>820</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NGUOI 2 -->
+  <div class="person p2">
+    <div class="person-header">
+      <h2>NGUOI 2 - Home Feed + Stories + Suggestions</h2>
+      <span class="lines">~870 dong</span>
+    </div>
+    <div class="person-body">
+      <div class="feature-tags">
+        <span class="tag">Trang chu</span>
+        <span class="tag">Bai dang (Feed)</span>
+        <span class="tag">Stories</span>
+        <span class="tag">Goi y follow</span>
+      </div>
+      <table>
+        <tr><th>File</th><th>Dong</th></tr>
+        <tr><td class="file-path">src/components/feed/Stories.jsx</td><td>151</td></tr>
+        <tr><td class="file-path">src/components/Post/PostCard.jsx</td><td>133</td></tr>
+        <tr><td class="file-path">src/components/feed/PostCard.jsx</td><td>130</td></tr>
+        <tr><td class="file-path">src/components/layout/RightSidebar.jsx</td><td>97</td></tr>
+        <tr><td class="file-path">src/store/slices/postSlice.js</td><td>82</td></tr>
+        <tr><td class="file-path">src/components/Post/CreatePostModal.jsx</td><td>49</td></tr>
+        <tr><td class="file-path">src/pages/Home.jsx</td><td>45</td></tr>
+        <tr><td class="file-path">src/services/postService.js</td><td>37</td></tr>
+        <tr><td class="file-path">src/components/HomeRight/HomeRight.jsx</td><td>36</td></tr>
+        <tr><td class="file-path">src/pages/HomePage/HomePage.jsx</td><td>30</td></tr>
+        <tr><td class="file-path">src/components/Post/PostCard.css</td><td>29</td></tr>
+        <tr><td class="file-path">src/pages/Router/Router.jsx</td><td>25</td></tr>
+        <tr><td class="file-path">src/components/HomeRight/SuggetionCard.jsx</td><td>22</td></tr>
+        <tr class="total-row"><td>Tong</td><td>866</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NGUOI 3 -->
+  <div class="person p3">
+    <div class="person-header">
+      <h2>NGUOI 3 - Profile + Settings</h2>
+      <span class="lines">~900 dong</span>
+    </div>
+    <div class="person-body">
+      <div class="feature-tags">
+        <span class="tag">Trang ca nhan</span>
+        <span class="tag">Chinh sua profile</span>
+        <span class="tag">Highlights</span>
+        <span class="tag">Grid bai dang</span>
+        <span class="tag">Cai dat</span>
+      </div>
+      <table>
+        <tr><th>File</th><th>Dong</th></tr>
+        <tr><td class="file-path">src/components/profile/ProfileHeader.jsx</td><td>133</td></tr>
+        <tr><td class="file-path">src/pages/Settings.jsx</td><td>104</td></tr>
+        <tr><td class="file-path">src/services/profileService.js</td><td>91</td></tr>
+        <tr><td class="file-path">src/pages/Profile.jsx</td><td>85</td></tr>
+        <tr><td class="file-path">src/components/profile/PostGrid.jsx</td><td>84</td></tr>
+        <tr><td class="file-path">src/components/profile/ProfileHighlights.jsx</td><td>70</td></tr>
+        <tr><td class="file-path">src/components/ProfileComponets/ReqUserPostPart.jsx</td><td>49</td></tr>
+        <tr><td class="file-path">src/components/ProfileComponets/ProfileUserDetails.jsx</td><td>49</td></tr>
+        <tr><td class="file-path">src/components/profile/ProfileTabs.jsx</td><td>37</td></tr>
+        <tr><td class="file-path">src/components/ProfileComponets/ReqUserPostCard.css</td><td>36</td></tr>
+        <tr><td class="file-path">src/components/ProfileComponets/ReqUserPostCard.jsx</td><td>27</td></tr>
+        <tr><td class="file-path">src/store/slices/userSlice.js</td><td>26</td></tr>
+        <tr><td class="file-path">src/pages/Profile/Profile.jsx</td><td>17</td></tr>
+        <tr><td class="file-path">src/components/ProfileComponets/index.jsx</td><td>4</td></tr>
+        <tr class="total-row"><td>Tong</td><td>812</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NGUOI 4 -->
+  <div class="person p4">
+    <div class="person-header">
+      <h2>NGUOI 4 - Messages + Reels + Explore</h2>
+      <span class="lines">~890 dong</span>
+    </div>
+    <div class="person-body">
+      <div class="feature-tags">
+        <span class="tag">Tin nhan</span>
+        <span class="tag">Chat</span>
+        <span class="tag">Reels video</span>
+        <span class="tag">Trang kham pha</span>
+        <span class="tag">Infinite scroll</span>
+      </div>
+      <table>
+        <tr><th>File</th><th>Dong</th></tr>
+        <tr><td class="file-path">src/components/messages/ReelCommentPanel.jsx</td><td>154</td></tr>
+        <tr><td class="file-path">src/pages/Reels.jsx</td><td>143</td></tr>
+        <tr><td class="file-path">src/components/messages/ChatWindow.jsx</td><td>94</td></tr>
+        <tr><td class="file-path">src/components/profile/ExploreGrid.jsx</td><td>92</td></tr>
+        <tr><td class="file-path">src/components/messages/ChatList.jsx</td><td>73</td></tr>
+        <tr><td class="file-path">src/services/messageService.js</td><td>53</td></tr>
+        <tr><td class="file-path">src/pages/Messages.jsx</td><td>49</td></tr>
+        <tr><td class="file-path">src/pages/Explore.jsx</td><td>40</td></tr>
+        <tr><td class="file-path">src/services/userService.js</td><td>31</td></tr>
+        <tr><td class="file-path">src/services/storyService.js</td><td>30</td></tr>
+        <tr><td class="file-path">src/hooks/useInfiniteScroll.js</td><td>29</td></tr>
+        <tr><td class="file-path">src/services/reelService.js</td><td>17</td></tr>
+        <tr><td class="file-path">src/services/commentService.js</td><td>13</td></tr>
+        <tr class="total-row"><td>Tong</td><td>818</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NGUOI 5 -->
+  <div class="person p5">
+    <div class="person-header">
+      <h2>NGUOI 5 - Shared Components + Modals + Data</h2>
+      <span class="lines">~940 dong</span>
+    </div>
+    <div class="person-body">
+      <div class="feature-tags">
+        <span class="tag">Modal Story</span>
+        <span class="tag">Modal Comment</span>
+        <span class="tag">Modal Tao bai</span>
+        <span class="tag">Modal DS user</span>
+        <span class="tag">Avatar</span>
+        <span class="tag">Carousel</span>
+        <span class="tag">Du lieu</span>
+        <span class="tag">Theme</span>
+      </div>
+      <table>
+        <tr><th>File</th><th>Dong</th></tr>
+        <tr><td class="file-path">src/components/modals/StoryModal.jsx</td><td>225</td></tr>
+        <tr><td class="file-path">src/api/dummyData.js</td><td>190</td></tr>
+        <tr><td class="file-path">src/components/Comment/CommentModal.jsx</td><td>164</td></tr>
+        <tr><td class="file-path">src/components/Comment/CommentCard.jsx</td><td>155</td></tr>
+        <tr><td class="file-path">src/components/modals/UserListModal.jsx</td><td>105</td></tr>
+        <tr><td class="file-path">src/components/modals/CreatePostModal.jsx</td><td>105</td></tr>
+        <tr><td class="file-path">src/components/common/ImageCarousel.jsx</td><td>84</td></tr>
+        <tr><td class="file-path">src/theme/index.js</td><td>35</td></tr>
+        <tr><td class="file-path">src/components/common/UserAvatar.jsx</td><td>27</td></tr>
+        <tr><td class="file-path">src/store/slices/uiSlice.js</td><td>21</td></tr>
+        <tr><td class="file-path">src/store/index.js</td><td>16</td></tr>
+        <tr><td class="file-path">src/components/Comment/CommentModal.css</td><td>16</td></tr>
+        <tr><td class="file-path">src/components/ui/provider.jsx</td><td>12</td></tr>
+        <tr><td class="file-path">src/components/ui/color-mode.jsx</td><td>9</td></tr>
+        <tr><td class="file-path">src/components/SideBar.css</td><td>0</td></tr>
+        <tr class="total-row"><td>Tong</td><td>1164</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- BANG TONG KET -->
+  <div class="overview-table">
+    <h3>BANG TONG KET</h3>
+    <table>
+      <tr><th>Nguoi</th><th>Chuc nang chinh</th><th>So file</th><th>Dong code</th></tr>
+      <tr><td><strong>Nguoi 1</strong></td><td>Auth, Sidebar, Search, Notification, Routing</td><td>12</td><td>820</td></tr>
+      <tr><td><strong>Nguoi 2</strong></td><td>Home, Feed, Stories, Suggestions</td><td>13</td><td>866</td></tr>
+      <tr><td><strong>Nguoi 3</strong></td><td>Profile, Settings, Highlights, Grid</td><td>14</td><td>812</td></tr>
+      <tr><td><strong>Nguoi 4</strong></td><td>Messages, Reels, Explore, Services</td><td>13</td><td>818</td></tr>
+      <tr><td><strong>Nguoi 5</strong></td><td>Modals, Shared Components, Data, Theme</td><td>15</td><td>1164</td></tr>
+      <tr class="total-row"><td></td><td><strong>TONG</strong></td><td><strong>67</strong></td><td><strong>4,480</strong></td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <strong>LUU Y QUAN TRONG:</strong><br>
+    - Moi nguoi CHI sua file trong danh sach cua minh, KHONG sua file cua nguoi khac.<br>
+    - 5 nguoi push SONG SONG, khong file nao trung nen KHONG conflict.<br>
+    - Moi nguoi tao branch rieng: <code>feature/auth-layout</code>, <code>feature/home-feed</code>, <code>feature/profile</code>, <code>feature/messages-reels</code>, <code>feature/shared-components</code><br>
+    - Xong merge ve <code>main</code> bang Pull Request.
+  </div>
+
+  <div class="footer">
+    Clone Instagram - SBA FPT Ky 7
+  </div>
+
+</div>
+</body>
+</html>
