@@ -80,11 +80,11 @@
 | JWT blacklist | Redis key `blacklist:{jti}` with TTL on logout |
 | Rate limiting | Redis counter `rate:login:{ip}` — 5 attempts / 60s |
 | Online presence | Redis key `online:{userId}` with 5-min TTL |
-| File uploads | Backend receives file → uploads to Cloudinary → stores URL in DB |
+| File uploads | Client uploads directly to Cloudinary → sends URLs to backend (JSON, no multipart) |
 | View counting | `post_view` table (unique per user, no double-counting) |
 | Message read | `conversation_participant.last_read_at` (unread = messages after this timestamp) |
 | Message requests | Auto-accept if sender follows recipient; else `is_accepted=false` |
-| Privacy | Service layer: private account → non-followers get 403 for content |
+| Privacy | Service layer: private account → non-followers get 404 on single post; empty list on paginated posts |
 | Follow requests | Private account → `follow.status=PENDING` → owner approves → `ACCEPTED` |
 | Close friends | `story.is_close_friends=true` → only users in `favorite_user` list can view |
 | Favorite users | Used for (1) feed priority ranking + (2) close friends story visibility |
@@ -261,76 +261,126 @@ GET    /users/blocked               [AUTH] → List<UserProfileResponse>
 
 ### Backend Tasks
 
+**Shared utilities (build first):**
+
+| File | Responsibility |
+|---|---|
+| `post/guard/PostAccessGuard.java` | @Component — privacy + block check reused by all post services |
+| `hashtag/service/HashtagUpsertService.java` | Thread-safe upsert with DataIntegrityViolationException retry |
+
 **Files in `post/`:**
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Repository | `repository/PostRepository.java` | `findFeedPosts(userId, pageable)`, `findByUser`, `findExplore` |
-| Repository | `repository/PostLikeRepository.java` | `existsByPostAndUser`, `countByPost` |
-| Repository | `repository/PostViewRepository.java` | `existsByPostAndViewer`, `countByPost` |
-| Repository | `repository/PostTagRepository.java` | `findByPost`, `findByTaggedUser` |
-| Request | `request/CreatePostRequest.java` | record: `caption, type, locationName, taggedUserIds, hashtagNames` |
+| Repository | `repository/PostRepository.java` | `findFeedPostsByCursor`, `findByUserId`, `findSavedByUserId` |
+| Repository | `repository/PostLikeRepository.java` | `existsByPostIdAndUserId`, `countByPostId` |
+| Repository | `repository/PostViewRepository.java` | `existsByPostIdAndViewerId` |
+| Repository | `repository/PostTagRepository.java` | `findByPostId`, `findByTaggedUserId` |
+| Repository | `repository/PostMediaRepository.java` | `findByPostIdOrderByDisplayOrderAsc` |
+| Request | `request/CreatePostRequest.java` | record: `caption, type, locationName, music, commentsDisabled, hideLikeCount, media(List<MediaItemRequest>), taggedUserIds` |
 | Request | `request/UpdatePostRequest.java` | record: `caption, locationName, commentsDisabled, hideLikeCount` |
-| Response | `response/PostResponse.java` | record: all post fields + `likeCount, commentCount, viewCount, isLiked, isSaved` |
+| Request | `request/GetFeedRequest.java` | record: `cursor(nullable), size` |
+| Response | `response/PostResponse.java` | see shape below |
+| Response | `response/PostAuthorResponse.java` | record: `id, username, fullName, avatarUrl, verified, isFollowing` |
 | Response | `response/PostMediaResponse.java` | record: `url, mediaType, displayOrder` |
-| Service | `service/CreatePostService.java` | Upload media to Cloudinary, save post + media + hashtags + tags |
-| Service | `service/GetFeedPostsService.java` | Followers' posts + favorites boosted, paginated |
-| Service | `service/GetExplorePostsService.java` | Public posts not in feed, paginated |
-| Service | `service/GetPostByIdService.java` | Single post with privacy check |
-| Service | `service/GetUserPostsService.java` | User's posts (respect privacy) |
-| Service | `service/UpdatePostService.java` | Update caption/settings (only post owner) |
-| Service | `service/DeletePostService.java` | Soft-delete or hard-delete |
-| Service | `service/TogglePostLikeService.java` | Add/remove post_like row; trigger notification |
-| Service | `service/RecordPostViewService.java` | Insert post_view if not exists |
-| Controller | `controller/PostController.java` | All post endpoints |
+| Response | `response/CreatePostResponse.java` | extends PostResponse + `skippedTagIds: List<UUID>` |
+| Response | `response/LikeResponse.java` | record: `liked: boolean, likeCount: long` |
+| Response | `response/SaveResponse.java` | record: `saved: boolean` |
+| Response | `response/FeedResponse.java` | record: `posts: List<PostResponse>, nextCursor: String, hasMore: boolean` |
+| Response | `response/LikerUserResponse.java` | record: `id, username, fullName, avatarUrl, verified, isFollowing` |
+| Response | `response/HashtagSuggestionResponse.java` | record: `name: String, postCount: long` |
+| Service | `service/CreatePostService.java` | Parse hashtags from caption via regex, validate tagPermission, collect skippedTagIds |
+| Service | `service/GetPostService.java` | Single post, PostAccessGuard check → 404 if denied |
+| Service | `service/UpdatePostService.java` | PUT, owner-only check → 403 |
+| Service | `service/DeletePostService.java` | Hard delete, owner-only |
+| Service | `service/ArchivePostService.java` | Toggle archived, returns PostResponse |
+| Service | `service/LikePostService.java` | Toggle like, returns LikeResponse with fresh COUNT |
+| Service | `service/ViewPostService.java` | Upsert view (silent if duplicate), 204 |
+| Service | `service/SavePostService.java` | Toggle saved_post, returns SaveResponse |
+| Service | `service/GetLikersService.java` | Paginated likers; 403 if hideLikeCount=true and not owner |
+| Service | `service/GetFeedService.java` | Cursor-based, ACCEPTED follows only, archived excluded |
+| Service | `service/GetUserPostsService.java` | Offset paginated; non-owner excludes archived |
+| Service | `service/GetSavedPostsService.java` | Current user's saved posts only |
+| Controller | `controller/PostController.java` | All post + actions endpoints |
+| Controller | `controller/FeedController.java` | GET /feed |
+
+**PostResponse shape (locked — all services must return this exact shape):**
+```
+id, type, caption, locationName, music,
+hideLikeCount, commentsDisabled, archived,
+author: PostAuthorResponse { id, username, fullName, avatarUrl, verified, isFollowing },
+media: List<PostMediaResponse> sorted ASC by displayOrder,
+hashtags: List<String>,
+taggedUsers: List<{ id, username, avatarUrl }>,
+likeCount, commentCount, viewCount,
+isLiked, isSaved, isOwner,     ← all false when unauthenticated
+createdAt, updatedAt
+```
 
 **Files in `hashtag/`:**
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Repository | `repository/HashtagRepository.java` | `findByName`, `findOrCreate` |
-| Service | `service/GetHashtagPostsService.java` | Posts by hashtag, paginated |
-| Controller | `controller/HashtagController.java` | `GET /hashtags/{name}/posts` |
+| Repository | `repository/HashtagRepository.java` | `findByName`, search by prefix |
+| Service | `service/HashtagUpsertService.java` | Thread-safe upsert |
+| Service | `service/HashtagSearchService.java` | Search with postCount, limit capped at 20 |
+| Controller | `controller/HashtagController.java` | `GET /hashtags/search?q=&limit=` |
 
-**Cloudinary integration:**
-
-| File | Responsibility |
-|---|---|
-| `config/CloudinaryConfig.java` | Configure Cloudinary bean from `application.yml` |
-| `integration/cloudinary/CloudinaryService.java` | Upload file → return URL |
+**Note:** Client uploads files directly to Cloudinary. Backend only receives URLs. No Cloudinary SDK call in CreatePostService.
 
 ### Frontend Tasks
 
 | Task | File | Notes |
 |---|---|---|
-| Replace all `postService` methods | `services/postService.js` | All `axiosClient` calls |
-| Replace `reelService` methods | `services/reelService.js` | |
-| Integrate `postSlice.fetchPosts()` | `store/slices/postSlice.js` | Connect to feed API |
-| CreatePostModal connected | `components/CreatePostModal.jsx` | Upload + create post |
-| Home feed wired | `pages/Home.jsx` | Real feed posts |
-| Explore wired | `pages/Explore.jsx` | Real explore posts |
-| Reels wired | `pages/Reels.jsx` | Real reels |
-| PostDetail wired | `pages/PostDetail.jsx` | Real post detail |
+| Update `postService.createPost()` | `services/postService.js` | JSON body with media URLs (not multipart) |
+| Update `postService.getFeed()` | `services/postService.js` | Cursor-based: `GET /feed?cursor=&size=` |
+| Update `postSlice` | `store/slices/postSlice.js` | Store `nextCursor` instead of `currentPage` |
+| Update `postService.likePost()` | `services/postService.js` | Returns `{ liked, likeCount }` — update count from response |
+| Update `postService.savePost()` | `services/postService.js` | Returns `{ saved }` |
+| Add `postService.getLikers()` | `services/postService.js` | `GET /posts/{id}/likers` |
+| Add `postService.getSavedPosts()` | `services/postService.js` | `GET /posts/saved` |
+| Add `hashtagService.search()` | `services/hashtagService.js` | `GET /hashtags/search?q=` for autocomplete |
+| Cloudinary upload util | `utils/cloudinaryUpload.js` | Direct upload, returns URL |
+| CreatePostModal | `components/CreatePostModal.jsx` | Upload → URLs → POST /posts |
+| Home feed wired | `pages/Home.jsx` | Cursor scroll, FeedResponse |
+| PostDetail wired | `pages/PostDetail.jsx` | Real post + comments |
 
 ### API Endpoints
 ```
-POST   /posts                       [AUTH] multipart  → PostResponse          (create)
-GET    /posts/feed?page=            [AUTH]            → Page<PostResponse>
-GET    /posts/explore?page=         [AUTH]            → Page<PostResponse>
-GET    /posts/{postId}              [AUTH]            → PostResponse
-PATCH  /posts/{postId}              [AUTH]            → PostResponse
-DELETE /posts/{postId}              [AUTH]            → void
-GET    /users/{username}/posts?page= [AUTH]           → Page<PostResponse>
+# Posts CRUD
+POST   /posts                        [AUTH] JSON      → 201 CreatePostResponse
+GET    /posts/{postId}               [AUTH]           → 200 PostResponse
+PUT    /posts/{postId}               [AUTH]           → 200 PostResponse
+PATCH  /posts/{postId}/archive       [AUTH]           → 200 PostResponse
+DELETE /posts/{postId}               [AUTH]           → 200
 
-POST   /posts/{postId}/like         [AUTH] → void     (toggle)
-POST   /posts/{postId}/view         [AUTH] → void
+# Post actions
+POST   /posts/{postId}/like          [AUTH] → 200 LikeResponse { liked, likeCount }
+POST   /posts/{postId}/view          [AUTH] → 204
+POST   /posts/{postId}/save          [AUTH] → 200 SaveResponse { saved }
+GET    /posts/{postId}/likers        [AUTH] → 200 PaginatedResponse<LikerUserResponse>
+GET    /posts/saved                  [AUTH] → 200 PaginatedResponse<PostResponse>
 
-GET    /hashtags/{name}/posts?page= [AUTH] → Page<PostResponse>
+# Feed & profile
+GET    /feed?cursor=&size=           [AUTH] → 200 FeedResponse { posts[], nextCursor, hasMore }
+GET    /users/{userId}/posts?page=   [AUTH] → 200 PaginatedResponse<PostResponse>
+
+# Comments (built in Phase 3 together with posts)
+GET    /posts/{postId}/comments?parentId=&page=  [AUTH] → 200 PaginatedResponse<CommentResponse>
+POST   /posts/{postId}/comments                  [AUTH] → 201 CommentResponse
+DELETE /posts/{postId}/comments/{commentId}      [AUTH] → 200
+POST   /posts/{postId}/comments/{commentId}/like [AUTH] → 200 LikeResponse { liked, likeCount }
+POST   /posts/{postId}/comments/{commentId}/pin  [AUTH] → 200 CommentResponse
+
+# Hashtag discovery
+GET    /hashtags/search?q=&limit=    [public]  → 200 List<HashtagSuggestionResponse { name, postCount }>
 ```
 
 ---
 
 ## Phase 4 — Comment
+
+> **Note:** Comments are implemented **together with Phase 3** (post services). The endpoints and services are listed in Phase 3. This section documents the comment-specific files only.
 
 ### Backend Tasks
 
@@ -338,34 +388,49 @@ GET    /hashtags/{name}/posts?page= [AUTH] → Page<PostResponse>
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Repository | `repository/CommentRepository.java` | `findTopLevelByPost(pageable)`, `findRepliesByParent(pageable)`, `countByPost` |
-| Repository | `repository/CommentLikeRepository.java` | `existsByCommentAndUser`, `countByComment` |
-| Request | `request/CreateCommentRequest.java` | record: `content, parentCommentId(nullable)` |
-| Response | `response/CommentResponse.java` | record: `id, user, content, isPinned, likeCount, replyCount, isLiked, createdAt` |
-| Service | `service/CreateCommentService.java` | Create top-level comment or reply; trigger COMMENT/MENTION notification |
-| Service | `service/GetPostCommentsService.java` | Paginated top-level comments (sort: top or newest) |
-| Service | `service/GetCommentRepliesService.java` | Paginated replies for a comment |
-| Service | `service/DeleteCommentService.java` | Delete (only owner or post owner) |
-| Service | `service/PinCommentService.java` | Pin/unpin (only post owner) |
-| Service | `service/ToggleCommentLikeService.java` | Add/remove comment_like |
-| Controller | `controller/CommentController.java` | All comment endpoints |
+| Repository | `repository/CommentRepository.java` | `findTopLevelByPostId(pageable)`, `findByPostIdAndParentCommentId(parentId, pageable)`, `countByPostId`, `countByParentCommentId` |
+| Repository | `repository/CommentLikeRepository.java` | `existsByCommentIdAndUserId`, `countByCommentId` |
+| Request | `request/AddCommentRequest.java` | record: `content, parentCommentId(nullable)` |
+| Request | `request/GetCommentsRequest.java` | record: `postId, parentCommentId(nullable), page, size` |
+| Response | `response/CommentResponse.java` | see shape below |
+| Service | `service/AddCommentService.java` | Validate: no reply-to-reply, commentsDisabled check, privacy check via PostAccessGuard |
+| Service | `service/GetCommentsService.java` | top-level if no parentId, replies if parentId provided; pinned comments first |
+| Service | `service/DeleteCommentService.java` | Only comment owner OR post owner can delete |
+| Service | `service/PinCommentService.java` | Toggle; only post owner; unpins previous pinned comment first |
+| Service | `service/LikeCommentService.java` | Toggle; returns LikeResponse with fresh COUNT |
+| Controller | `controller/CommentController.java` | All comment endpoints (nested under /posts/{postId}/comments) |
+
+**CommentResponse shape (locked):**
+```
+id, content, parentCommentId,
+author: { id, username, avatarUrl, verified },
+replyCount,          ← COUNT of direct children
+likeCount,
+isLiked,             ← viewer context (false if unauthenticated)
+isPinned,
+isOwner,             ← viewer context
+createdAt
+```
+
+**Business rules:**
+- Reply depth: max 1 level. AddCommentService throws `BusinessException("Cannot reply to a reply")` if `parentComment.parentCommentId != null`
+- `commentsDisabled = true` → `AddCommentService` throws `BusinessException("Comments are disabled")`
+- Pin: unpin all existing pinned comments for that post before pinning new one (max 1 pinned per post)
+- Delete: either `comment.userId == currentUserId` OR `post.userId == currentUserId`
 
 ### Frontend Tasks
 
 | Task | File | Notes |
 |---|---|---|
-| Replace `commentService.getCommentsByPostId()` | `services/commentService.js` | axiosClient.get |
-| Replace comment TODO methods | `services/commentService.js` | addComment, addReply, toggleLikeComment |
+| Wire comment list | `services/commentService.js` | `GET /posts/{id}/comments` |
+| Wire add comment | `services/commentService.js` | `POST /posts/{id}/comments` |
+| Wire reply load | `services/commentService.js` | `GET /posts/{id}/comments?parentId=` |
+| Wire comment like | `services/commentService.js` | `POST /posts/{id}/comments/{cid}/like` → `{ liked, likeCount }` |
+| Wire delete | `services/commentService.js` | Show delete button only if `comment.isOwner` |
+| "View X replies" | `components/CommentItem.jsx` | Show only if `comment.replyCount > 0` |
 
 ### API Endpoints
-```
-GET    /posts/{postId}/comments?page=&sort=TOP  [AUTH] → Page<CommentResponse>
-POST   /posts/{postId}/comments                 [AUTH] → CommentResponse
-GET    /comments/{commentId}/replies?page=      [AUTH] → Page<CommentResponse>
-POST   /comments/{commentId}/like               [AUTH] → void   (toggle)
-DELETE /comments/{commentId}                    [AUTH] → void
-POST   /posts/{postId}/comments/{commentId}/pin [AUTH] → void   (toggle, post owner only)
-```
+*(All endpoints listed in Phase 3 API section)*
 
 ---
 
