@@ -4,6 +4,7 @@ import MainLayout from "./layouts/MainLayout";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchCurrentUser } from "./store/slices/authSlice";
 import { setUnreadNotificationCount, incrementUnreadNotificationCount } from "./store/slices/uiSlice";
+import { updateUserProfile } from "./store/slices/userSlice";
 import CreatePostModal from "./components/modals/CreatePostModal";
 import useStomp from "./hooks/useStomp";
 import InstagramAlert from "./components/common/InstagramAlert";
@@ -43,15 +44,31 @@ const App = () => {
 
     // GLOBAL WEBSOCKET FOR NOTIFICATIONS
     const { connected, subscribe } = useStomp("/ws");
+    const { userProfile } = useSelector((state) => state.user);
 
     useEffect(() => {
         if (connected && user?.id) {
             const sub = subscribe(`/user/${user.id}/queue/notifications`, (notification) => {
                 dispatch(incrementUnreadNotificationCount());
+                
+                // Real-time sync follow status if looking at the actor's profile
+                if (userProfile && userProfile.id === notification.actor?.id) {
+                    if (notification.type === "FOLLOW_ACCEPTED") {
+                        dispatch(updateUserProfile({
+                            isFollowing: true,
+                            isPending: false,
+                            followersCount: (userProfile.followersCount || 0) + 1,
+                            canViewContent: true
+                        }));
+                    } else if (notification.type === "FOLLOW_REQUEST") {
+                        // This handles the case where you are looking at someone 
+                        // and they happen to request to follow you (not very common to sync here but okay)
+                    }
+                }
             });
             return () => sub?.unsubscribe();
         }
-    }, [connected, subscribe, user?.id, dispatch]);
+    }, [connected, subscribe, user?.id, dispatch, userProfile]);
 
     return (
         <div className="app-container">

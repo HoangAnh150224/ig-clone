@@ -31,42 +31,47 @@ const Stories = () => {
         }
     }, []);
 
-    useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await storyService.getFeedStories();
-                let fetchedStories = response || [];
+    const fetchStories = useCallback(async () => {
+        try {
+            const response = await storyService.getFeedStories();
+            let fetchedStories = response || [];
 
-                // 1. Find own story
-                const ownStoryIndex = fetchedStories.findIndex(s => s.isOwn || s.username === authUser?.username);
-                let finalStories = [];
+            // Separate own story from others
+            const ownStoryIndex = fetchedStories.findIndex(s => s.isOwn || s.username === authUser?.username);
+            let ownStory = null;
+            let otherStories = [...fetchedStories];
 
-                if (ownStoryIndex !== -1) {
-                    // 2a. If own story exists, move it to the front
-                    const ownStory = fetchedStories.splice(ownStoryIndex, 1)[0];
-                    finalStories = [ownStory, ...fetchedStories];
-                } else {
-                    // 2b. If no own story, add a placeholder
-                    const placeholder = {
-                        id: 'own-placeholder',
-                        username: "Your story",
-                        avatar: authUser?.avatarUrl,
-                        isOwn: true,
-                        hasUnseenStory: false,
-                        stories: []
-                    };
-                    finalStories = [placeholder, ...fetchedStories];
-                }
-
-                setStories(finalStories);
-            } catch (error) {
-                console.error("Failed to fetch stories", error);
+            if (ownStoryIndex !== -1) {
+                ownStory = otherStories.splice(ownStoryIndex, 1)[0];
+            } else {
+                ownStory = {
+                    id: 'own-placeholder',
+                    username: "Your story",
+                    avatar: authUser?.avatarUrl,
+                    isOwn: true,
+                    hasUnseenStory: false,
+                    stories: []
+                };
             }
-        };
+
+            // Sort other stories: unseen first, then seen
+            otherStories.sort((a, b) => {
+                if (a.hasUnseenStory && !b.hasUnseenStory) return -1;
+                if (!a.hasUnseenStory && b.hasUnseenStory) return 1;
+                return 0;
+            });
+
+            setStories([ownStory, ...otherStories]);
+        } catch (error) {
+            console.error("Failed to fetch stories", error);
+        }
+    }, [authUser]);
+
+    useEffect(() => {
         if (authUser) {
             fetchStories();
         }
-    }, [authUser]);
+    }, [authUser, fetchStories]);
 
     const onMouseDown = (e) => {
         setIsDragging(true);
@@ -303,7 +308,10 @@ const Stories = () => {
             {/* Story Player */}
             <StoryModal
                 isOpen={isStoryOpen}
-                onClose={() => setIsStoryOpen(false)}
+                onClose={() => {
+                    setIsStoryOpen(false);
+                    fetchStories();
+                }}
                 highlights={stories.map((s) => ({
                     title: "Story",
                     user: s,

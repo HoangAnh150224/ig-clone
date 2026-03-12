@@ -7,13 +7,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class UserPrincipal implements UserDetails {
+public class UserPrincipal implements UserDetails, Principal {
 
     private final UUID userId;
     private final String username;
@@ -21,6 +22,11 @@ public class UserPrincipal implements UserDetails {
     private final String password;
     private final boolean active;
     private final Collection<? extends GrantedAuthority> authorities;
+
+    @Override
+    public String getName() {
+        return userId.toString();
+    }
 
     public static UserPrincipal from(UserProfile user) {
         List<GrantedAuthority> authorities = List.of(

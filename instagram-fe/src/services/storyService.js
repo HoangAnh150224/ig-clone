@@ -61,6 +61,14 @@ const storyService = {
     },
 
     /**
+     * Get archived stories.
+     * API: GET /archive/stories
+     */
+    getArchivedStories: async () => {
+        return axiosClient.get("/archive/stories");
+    },
+
+    /**
      * Get viewers of a story.
      * API: GET /stories/{id}/viewers
      */

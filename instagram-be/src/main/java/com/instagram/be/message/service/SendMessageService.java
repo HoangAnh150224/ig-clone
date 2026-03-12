@@ -27,6 +27,7 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
     private final FollowRepository followRepository;
     private final UserProfileRepository userProfileRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AutoAcceptConversationService autoAcceptConversationService;
 
     @Override
     @Transactional
@@ -68,6 +69,10 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
 
                     return conv;
                 });
+
+        // Trigger 1: if sender is replying to a message request, auto-accept their participant row
+        // (recipientId is the original sender; senderId is the one who had accepted=false)
+        autoAcceptConversationService.accept(recipientId, senderId);
 
         MediaType mediaType = request.getMediaType() != null
                 ? MediaType.valueOf(request.getMediaType().toUpperCase()) : null;

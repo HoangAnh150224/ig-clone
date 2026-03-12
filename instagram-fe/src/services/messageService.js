@@ -63,6 +63,14 @@ const messageService = {
      */
     deleteMessage: async (chatId, messageId) => {
         return axiosClient.delete(`/messages/${chatId}/${messageId}`);
+    },
+
+    /**
+     * Accept a conversation request (promotes to Primary).
+     * API: POST /messages/{chatId}/accept
+     */
+    acceptConversation: async (chatId) => {
+        return axiosClient.post(`/messages/${chatId}/accept`);
     }
 };
 

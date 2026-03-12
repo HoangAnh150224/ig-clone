@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, VStack, Flex, Spinner, Image, Button } from "@chakra-ui/react";
+import { Box, Text, VStack, Flex, Spinner, Image, Button, HStack } from "@chakra-ui/react";
 import { AiOutlineHeart } from "react-icons/ai";
 import UserAvatar from "../../common/UserAvatar";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { clearUnreadNotificationCount } from "../../../store/slices/uiSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUnreadNotificationCount, setUnreadNotificationCount } from "../../../store/slices/uiSlice";
+import { updateUserProfile } from "../../../store/slices/userSlice";
 import notificationService from "../../../services/notificationService";
 import profileService from "../../../services/profileService";
 
@@ -38,6 +39,7 @@ const getNotificationText = (type) => {
         case "COMMENT": return "commented on your post.";
         case "MENTION": return "mentioned you in a comment.";
         case "FOLLOW_REQUEST": return "requested to follow you.";
+        case "FOLLOW_ACCEPTED": return "accepted your follow request.";
         case "TAG": return "tagged you in a post.";
         case "STORY_REPLY": return "replied to your story.";
         default: return "interacted with you.";
@@ -47,6 +49,7 @@ const getNotificationText = (type) => {
 const NotificationPanel = ({ isOpen }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { userProfile } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState([]);
     const [followingMap, setFollowingMap] = useState({});
@@ -68,7 +71,9 @@ const NotificationPanel = ({ isOpen }) => {
                     });
                     setFollowingMap(initialMap);
                     
-                    // Mark all as read and clear badge
+                    // Mark all as read and clear badge - per Instagram standard, we often clear badge
+                    // but we might want to keep individual status until clicked.
+                    // For now, let's keep it simple: open = clear badge, but keep blue dots until clicked or re-fetched.
                     notificationService.markAllRead().catch(console.error);
                     dispatch(clearUnreadNotificationCount());
                 })
@@ -76,6 +81,30 @@ const NotificationPanel = ({ isOpen }) => {
                 .finally(() => setLoading(false));
         }
     }, [isOpen, dispatch]);
+
+    const handleNotificationClick = async (notif) => {
+        // 1. Mark as read in Backend
+        if (!notif.read) {
+            try {
+                await notificationService.markAsRead(notif.id);
+                // Update local state to remove blue dot
+                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                
+                // Refresh unread count globally to be safe
+                const count = await notificationService.getUnreadCount();
+                dispatch(setUnreadNotificationCount(count));
+            } catch (error) {
+                console.error("Failed to mark notification as read", error);
+            }
+        }
+
+        // 2. Navigate
+        if (notif.postId) {
+            navigate(`/p/${notif.postId}`);
+        } else if (notif.actor?.username) {
+            navigate(`/${notif.actor.username}`);
+        }
+    };
 
     const handleFollowToggle = async (e, userId) => {
         e.stopPropagation();
@@ -87,6 +116,50 @@ const NotificationPanel = ({ isOpen }) => {
             }));
         } catch (error) {
             console.error("Failed to toggle follow", error);
+        }
+    };
+
+    const handleAcceptRequest = async (e, userId, notifId) => {
+        e.stopPropagation();
+        try {
+            await profileService.acceptFollowRequest(userId);
+            
+            // Mark as read and remove from UI or update type
+            setNotifications(prev => prev.filter(n => n.id !== notifId));
+            const count = await notificationService.getUnreadCount();
+            dispatch(setUnreadNotificationCount(count));
+
+            // SYNC: If we are currently viewing this user's profile, update it
+            if (userProfile && userProfile.id === userId) {
+                dispatch(updateUserProfile({ 
+                    isFollowing: true, 
+                    isPending: false,
+                    followersCount: (userProfile.followersCount || 0) + 1,
+                    canViewContent: true
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to accept follow request", error);
+        }
+    };
+
+    const handleDeclineRequest = async (e, userId, notifId) => {
+        e.stopPropagation();
+        try {
+            await profileService.declineFollowRequest(userId);
+            setNotifications(prev => prev.filter(n => n.id !== notifId));
+            const count = await notificationService.getUnreadCount();
+            dispatch(setUnreadNotificationCount(count));
+
+            // SYNC: If we are currently viewing this user's profile, update it
+            if (userProfile && userProfile.id === userId) {
+                dispatch(updateUserProfile({ 
+                    isFollowing: false, 
+                    isPending: false 
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to decline follow request", error);
         }
     };
 
@@ -165,7 +238,7 @@ const NotificationPanel = ({ isOpen }) => {
                                                     py={3}
                                                     cursor="pointer"
                                                     _hover={{ bg: "blackAlpha.50" }}
-                                                    onClick={() => navigate(`/${notif.actor.username}`)}
+                                                    onClick={() => handleNotificationClick(notif)}
                                                 >
                                                     <Box flexShrink={0}>
                                                         <UserAvatar src={notif.actor.avatarUrl} size="44px" />
@@ -179,7 +252,18 @@ const NotificationPanel = ({ isOpen }) => {
                                                         </Text>
                                                     </Box>
 
-                                                    {notif.type === "FOLLOW" ? (
+                                                    {/* New Notification Indicator (Blue Dot) */}
+                                                    {!notif.read && (
+                                                        <Box 
+                                                            w="8px" h="8px" 
+                                                            bg="#0095f6" 
+                                                            borderRadius="full" 
+                                                            mr={2}
+                                                            flexShrink={0}
+                                                        />
+                                                    )}
+
+                                                    {notif.type === "FOLLOW" || notif.type === "FOLLOW_ACCEPTED" ? (
                                                         <Button
                                                             size="sm"
                                                             bg={followingMap[notif.actor.id] ? "#efefef" : "#0095f6"}
@@ -196,6 +280,37 @@ const NotificationPanel = ({ isOpen }) => {
                                                         >
                                                             {followingMap[notif.actor.id] ? "Following" : "Follow"}
                                                         </Button>
+                                                    ) : notif.type === "FOLLOW_REQUEST" ? (
+                                                        <HStack gap={2} flexShrink={0}>
+                                                            <Button
+                                                                size="sm"
+                                                                bg="#0095f6"
+                                                                color="white"
+                                                                px={4}
+                                                                py={1.5}
+                                                                borderRadius="8px"
+                                                                fontSize="14px"
+                                                                fontWeight="bold"
+                                                                _hover={{ bg: "#1877f2" }}
+                                                                onClick={(e) => handleAcceptRequest(e, notif.actor.id, notif.id)}
+                                                            >
+                                                                Confirm
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                bg="#efefef"
+                                                                color="black"
+                                                                px={4}
+                                                                py={1.5}
+                                                                borderRadius="8px"
+                                                                fontSize="14px"
+                                                                fontWeight="bold"
+                                                                _hover={{ bg: "#dbdbdb" }}
+                                                                onClick={(e) => handleDeclineRequest(e, notif.actor.id, notif.id)}
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        </HStack>
                                                     ) : (
                                                         notif.postId && (
                                                             <Box 
@@ -208,7 +323,7 @@ const NotificationPanel = ({ isOpen }) => {
                                                                 cursor="pointer"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    navigate(`/p/${notif.postId}`);
+                                                                    handleNotificationClick(notif);
                                                                 }}
                                                             >
                                                                 {notif.postThumbnailUrl ? (

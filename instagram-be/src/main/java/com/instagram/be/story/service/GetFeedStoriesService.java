@@ -64,7 +64,7 @@ public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, Li
                     var user = userStories.get(0).getUser();
                     boolean hasUnseen = userStories.stream().anyMatch(s -> !viewedIds.contains(s.getId()));
                     List<StoryItemResponse> items = userStories.stream()
-                            .map(StoryItemResponse::from)
+                            .map(s -> StoryItemResponse.from(s, viewedIds.contains(s.getId())))
                             .collect(Collectors.toList());
                     return new StoryFeedResponse(user.getId(), user.getUsername(), user.getAvatarUrl(), hasUnseen, items);
                 })

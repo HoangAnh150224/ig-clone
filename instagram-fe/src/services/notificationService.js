@@ -27,6 +27,14 @@ const notificationService = {
      */
     markAllRead: async () => {
         return axiosClient.post("/notifications/read-all");
+    },
+
+    /**
+     * Mark a single notification as read.
+     * API: PATCH /notifications/{id}/read
+     */
+    markAsRead: async (id) => {
+        return axiosClient.patch(`/notifications/${id}/read`);
     }
 };
 

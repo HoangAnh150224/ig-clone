@@ -63,7 +63,7 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
     };
 
     const handleMessageClick = () => {
-        navigate("/direct/inbox");
+        navigate("/direct/inbox", { state: { selectedUser: user } });
     };
 
     // STORY DATA ONLY CONTAINS NEW STORIES, NO HIGHLIGHTS
@@ -189,15 +189,15 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                             <HStack gap={2}>
                                 <Button
                                     size="sm"
-                                    bg={user.isFollowing ? "#efefef" : "#0095f6"}
-                                    color={user.isFollowing ? "black" : "white"}
+                                    bg={user.isFollowing || user.isPending ? "#efefef" : "#0095f6"}
+                                    color={user.isFollowing || user.isPending ? "black" : "white"}
                                     fontWeight="600"
                                     px={6}
                                     borderRadius="8px"
-                                    _hover={{ bg: user.isFollowing ? "#dbdbdb" : "#1877f2" }}
+                                    _hover={{ bg: user.isFollowing || user.isPending ? "#dbdbdb" : "#1877f2" }}
                                     onClick={handleFollowToggle}
                                 >
-                                    {user.isFollowing ? "Following" : "Follow"}
+                                    {user.isFollowing ? "Following" : (user.isPending ? "Requested" : "Follow")}
                                 </Button>
                                 <Button
                                     size="sm"

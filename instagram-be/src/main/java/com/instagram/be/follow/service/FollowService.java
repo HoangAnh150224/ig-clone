@@ -10,6 +10,7 @@ import com.instagram.be.follow.request.FollowRequest;
 import com.instagram.be.follow.response.FollowResponse;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.notification.enums.NotificationType;
+import com.instagram.be.message.service.AutoAcceptConversationService;
 import com.instagram.be.notification.service.CreateNotificationService;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
@@ -28,6 +29,7 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
     private final UserProfileRepository userProfileRepository;
     private final BlockRepository blockRepository;
     private final CreateNotificationService notificationService;
+    private final AutoAcceptConversationService autoAcceptConversationService;
 
     @Override
     @Transactional
@@ -69,6 +71,11 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
                 .build();
 
         Follow saved = followRepository.save(follow);
+
+        // Trigger 2: if follow is immediately ACCEPTED (public account), auto-accept any pending message request
+        if (status == FollowStatus.ACCEPTED) {
+            autoAcceptConversationService.accept(followerId, followingId);
+        }
 
         // Notify target
         NotificationType type = (status == FollowStatus.ACCEPTED) ? NotificationType.FOLLOW : NotificationType.FOLLOW_REQUEST;

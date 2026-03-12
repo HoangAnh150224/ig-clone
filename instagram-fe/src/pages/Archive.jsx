@@ -11,7 +11,8 @@ import {
     IconButton,
     SimpleGrid,
 } from "@chakra-ui/react";
-import { BsArrowLeft, BsClockHistory, BsGrid3X3 } from "react-icons/bs";
+import { IoChevronBack } from "react-icons/io5";
+import { BsClockHistory, BsGrid3X3 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import StoryModal from "../components/modals/StoryModal";
@@ -86,13 +87,23 @@ const Archive = () => {
                 py={3}
                 borderBottom="1px solid"
                 borderColor="gray.100"
+                bg="white"
+                position="sticky"
+                top={0}
+                zIndex={10}
             >
                 <IconButton
-                    icon={<BsArrowLeft size={24} />}
+                    icon={<IoChevronBack size={28} color="black" />}
                     variant="ghost"
                     aria-label="Back"
                     onClick={() => navigate(-1)}
                     mr={4}
+                    minW="auto"
+                    p={0}
+                    _hover={{ bg: "transparent" }}
+                    _active={{ bg: "transparent" }}
+                    _focus={{ boxShadow: "none" }}
+                    border="none"
                 />
                 <Text fontSize="20px" fontWeight="700">
                     Archive

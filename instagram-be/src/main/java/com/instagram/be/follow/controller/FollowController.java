@@ -8,9 +8,12 @@ import com.instagram.be.follow.request.FollowListRequest;
 import com.instagram.be.follow.request.FollowRequest;
 import com.instagram.be.follow.response.FollowResponse;
 import com.instagram.be.follow.response.FollowUserResponse;
+import com.instagram.be.follow.service.AcceptFollowRequestService;
+import com.instagram.be.follow.service.DeclineFollowRequestService;
 import com.instagram.be.follow.service.FollowService;
 import com.instagram.be.follow.service.GetFollowersService;
 import com.instagram.be.follow.service.GetFollowingService;
+import com.instagram.be.follow.service.GetFollowRequestsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +29,51 @@ public class FollowController {
     private final FollowService followService;
     private final GetFollowersService getFollowersService;
     private final GetFollowingService getFollowingService;
+    private final GetFollowRequestsService getFollowRequestsService;
+    private final AcceptFollowRequestService acceptFollowRequestService;
+    private final DeclineFollowRequestService declineFollowRequestService;
+
+    @GetMapping("/follow-requests")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PaginatedResponse<FollowUserResponse>>> getFollowRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        FollowListRequest request = FollowListRequest.builder()
+                .page(page)
+                .size(size)
+                .userContext(ctx)
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(
+                getFollowRequestsService.execute(request), "Follow requests retrieved", 200));
+    }
+
+    @PostMapping("/{userId}/follow/accept")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<FollowResponse>> acceptFollowRequest(@PathVariable UUID userId) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        FollowRequest request = FollowRequest.builder()
+                .targetUserId(userId)
+                .userContext(ctx)
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(
+                acceptFollowRequestService.execute(request), "Follow request accepted", 200));
+    }
+
+    @PostMapping("/{userId}/follow/decline")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> declineFollowRequest(@PathVariable UUID userId) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        FollowRequest request = FollowRequest.builder()
+                .targetUserId(userId)
+                .userContext(ctx)
+                .build();
+        declineFollowRequestService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Follow request declined", 200));
+    }
 
     @PostMapping("/{userId}/follow")
     @PreAuthorize("isAuthenticated()")

@@ -5,9 +5,11 @@ import {
     VStack,
     Text,
     Link as ChakraLink,
+    Flex,
 } from "@chakra-ui/react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { FiLock } from "react-icons/fi";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import PostGrid from "../components/profile/PostGrid";
@@ -124,26 +126,44 @@ const Profile = () => {
         ? posts.filter(p => p.type === "REEL") 
         : posts;
 
+    const isPrivateProfileHidden = userProfile?.privateAccount && !isOwnProfile && !userProfile?.isFollowing;
+
     return (
         <Container maxW="935px" p={0} bg="white" color="black" mt={4}>
             <ProfileHeader user={userProfile} isOwnProfile={isOwnProfile} />
 
-            <ProfileHighlights 
-                isOwnProfile={isOwnProfile} 
-                user={userProfile} 
-                highlights={highlights} 
-                onRefresh={handleRefreshHighlights}
-            />
+            {isPrivateProfileHidden ? (
+                <Flex direction="column" align="center" justify="center" py={16} borderTop="1px solid" borderColor="gray.200" mt={8}>
+                    <Box p={6} borderRadius="full" border="2px solid" borderColor="black" mb={6} display="flex" alignItems="center" justifyContent="center">
+                        <FiLock size={48} strokeWidth={1.5} />
+                    </Box>
+                    <Text fontSize="14px" fontWeight="bold" mb={2}>
+                        This account is private
+                    </Text>
+                    <Text fontSize="14px" color="gray.500">
+                        Follow to see their photos and videos.
+                    </Text>
+                </Flex>
+            ) : (
+                <>
+                    <ProfileHighlights 
+                        isOwnProfile={isOwnProfile} 
+                        user={userProfile} 
+                        highlights={highlights} 
+                        onRefresh={handleRefreshHighlights}
+                    />
 
-            <ProfileTabs 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                isOwnProfile={isOwnProfile} 
-            />
+                    <ProfileTabs 
+                        activeTab={activeTab} 
+                        setActiveTab={setActiveTab} 
+                        isOwnProfile={isOwnProfile} 
+                    />
 
-            <Box py={4}>
-                <PostGrid posts={filteredPosts} loading={tabLoading} />
-            </Box>
+                    <Box py={4}>
+                        <PostGrid posts={filteredPosts} loading={tabLoading} />
+                    </Box>
+                </>
+            )}
         </Container>
     );
 };

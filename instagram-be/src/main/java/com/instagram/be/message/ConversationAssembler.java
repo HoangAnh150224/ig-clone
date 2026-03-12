@@ -59,7 +59,8 @@ public class ConversationAssembler {
                 isOnline,
                 lastMessage,
                 unreadCount,
-                myParticipant.isAccepted()
+                myParticipant.isAccepted(),
+                other.getLastReadAt()
         );
     }
 }

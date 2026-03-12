@@ -94,6 +94,30 @@ const profileService = {
     },
 
     /**
+     * Get follow requests for the current user.
+     * API: GET /users/follow-requests
+     */
+    getFollowRequests: async (page = 0, size = 20) => {
+        return axiosClient.get(`/users/follow-requests?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Accept a follow request.
+     * API: POST /users/{userId}/follow/accept
+     */
+    acceptFollowRequest: async (userId) => {
+        return axiosClient.post(`/users/${userId}/follow/accept`);
+    },
+
+    /**
+     * Decline a follow request.
+     * API: POST /users/{userId}/follow/decline
+     */
+    declineFollowRequest: async (userId) => {
+        return axiosClient.post(`/users/${userId}/follow/decline`);
+    },
+
+    /**
      * Get highlights for a specific user.
      * API: GET /users/{username}/highlights
      */

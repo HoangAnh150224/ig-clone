@@ -19,7 +19,8 @@ const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) =
         setIsCreateOpen(true);
     };
 
-    if (!isOwnProfile && highlights.length === 0) return null;
+    // If no highlights and not own profile, hide the entire section
+    if (highlights.length === 0 && !isOwnProfile) return null;
 
     return (
         <>
@@ -35,8 +36,8 @@ const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) =
                     msOverflowStyle: "none"
                 }}
             >
-                <HStack gap={10} align="start">
-                    {/* "New" button */}
+                <HStack gap={10} align="start" px={4}>
+                    {/* "New" button - ONLY for owner */}
                     {isOwnProfile && (
                         <VStack gap={2} cursor="pointer" minW="87px" onClick={handleNewHighlight}>
                             <Box

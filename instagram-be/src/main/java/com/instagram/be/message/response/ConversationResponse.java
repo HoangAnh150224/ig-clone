@@ -11,7 +11,8 @@ public record ConversationResponse(
         boolean isOnline,
         LastMessageInfo lastMessage,
         long unreadCount,
-        boolean isAccepted
+        boolean isAccepted,
+        LocalDateTime lastReadAt
 ) {
     public record LastMessageInfo(String content, String mediaType, LocalDateTime createdAt) {}
 }

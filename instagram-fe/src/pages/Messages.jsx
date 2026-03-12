@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Flex } from "@chakra-ui/react";
+import { useLocation } from "react-router-dom";
 import ChatList from "../components/messages/ChatList";
 import ChatWindow from "../components/messages/ChatWindow";
 import MessageSkeleton from "../components/skeletons/MessageSkeleton";
@@ -10,6 +11,7 @@ import { useSelector } from "react-redux";
 
 const Messages = () => {
     const authUser = useSelector((state) => state.auth.user);
+    const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [activeChatId, setActiveChatId] = useState(null);
     const [view, setView] = useState("primary"); // 'primary' | 'requests'
@@ -45,15 +47,39 @@ const Messages = () => {
                 });
             };
 
-            setPrimaryChats(formatChats(primaryRes));
-            setRequestChats(formatChats(requestRes));
+            const pChats = formatChats(primaryRes);
+            const rChats = formatChats(requestRes);
+
+            setPrimaryChats(pChats);
+            setRequestChats(rChats);
             setRequestCount(countRes);
+
+            // Check for selectedUser from profile navigation
+            if (location.state?.selectedUser) {
+                const user = location.state.selectedUser;
+                const existing = [...pChats, ...rChats].find(
+                    c => (c.participant?.id || c.user?.id) === user.id
+                );
+                
+                if (existing) {
+                    setActiveChatId(existing.id);
+                } else {
+                    setActiveChatId("temp");
+                    setTempChat({
+                        id: "temp",
+                        participant: user,
+                        messages: []
+                    });
+                }
+                // Clear state to prevent re-selection on refresh
+                window.history.replaceState({}, document.title);
+            }
         } catch (error) {
             console.error("Failed to fetch chats", error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [location.state]);
 
     useEffect(() => {
         fetchChats();
@@ -145,6 +171,34 @@ const Messages = () => {
         }
     };
 
+    const handleAcceptRequest = async () => {
+        if (!activeChatId || activeChatId === "temp") return;
+        try {
+            await messageService.acceptConversation(activeChatId);
+            // Move to primary view and refresh
+            setView("primary");
+            fetchChats();
+        } catch (error) {
+            console.error("Failed to accept request", error);
+        }
+    };
+
+    const handleSeenStatusUpdate = useCallback((data) => {
+        // data: { conversationId, userId, readAt }
+        if (data.userId === authUser.id) return; // Ignore our own seen status broadcast
+
+        const updateList = (prev) => {
+            return prev.map(chat => {
+                if (chat.id === data.conversationId) {
+                    return { ...chat, lastReadAt: data.readAt };
+                }
+                return chat;
+            });
+        };
+
+        setPrimaryChats(prev => updateList(prev));
+    }, [authUser.id]);
+
     // Topic Subscription for current active chat
     useEffect(() => {
         if (connected && activeChatId && activeChatId !== "temp") {
@@ -154,17 +208,26 @@ const Messages = () => {
             }
             
             // Subscribe to the conversation topic to get messages sent by both parties
-            const sub = subscribe(`/topic/messages/${activeChatId}`, (message) => {
-                handleNewIncomingMessage(message);
+            const sub = subscribe(`/topic/messages/${activeChatId}`, (data) => {
+                // If it's a message, handle it (check for properties that exist in message but not status)
+                if (data.sender || data.deleted !== undefined || data.content !== undefined) {
+                    handleNewIncomingMessage(data);
+                } else if (data.readAt) {
+                    // If it's a read status update
+                    handleSeenStatusUpdate(data);
+                }
             });
             topicSubRef.current = sub;
+            
+            // Mark as read immediately when joining
+            messageService.markAsRead(activeChatId);
 
             return () => {
                 sub?.unsubscribe();
                 topicSubRef.current = null;
             };
         }
-    }, [connected, activeChatId, subscribe, handleNewIncomingMessage]);
+    }, [connected, activeChatId, subscribe, handleNewIncomingMessage, handleSeenStatusUpdate]);
 
     // Private queue subscription for background updates and new conversations
     useEffect(() => {
@@ -254,8 +317,9 @@ const Messages = () => {
                 return prev.map(m => m.id === tempMsgId ? sentMessage : m);
             });
 
-            // 4. Handle transition from 'temp' to real conversation
-            if (activeChatId === "temp") {
+            // 4. Handle transition from 'temp' or 'requests' to real conversation
+            if (activeChatId === "temp" || view === "requests") {
+                if (view === "requests") setView("primary");
                 setTempChat(null);
                 setActiveChatId(sentMessage.conversationId);
                 fetchChats();
@@ -309,6 +373,9 @@ const Messages = () => {
                     onSendMessage={handleSendMessage}
                     onTyping={handleTyping}
                     onUnsendMessage={handleUnsendMessage}
+                    onOpenNewMessage={() => setIsNewMessageOpen(true)}
+                    onAcceptRequest={handleAcceptRequest}
+                    currentView={view}
                     isTyping={participantId ? typingUsers[participantId] : false}
                 />
             </Flex>

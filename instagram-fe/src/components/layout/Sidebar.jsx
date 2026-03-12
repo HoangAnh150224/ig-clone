@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, VStack, Text, Flex, Image } from "@chakra-ui/react";
 import {
     AiFillHome,
@@ -20,10 +20,11 @@ import { FaInstagram, FaUserCircle, FaRegUserCircle } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { openCreatePostModal } from "../../store/slices/uiSlice";
+import { openCreatePostModal, setUnreadNotificationCount } from "../../store/slices/uiSlice";
 import { logout } from "../../store/slices/authSlice";
 import SearchPanel from "./panels/SearchPanel";
 import NotificationPanel from "./panels/NotificationPanel";
+import notificationService from "../../services/notificationService";
 
 const SidebarItem = ({
     icon: OutlineIcon,
@@ -127,6 +128,16 @@ const Sidebar = () => {
     const [activePanel, setActivePanel] = useState(null);
     const [isHovered, setIsHovered] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+    useEffect(() => {
+        if (authUser) {
+            notificationService.getUnreadCount()
+                .then(count => {
+                    dispatch(setUnreadNotificationCount(count));
+                })
+                .catch(console.error);
+        }
+    }, [authUser, dispatch]);
 
     const togglePanel = (panel) => {
         setActivePanel(activePanel === panel ? null : panel);

@@ -4,7 +4,9 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.message.ConversationParticipantRepository;
 import com.instagram.be.message.request.MessageActionRequest;
+import com.instagram.be.message.response.ReadStatusResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class MarkReadService extends BaseService<MessageActionRequest, Void> {
 
     private final ConversationParticipantRepository participantRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -30,8 +33,18 @@ public class MarkReadService extends BaseService<MessageActionRequest, Void> {
                 .findByConversationIdAndUserId(request.getConversationId(), userId)
                 .orElseThrow(() -> new NotFoundException("Conversation not found"));
 
-        participant.setLastReadAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        participant.setLastReadAt(now);
         participantRepository.save(participant);
+
+        // Notify other participants in the conversation that this user has read messages
+        ReadStatusResponse status = new ReadStatusResponse(
+                request.getConversationId(),
+                userId,
+                now
+        );
+        messagingTemplate.convertAndSend("/topic/messages/" + request.getConversationId(), status);
+
         return null;
     }
 }

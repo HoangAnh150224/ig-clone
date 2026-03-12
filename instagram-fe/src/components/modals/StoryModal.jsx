@@ -47,6 +47,25 @@ const StoryModal = ({
     const currentStory = currentStories[storyIndex];
     const storyUser = currentHighlight?.user;
 
+    const markAsSeen = useCallback(async (storyId) => {
+        if (!storyId || isArchiveMode) return;
+        try {
+            await storyService.viewStory(storyId);
+            // Optionally update local state if needed, but the main goal is the server call
+            if (currentStory) {
+                currentStory.seen = true;
+            }
+        } catch (error) {
+            console.error("Failed to mark story as seen", error);
+        }
+    }, [isArchiveMode, currentStory]);
+
+    useEffect(() => {
+        if (isOpen && currentStory && !currentStory.seen) {
+            markAsSeen(currentStory.id);
+        }
+    }, [isOpen, currentStory, markAsSeen]);
+
     const isOwnStory =
         storyUser?.id === authUser?.id ||
         storyUser?.username === authUser?.username;
@@ -99,16 +118,26 @@ const StoryModal = ({
         }
     };
 
+    const getFirstUnseenIndex = useCallback((stories) => {
+        if (!stories || stories.length === 0) return 0;
+        const index = stories.findIndex(s => s.seen === false);
+        return index === -1 ? 0 : index;
+    }, []);
+
     useEffect(() => {
         if (isOpen) {
             setHighlightIndex(initialHighlightIndex || 0);
-            setStoryIndex(0);
+            
+            // Jump to the first unseen story of the initial highlight
+            const initialStories = highlights?.[initialHighlightIndex || 0]?.stories || [];
+            setStoryIndex(getFirstUnseenIndex(initialStories));
+            
             setProgress(0);
             setIsLiked(false);
             setIsActivityOpen(false);
             setViewers([]);
         }
-    }, [isOpen, initialHighlightIndex]);
+    }, [isOpen, initialHighlightIndex, highlights, getFirstUnseenIndex]);
 
     const handleNext = useCallback(() => {
         if (isActivityOpen || isHighlighting) return;
@@ -116,8 +145,13 @@ const StoryModal = ({
             setStoryIndex((prev) => prev + 1);
             setProgress(0);
         } else if (highlightIndex < highlights.length - 1) {
-            setHighlightIndex((prev) => prev + 1);
-            setStoryIndex(0);
+            const nextHighlightIndex = highlightIndex + 1;
+            setHighlightIndex(nextHighlightIndex);
+            
+            // When moving to the next highlight, also jump to its first unseen story
+            const nextStories = highlights[nextHighlightIndex]?.stories || [];
+            setStoryIndex(getFirstUnseenIndex(nextStories));
+            
             setProgress(0);
         } else {
             onClose();
@@ -126,10 +160,11 @@ const StoryModal = ({
         storyIndex,
         currentStories.length,
         highlightIndex,
-        highlights?.length,
+        highlights,
         onClose,
         isActivityOpen,
         isHighlighting,
+        getFirstUnseenIndex
     ]);
 
     const handlePrev = useCallback(() => {
