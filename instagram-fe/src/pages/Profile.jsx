@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     Box,
     Container,
-    Spinner,
-    Center,
     VStack,
     Text,
     Link as ChakraLink,
@@ -16,6 +14,7 @@ import PostGrid from "../components/profile/PostGrid";
 import ProfileHighlights from "../components/profile/ProfileHighlights";
 import ProfileSkeleton from "../components/skeletons/ProfileSkeleton";
 import profileService from "../services/profileService";
+import postService from "../services/postService";
 import {
     setUserProfile,
     setProfilePosts,
@@ -29,32 +28,80 @@ const Profile = () => {
     const { userProfile, posts, loading } = useSelector((state) => state.user);
     const { user: authUser } = useSelector((state) => state.auth);
     const [activeTab, setActiveTab] = useState("posts");
+    const [highlights, setHighlights] = useState([]);
+    const [tabLoading, setTabLoading] = useState(false);
 
     const isOwnProfile = authUser?.username === username;
 
-    useEffect(() => {
-        const fetchProfileData = async () => {
-            dispatch(resetProfile()); // RESET PREVIOUS DATA BEFORE FETCHING NEW
-            dispatch(setLoading(true));
-            try {
-                const [profileRes, postsRes] = await Promise.all([
-                    profileService.getUserProfile(username),
-                    profileService.getUserPosts(username),
-                ]);
-                dispatch(setUserProfile(profileRes));
-                dispatch(setProfilePosts(postsRes));
-            } catch (error) {
-                console.error("Failed to fetch profile data", error);
-            } finally {
-                dispatch(setLoading(false));
+    const fetchTabData = useCallback(async (tab) => {
+        setTabLoading(true);
+        try {
+            let results = [];
+            if (tab === "posts" || tab === "reels") {
+                const response = await profileService.getUserPosts(username);
+                results = response.content || response;
+            } else if (tab === "saved") {
+                const response = await postService.getSavedPosts();
+                results = response.content || response;
+            } else if (tab === "tagged") {
+                const response = await postService.getTaggedPosts(userProfile?.id);
+                results = response.content || response;
             }
-        };
+            dispatch(setProfilePosts(results));
+        } catch (error) {
+            console.error(`Failed to fetch ${tab} data`, error);
+        } finally {
+            setTabLoading(false);
+        }
+    }, [username, userProfile?.id, dispatch]);
 
-        fetchProfileData();
+    const fetchInitialData = useCallback(async () => {
+        dispatch(resetProfile());
+        dispatch(setLoading(true));
+        try {
+            const [profileRes, highlightsRes] = await Promise.all([
+                profileService.getUserProfile(username),
+                profileService.getUserHighlights(username),
+            ]);
+            dispatch(setUserProfile(profileRes));
+            setHighlights(highlightsRes || []);
+            
+            // Fetch posts for the initial active tab
+            const postsRes = await profileService.getUserPosts(username);
+            dispatch(setProfilePosts(postsRes.content || postsRes));
+        } catch (error) {
+            console.error("Failed to fetch initial profile data", error);
+        } finally {
+            dispatch(setLoading(false));
+        }
     }, [username, dispatch]);
 
+    useEffect(() => {
+        fetchInitialData();
+        setActiveTab("posts");
+    }, [fetchInitialData]);
+
+    const handleRefreshHighlights = async () => {
+        try {
+            const highlightsRes = await profileService.getUserHighlights(username);
+            setHighlights(highlightsRes || []);
+        } catch (error) {
+            console.error("Failed to refresh highlights", error);
+        }
+    };
+
+    useEffect(() => {
+        if (userProfile && activeTab !== "posts") {
+            fetchTabData(activeTab);
+        }
+    }, [activeTab, fetchTabData, userProfile]);
+
     if (loading) {
-        return <ProfileSkeleton />;
+        return (
+            <Container maxW="935px" p={0} mt={4}>
+                <ProfileSkeleton />
+            </Container>
+        );
     }
 
     if (!userProfile && !loading) {
@@ -64,8 +111,7 @@ const Profile = () => {
                     Sorry, this page isn't available.
                 </Text>
                 <Text color="gray.500">
-                    The link you followed may be broken, or the page may have
-                    been removed.
+                    The link you followed may be broken, or the page may have been removed.
                 </Text>
                 <ChakraLink href="/" color="blue.900" fontWeight="bold">
                     Go back to Instagram.
@@ -74,30 +120,29 @@ const Profile = () => {
         );
     }
 
+    const filteredPosts = activeTab === "reels" 
+        ? posts.filter(p => p.type === "REEL") 
+        : posts;
+
     return (
-        <Container maxW="935px" p={0} bg="white" color="black">
-            <ProfileHeader user={userProfile} />
+        <Container maxW="935px" p={0} bg="white" color="black" mt={4}>
+            <ProfileHeader user={userProfile} isOwnProfile={isOwnProfile} />
 
-            {/* Profile Highlights Section */}
-            <ProfileHighlights isOwnProfile={isOwnProfile} user={userProfile} />
+            <ProfileHighlights 
+                isOwnProfile={isOwnProfile} 
+                user={userProfile} 
+                highlights={highlights} 
+                onRefresh={handleRefreshHighlights}
+            />
 
-            <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            <ProfileTabs 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab} 
+                isOwnProfile={isOwnProfile} 
+            />
 
             <Box py={4}>
-                {activeTab === "posts" && (
-                    <PostGrid posts={posts} loading={loading} />
-                )}
-                {activeTab === "reels" && (
-                    <PostGrid
-                        posts={posts.filter((p) => p.type === "reel")}
-                        loading={loading}
-                    />
-                )}
-                {activeTab === "saved" && (
-                    <Center py={20} color="gray.500">
-                        Saved posts are only visible to you.
-                    </Center>
-                )}
+                <PostGrid posts={filteredPosts} loading={tabLoading} />
             </Box>
         </Container>
     );

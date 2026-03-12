@@ -1,31 +1,29 @@
-import { allReels } from "../api/dummyData";
+import axiosClient from "../api/axiosClient";
 
+/**
+ * ReelService handles reel-related API calls.
+ * Now standardized to use the common feed endpoint with type=REEL.
+ */
 const reelService = {
     /**
-     * Get all reels.
-     * API: GET /api/reels
+     * Get reels for the feed (cursor-based).
+     * API: GET /feed?type=REEL
      */
-    getAllReels: async () => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(allReels);
-            }, 300);
-        });
+    getAllReels: async (cursor = null, size = 12) => {
+        const params = new URLSearchParams();
+        params.append("type", "REEL");
+        if (cursor) params.append("cursor", cursor);
+        if (size) params.append("size", size);
+        return axiosClient.get(`/feed?${params.toString()}`);
     },
 
     /**
-     * BACKEND SETUP: Update reel
-     * API: PATCH /api/reels/{reelId}
+     * Get archived reels.
+     * API: GET /archive/posts?type=REEL
      */
-    updateReel: async (reelId, updatedData) => {
-        return new Promise((resolve) => {
-            console.log(`Backend Action: UPDATING REEL ${reelId}`, updatedData);
-            setTimeout(() => {
-                // TODO: Send PATCH request via axiosClient
-                resolve();
-            }, 500);
-        });
-    },
+    getArchivedReels: async (page = 0, size = 12) => {
+        return axiosClient.get(`/archive/posts?type=REEL&page=${page}&size=${size}`);
+    }
 };
 
 export default reelService;

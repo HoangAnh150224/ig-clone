@@ -6,10 +6,13 @@ import com.instagram.be.base.api.ApiResponse;
 import com.instagram.be.search.request.AddSearchHistoryRequest;
 import com.instagram.be.search.request.DeleteSearchHistoryRequest;
 import com.instagram.be.search.request.GetSearchHistoryRequest;
+import com.instagram.be.search.request.SearchRequest;
 import com.instagram.be.search.response.SearchHistoryResponse;
+import com.instagram.be.search.response.SearchResultResponse;
 import com.instagram.be.search.service.AddSearchHistoryService;
 import com.instagram.be.search.service.DeleteSearchHistoryService;
 import com.instagram.be.search.service.GetSearchHistoryService;
+import com.instagram.be.search.service.SearchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +31,18 @@ public class SearchHistoryController {
     private final GetSearchHistoryService getSearchHistoryService;
     private final AddSearchHistoryService addSearchHistoryService;
     private final DeleteSearchHistoryService deleteSearchHistoryService;
+    private final SearchService searchService;
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<SearchResultResponse>> search(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "10") int size) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        SearchRequest request = SearchRequest.builder().userContext(ctx).query(q).size(size).build();
+        return ResponseEntity.ok(ApiResponse.success(searchService.execute(request), "Search results", 200));
+    }
 
     @GetMapping("/history")
     @PreAuthorize("isAuthenticated()")

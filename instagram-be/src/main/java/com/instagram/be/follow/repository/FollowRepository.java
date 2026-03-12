@@ -32,4 +32,8 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     Page<Follow> findFollowingByUserId(@Param("userId") UUID userId,
                                         @Param("status") FollowStatus status,
                                         Pageable pageable);
+
+    @Query("DELETE FROM Follow f WHERE (f.follower.id = :a AND f.following.id = :b) OR (f.follower.id = :b AND f.following.id = :a)")
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteAllBetween(@Param("a") UUID userA, @Param("b") UUID userB);
 }

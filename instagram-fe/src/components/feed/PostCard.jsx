@@ -18,7 +18,7 @@ import {
 import { FaRegSmile } from "react-icons/fa";
 import UserAvatar from "../common/UserAvatar";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleLikePost } from "../../store/slices/postSlice";
+import { toggleLike, updatePostInStore } from "../../store/slices/postSlice";
 import { toggleMute } from "../../store/slices/uiSlice";
 import { useNavigate } from "react-router-dom";
 import PostDetailModal from "../modals/PostDetailModal";
@@ -26,6 +26,8 @@ import ImageCarousel from "../common/ImageCarousel";
 import UserListModal from "../modals/UserListModal";
 import MoreOptionsModal from "../modals/MoreOptionsModal";
 import { formatPostDate } from "../../utils/dateUtils";
+import postService from "../../services/postService";
+import commentService from "../../services/commentService";
 
 const PostCard = ({ post }) => {
     const dispatch = useDispatch();
@@ -34,31 +36,26 @@ const PostCard = ({ post }) => {
     const isMuted = useSelector((state) => state.ui.isMuted);
     const videoRef = useRef(null);
 
-    // FAVORITES LOGIC: Get from Redux Store (Synchronized from Backend)
+    // FAVORITES LOGIC
     const favoriteUserIds = authUser?.favoriteUserIds || [];
-    const isFavoriteUser = favoriteUserIds.includes(
-        post.userId || post.user?.id,
-    );
+    const isFavoriteUser = favoriteUserIds.includes(post.author?.id);
 
     const [showHeartAnim, setShowHeartAnim] = useState(false);
     const [comment, setComment] = useState("");
-    const [isSaved, setIsSaved] = useState(false);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
     const [isLikeListOpen, setIsLikeListOpen] = useState(false);
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
+    const [likedUsers, setLikedUsers] = useState([]);
 
-    const isLiked = post.likedBy?.some((u) => u.id === authUser?.id) || false;
-    const isOwnPost = post.user?.id === authUser?.id;
-    const isReel = post.type === "reel";
+    const isLiked = post.isLiked || false;
+    const isSaved = post.isSaved || false;
+    const isOwnPost = post.author?.id === authUser?.id;
+    const isReel = post.type === "REEL";
 
     const handleLike = () => {
-        dispatch(
-            toggleLikePost({
-                postId: post.id,
-                userId: authUser?.id || "guest",
-            }),
-        );
+        dispatch(toggleLike(post.id));
     };
 
     const handleDoubleLike = (e) => {
@@ -66,6 +63,40 @@ const PostCard = ({ post }) => {
         if (!isLiked) handleLike();
         setShowHeartAnim(true);
         setTimeout(() => setShowHeartAnim(false), 800);
+    };
+
+    const handleSave = async () => {
+        try {
+            const response = await postService.savePost(post.id);
+            dispatch(updatePostInStore({ id: post.id, changes: { isSaved: response.saved } }));
+        } catch (error) {
+            console.error("Failed to save post", error);
+        }
+    };
+
+    const handlePostComment = async () => {
+        if (!comment.trim() || isSubmittingComment) return;
+        setIsSubmittingComment(true);
+        try {
+            await commentService.addComment(post.id, comment);
+            setComment("");
+            // Optionally update local comment count
+            dispatch(updatePostInStore({ id: post.id, changes: { commentCount: (post.commentCount || 0) + 1 } }));
+        } catch (error) {
+            console.error("Failed to post comment", error);
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const fetchLikers = async () => {
+        try {
+            const response = await postService.getPostLikers(post.id);
+            setLikedUsers(response.content || []);
+            setIsLikeListOpen(true);
+        } catch (error) {
+            console.error("Failed to fetch likers", error);
+        }
     };
 
     const togglePlay = () => {
@@ -79,8 +110,6 @@ const PostCard = ({ post }) => {
         }
     };
 
-    const likedUsers = post.likedBy || [];
-
     return (
         <>
             <Box
@@ -89,7 +118,7 @@ const PostCard = ({ post }) => {
                 mx="auto"
                 border="1px solid"
                 borderColor="gray.200"
-                borderRadius="8px"
+                borderRadius="0px" // Bỏ bo góc theo GEMINI.md
                 bg="white"
                 overflow="hidden"
                 color="black"
@@ -100,76 +129,23 @@ const PostCard = ({ post }) => {
                     <HStack
                         gap={3}
                         cursor="pointer"
-                        onClick={() => navigate(`/${post.user?.username}`)}
+                        onClick={() => navigate(`/${post.author?.username}`)}
                     >
-                        <UserAvatar src={post.user?.avatar} />
+                        <UserAvatar src={post.author?.avatarUrl} />
                         <Text
                             fontSize="14px"
                             fontWeight="600"
                             color="black"
                             _hover={{ color: "gray.500" }}
                         >
-                            {post.user?.username || "user"}
+                            {post.author?.username || "user"}
                         </Text>
                     </HStack>
 
                     <HStack gap={3}>
-                        {/* GRADIENT STAR ICON FOR FAVORITES - MOVED TO RIGHT NEXT TO MORE OPTIONS */}
                         {isFavoriteUser && (
-                            <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                style={{
-                                    background:
-                                        "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                }}
-                            >
-                                {/* Use a span or Box with color: transparent to ensure gradient shows through the icon */}
-                                <Icon
-                                    as={BsStarFill}
-                                    boxSize="15px"
-                                    style={{
-                                        fill: "url(#ig-gradient)" || "inherit",
-                                    }}
-                                />
-                                {/* Fallback SVG for guaranteed gradient if Icon component struggles */}
-                                <svg
-                                    width="0"
-                                    height="0"
-                                    style={{ position: "absolute" }}
-                                >
-                                    <linearGradient
-                                        id="ig-gradient"
-                                        x1="0%"
-                                        y1="0%"
-                                        x2="100%"
-                                        y2="100%"
-                                    >
-                                        <stop
-                                            offset="0%"
-                                            style={{ stopColor: "#f09433" }}
-                                        />
-                                        <stop
-                                            offset="25%"
-                                            style={{ stopColor: "#e6683c" }}
-                                        />
-                                        <stop
-                                            offset="50%"
-                                            style={{ stopColor: "#dc2743" }}
-                                        />
-                                        <stop
-                                            offset="75%"
-                                            style={{ stopColor: "#cc2366" }}
-                                        />
-                                        <stop
-                                            offset="100%"
-                                            style={{ stopColor: "#bc1888" }}
-                                        />
-                                    </linearGradient>
-                                </svg>
+                            <Box display="flex" alignItems="center" justifyContent="center">
+                                <Icon as={BsStarFill} color="orange.400" boxSize="15px" />
                             </Box>
                         )}
                         <Box
@@ -189,7 +165,7 @@ const PostCard = ({ post }) => {
                     bg="black"
                     position="relative"
                     width="100%"
-                    paddingBottom={isReel ? "125%" : "125%"}
+                    paddingBottom="125%" // Standard Instagram ratio
                     overflow="hidden"
                     cursor="pointer"
                     onClick={isReel ? togglePlay : undefined}
@@ -209,7 +185,7 @@ const PostCard = ({ post }) => {
                                 <Box
                                     as="video"
                                     ref={videoRef}
-                                    src={post.videoUrl}
+                                    src={post.media?.[0]?.url}
                                     autoPlay
                                     loop
                                     muted={isMuted}
@@ -251,7 +227,7 @@ const PostCard = ({ post }) => {
                             </>
                         ) : (
                             <ImageCarousel
-                                images={post.images || [post.imageUrl]}
+                                images={post.media?.map(m => m.url) || []}
                                 height="100%"
                             />
                         )}
@@ -304,28 +280,30 @@ const PostCard = ({ post }) => {
                             />
                         </HStack>
                         <Box
-                            onClick={() => setIsSaved(!isSaved)}
+                            onClick={handleSave}
                             cursor="pointer"
                             color="black"
                         >
                             {isSaved ? (
-                                <BsBookmarkFill size={24} color="#FFD700" />
+                                <BsBookmarkFill size={24} color="black" />
                             ) : (
                                 <BsBookmark size={24} />
                             )}
                         </Box>
                     </Flex>
 
-                    <Text
-                        fontSize="14px"
-                        fontWeight="600"
-                        mb={2}
-                        color="black"
-                        cursor="pointer"
-                        onClick={() => setIsLikeListOpen(true)}
-                    >
-                        {post.likeCount?.toLocaleString()} likes
-                    </Text>
+                    {!post.hideLikeCount && (
+                        <Text
+                            fontSize="14px"
+                            fontWeight="600"
+                            mb={2}
+                            color="black"
+                            cursor="pointer"
+                            onClick={fetchLikers}
+                        >
+                            {post.likeCount?.toLocaleString()} likes
+                        </Text>
+                    )}
 
                     <Box mb={2}>
                         <Text fontSize="14px" lineHeight="1.4" color="black">
@@ -335,24 +313,26 @@ const PostCard = ({ post }) => {
                                 mr={2}
                                 cursor="pointer"
                                 onClick={() =>
-                                    navigate(`/${post.user?.username}`)
+                                    navigate(`/${post.author?.username}`)
                                 }
                             >
-                                {post.user?.username}
+                                {post.author?.username}
                             </Text>
                             {post.caption}
                         </Text>
                     </Box>
 
-                    <Text
-                        fontSize="14px"
-                        color="gray.500"
-                        cursor="pointer"
-                        mb={2}
-                        onClick={() => setIsCommentModalOpen(true)}
-                    >
-                        View all {post.commentCount} comments
-                    </Text>
+                    {post.commentCount > 0 && (
+                        <Text
+                            fontSize="14px"
+                            color="gray.500"
+                            cursor="pointer"
+                            mb={2}
+                            onClick={() => setIsCommentModalOpen(true)}
+                        >
+                            View all {post.commentCount} comments
+                        </Text>
+                    )}
 
                     <Text
                         fontSize="10px"
@@ -390,8 +370,9 @@ const PostCard = ({ post }) => {
                             color="#0095f6"
                             fontSize="14px"
                             fontWeight="600"
-                            opacity={comment.trim() ? 1 : 0.3}
-                            cursor={comment.trim() ? "pointer" : "default"}
+                            opacity={comment.trim() && !isSubmittingComment ? 1 : 0.3}
+                            cursor={comment.trim() && !isSubmittingComment ? "pointer" : "default"}
+                            onClick={handlePostComment}
                         >
                             Post
                         </Text>
@@ -403,10 +384,6 @@ const PostCard = ({ post }) => {
                 isOpen={isCommentModalOpen}
                 onClose={() => setIsCommentModalOpen(false)}
                 post={post}
-                isLiked={isLiked}
-                handleLike={handleLike}
-                isSaved={isSaved}
-                handleSave={() => setIsSaved(!isSaved)}
             />
             <UserListModal
                 isOpen={isLikeListOpen}

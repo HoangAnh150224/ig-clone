@@ -4,6 +4,7 @@ const initialState = {
     isCreatePostModalOpen: false,
     isMuted: true, // Default to mute per Instagram standard
     globalError: null,
+    unreadNotificationCount: 0,
 };
 
 const uiSlice = createSlice({
@@ -25,6 +26,15 @@ const uiSlice = createSlice({
         clearGlobalError: (state) => {
             state.globalError = null;
         },
+        setUnreadNotificationCount: (state, action) => {
+            state.unreadNotificationCount = action.payload;
+        },
+        incrementUnreadNotificationCount: (state) => {
+            state.unreadNotificationCount += 1;
+        },
+        clearUnreadNotificationCount: (state) => {
+            state.unreadNotificationCount = 0;
+        }
     },
 });
 
@@ -34,5 +44,8 @@ export const {
     toggleMute,
     setGlobalError,
     clearGlobalError,
+    setUnreadNotificationCount,
+    incrementUnreadNotificationCount,
+    clearUnreadNotificationCount
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -1,5 +1,7 @@
 instagram-fe/.env
+instagram-be/.env
 changes.txt
 PLAN.md
 instagram-be/.idea/misc.xml
 instagram-be/.idea/*
+.claude/settings.local.json

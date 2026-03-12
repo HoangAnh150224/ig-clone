@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { AiOutlinePlus } from "react-icons/ai";
+import { useDispatch } from "react-redux";
+import CreateHighlightModal from "../modals/CreateHighlightModal";
 import StoryModal from "../modals/StoryModal";
 
-const ProfileHighlights = ({ isOwnProfile, user }) => {
+const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) => {
     const [isStoryOpen, setIsStoryOpen] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedHighlightIndex, setSelectedHighlightIndex] = useState(0);
-
-    // Get highlights from the passed user data
-    const highlights = user?.highlights || [];
 
     const handleHighlightClick = (index) => {
         setSelectedHighlightIndex(index);
         setIsStoryOpen(true);
+    };
+
+    const handleNewHighlight = () => {
+        setIsCreateOpen(true);
     };
 
     if (!isOwnProfile && highlights.length === 0) return null;
@@ -25,12 +29,16 @@ const ProfileHighlights = ({ isOwnProfile, user }) => {
                 px={4}
                 bg="white"
                 overflowX="auto"
-                css={{ "&::-webkit-scrollbar": { display: "none" } }}
+                css={{ 
+                    "&::-webkit-scrollbar": { display: "none" },
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none"
+                }}
             >
                 <HStack gap={10} align="start">
                     {/* "New" button */}
                     {isOwnProfile && (
-                        <VStack gap={2} cursor="pointer" minW="87px">
+                        <VStack gap={2} cursor="pointer" minW="87px" onClick={handleNewHighlight}>
                             <Box
                                 width="87px"
                                 height="87px"
@@ -83,7 +91,7 @@ const ProfileHighlights = ({ isOwnProfile, user }) => {
                                     bg="gray.100"
                                 >
                                     <img
-                                        src={item.cover}
+                                        src={item.coverUrl} // Fixed field name
                                         alt={item.title}
                                         style={{
                                             width: "100%",
@@ -107,6 +115,13 @@ const ProfileHighlights = ({ isOwnProfile, user }) => {
                     ))}
                 </HStack>
             </Box>
+
+            {/* Create Highlight Modal */}
+            <CreateHighlightModal 
+                isOpen={isCreateOpen} 
+                onClose={() => setIsCreateOpen(false)}
+                onCreated={onRefresh}
+            />
 
             {/* Story Player for Highlights */}
             <StoryModal

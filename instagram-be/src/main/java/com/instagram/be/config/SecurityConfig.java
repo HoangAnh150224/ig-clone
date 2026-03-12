@@ -2,12 +2,14 @@ package com.instagram.be.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instagram.be.auth.jwt.JwtAuthenticationFilter;
+import com.instagram.be.auth.jwt.JwtUtil;
 import com.instagram.be.auth.security.UserDetailsServiceImpl;
 import com.instagram.be.base.api.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,18 +36,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsServiceImpl userDetailsService;
     private final ObjectMapper objectMapper;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
             "/actuator/health", "/actuator/info",
-            "/auth/**"
+            "/auth/**",
+            "/ws/**"
     };
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, redisTemplate);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)

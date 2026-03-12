@@ -41,7 +41,6 @@ const PostDetail = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const isMuted = useSelector((state) => state.ui.isMuted);
-    const authUser = useSelector((state) => state.auth.user);
 
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -55,6 +54,7 @@ const PostDetail = () => {
     const [commentValue, setCommentValue] = useState("");
     const [replyingTo, setReplyingTo] = useState(null); // { id, username }
     const inputRef = useRef(null);
+    const [comments, setComments] = useState([]);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -67,7 +67,7 @@ const PostDetail = () => {
                 } else {
                     setError(true);
                 }
-            } catch (err) {
+            } catch {
                 setError(true);
             } finally {
                 setLoading(false);
@@ -79,12 +79,27 @@ const PostDetail = () => {
         }
     }, [postId]);
 
+    useEffect(() => {
+        if (post?.id) {
+            const fetchComments = async () => {
+                try {
+                    const response = await commentService.getComments(post.id);
+                    const commentList = Array.isArray(response) ? response : (response?.content || []);
+                    setComments(commentList);
+                } catch (e) {
+                    console.error("Failed to fetch comments", e);
+                }
+            };
+            fetchComments();
+        }
+    }, [post?.id]);
+
     const handleReply = (parentComment) => {
         setReplyingTo({
             id: parentComment.id,
-            username: parentComment.user.username,
+            username: parentComment.author.username,
         });
-        setCommentValue(`@${parentComment.user.username} `);
+        setCommentValue(`@${parentComment.author.username} `);
         inputRef.current?.focus();
     };
 
@@ -97,7 +112,8 @@ const PostDetail = () => {
             const content = commentValue
                 .replace(`@${replyingTo.username}`, "")
                 .trim();
-            response = await commentService.addReply(replyingTo.id, content);
+            // addComment(postId, content, parentId)
+            response = await commentService.addComment(post.id, content, replyingTo.id);
         } else {
             // Send new Comment
             response = await commentService.addComment(post.id, commentValue);
@@ -106,18 +122,9 @@ const PostDetail = () => {
         if (response) {
             setCommentValue("");
             setReplyingTo(null);
-            // TODO: Update local comment list for immediate feedback
-            console.log("Comment/Reply posted successfully");
-        }
-    };
-
-    const handleSave = async () => {
-        const previousState = isSaved;
-        setIsSaved(!isSaved);
-        try {
-            await postService.toggleSavePost(post.id);
-        } catch (error) {
-            setIsSaved(previousState);
+            // Refresh comments to show the new one
+            const updatedComments = await commentService.getComments(post.id);
+            setComments(Array.isArray(updatedComments) ? updatedComments : (updatedComments?.content || []));
         }
     };
 
@@ -148,8 +155,7 @@ const PostDetail = () => {
         );
     }
 
-    const comments = commentService.getCommentsByPostId(post.id) || [];
-    const isReel = post.type === "reel" || !!post.videoUrl;
+    const isReel = post.type === "REEL";
 
     return (
         <Box maxW="1200px" mx="auto" mt={8} mb={20} px={{ base: 0, md: 4 }}>
@@ -190,7 +196,7 @@ const PostDetail = () => {
                             <Box
                                 as="video"
                                 ref={videoRef}
-                                src={post.videoUrl}
+                                src={post.media?.[0]?.url}
                                 autoPlay
                                 loop
                                 muted={isMuted}
@@ -235,7 +241,7 @@ const PostDetail = () => {
                     ) : (
                         <Box width="100%" height="100%">
                             <ImageCarousel
-                                images={post.images || [post.imageUrl]}
+                                images={post.media?.map(m => m.url) || []}
                                 height="100%"
                                 objectFit="contain"
                             />
@@ -267,11 +273,11 @@ const PostDetail = () => {
                             <Box
                                 cursor="pointer"
                                 onClick={() =>
-                                    navigate(`/${post.user?.username}`)
+                                    navigate(`/${post.author?.username}`)
                                 }
                             >
                                 <UserAvatar
-                                    src={post.user?.avatar}
+                                    src={post.author?.avatarUrl}
                                     size="32px"
                                 />
                             </Box>
@@ -281,10 +287,10 @@ const PostDetail = () => {
                                 color="black"
                                 cursor="pointer"
                                 onClick={() =>
-                                    navigate(`/${post.user?.username}`)
+                                    navigate(`/${post.author?.username}`)
                                 }
                             >
-                                {post.user?.username}
+                                {post.author?.username}
                             </Text>
                             <Text as="span" mx={1} color="gray.400">
                                 •
@@ -317,11 +323,11 @@ const PostDetail = () => {
                             <Box
                                 cursor="pointer"
                                 onClick={() =>
-                                    navigate(`/${post.user?.username}`)
+                                    navigate(`/${post.author?.username}`)
                                 }
                             >
                                 <UserAvatar
-                                    src={post.user?.avatar}
+                                    src={post.author?.avatarUrl}
                                     size="32px"
                                 />
                             </Box>
@@ -333,10 +339,10 @@ const PostDetail = () => {
                                         mr={2}
                                         cursor="pointer"
                                         onClick={() =>
-                                            navigate(`/${post.user?.username}`)
+                                            navigate(`/${post.author?.username}`)
                                         }
                                     >
-                                        {post.user?.username}
+                                        {post.author?.username}
                                     </Text>
                                     {post.caption}
                                 </Text>
@@ -362,11 +368,11 @@ const PostDetail = () => {
                                     <CommentCard
                                         key={c.id}
                                         comment={c}
+                                        postId={postId}
                                         onReply={handleReply}
                                     />
                                 ))
-                            ) : (
-                                <Center h="100px">
+                            ) : (                                <Center h="100px">
                                     <Text color="gray.400" fontSize="sm">
                                         No comments yet.
                                     </Text>

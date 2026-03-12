@@ -15,20 +15,41 @@ import { AiOutlineClose } from "react-icons/ai";
 import UserAvatar from "../common/UserAvatar";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import profileService from "../../services/profileService";
 
 const UserListModal = ({
     isOpen,
     onClose,
     title,
-    users,
-    isOwnContext = false,
+    users: initialUsers = [],
 }) => {
     const navigate = useNavigate();
     const authUser = useSelector((state) => state.auth.user);
+    const [users, setUsers] = React.useState(initialUsers);
+
+    React.useEffect(() => {
+        setUsers(initialUsers);
+    }, [initialUsers]);
 
     const handleUserClick = (username) => {
         onClose();
         navigate(`/${username}`);
+    };
+
+    const handleFollowToggle = async (userId) => {
+        try {
+            // Optimistic update
+            setUsers(prev => prev.map(u => 
+                u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u
+            ));
+            await profileService.toggleFollow(userId);
+        } catch (error) {
+            console.error("Failed to toggle follow", error);
+            // Rollback on error
+            setUsers(prev => prev.map(u => 
+                u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u
+            ));
+        }
     };
 
     return (
@@ -58,7 +79,7 @@ const UserListModal = ({
                         borderBottom="1px solid"
                         borderColor="gray.100"
                     >
-                        <Box width="32px" /> {/* Spacer */}
+                        <Box width="32px" />
                         <Text fontWeight="bold" fontSize="16px">
                             {title}
                         </Text>
@@ -71,14 +92,8 @@ const UserListModal = ({
                         <VStack align="stretch" gap={0} py={2}>
                             {users && users.length > 0 ? (
                                 users.map((user) => {
-                                    const isMe =
-                                        user.id === authUser?.id ||
-                                        user.username === authUser?.username;
-                                    const isFollowersList =
-                                        title === "Followers";
-                                    const isFollowingList =
-                                        title === "Following";
-                                    const isLikesList = title === "Likes";
+                                    const isMe = user.id === authUser?.id;
+                                    const isFollowing = user.isFollowing;
 
                                     return (
                                         <Flex
@@ -93,75 +108,40 @@ const UserListModal = ({
                                             <HStack
                                                 gap={3}
                                                 cursor="pointer"
-                                                onClick={() =>
-                                                    handleUserClick(
-                                                        user.username,
-                                                    )
-                                                }
+                                                onClick={() => handleUserClick(user.username)}
                                             >
-                                                <UserAvatar
-                                                    src={user.avatar}
-                                                    size="44px"
-                                                />
-                                                <VStack align="start" gap={0}>
-                                                    <Text
-                                                        fontSize="14px"
-                                                        fontWeight="bold"
-                                                    >
+                                                <UserAvatar src={user.avatarUrl} size="44px" />
+                                                <VStack align="start" gap={0} minW={0}>
+                                                    <Text fontSize="14px" fontWeight="bold" isTruncated maxW="180px">
                                                         {user.username}
                                                     </Text>
-                                                    <Text
-                                                        fontSize="14px"
-                                                        color="gray.500"
-                                                    >
+                                                    <Text fontSize="14px" color="gray.500" isTruncated maxW="180px">
                                                         {user.fullName}
                                                     </Text>
                                                 </VStack>
                                             </HStack>
 
-                                            {/* Logic for displaying control buttons */}
-                                            {((isLikesList && isMe) ||
-                                                (isFollowersList &&
-                                                    isOwnContext)) && (
+                                            {!isMe && (
                                                 <Box
                                                     as="button"
-                                                    bg="#efefef"
+                                                    bg={isFollowing ? "#efefef" : "#0095f6"}
+                                                    color={isFollowing ? "black" : "white"}
                                                     px={4}
                                                     py={1.5}
                                                     borderRadius="8px"
                                                     fontSize="14px"
                                                     fontWeight="bold"
-                                                    _hover={{ bg: "#dbdbdb" }}
+                                                    onClick={() => handleFollowToggle(user.id)}
                                                 >
-                                                    Remove
+                                                    {isFollowing ? "Following" : "Follow"}
                                                 </Box>
                                             )}
-
-                                            {isFollowingList &&
-                                                isOwnContext && (
-                                                    <Box
-                                                        as="button"
-                                                        bg="#efefef"
-                                                        px={4}
-                                                        py={1.5}
-                                                        borderRadius="8px"
-                                                        fontSize="14px"
-                                                        fontWeight="bold"
-                                                        _hover={{
-                                                            bg: "#dbdbdb",
-                                                        }}
-                                                    >
-                                                        Following
-                                                    </Box>
-                                                )}
                                         </Flex>
                                     );
                                 })
                             ) : (
                                 <Flex h="100px" align="center" justify="center">
-                                    <Text color="gray.500">
-                                        No users found.
-                                    </Text>
+                                    <Text color="gray.500">No users found.</Text>
                                 </Flex>
                             )}
                         </VStack>

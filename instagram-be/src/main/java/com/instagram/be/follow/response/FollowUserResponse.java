@@ -9,7 +9,9 @@ public record FollowUserResponse(
         String username,
         String fullName,
         String avatarUrl,
-        boolean verified) {
+        boolean verified,
+        boolean isFollowing,
+        long mutualCount) {
 
     public static FollowUserResponse from(UserProfile user) {
         return new FollowUserResponse(
@@ -17,7 +19,33 @@ public record FollowUserResponse(
                 user.getUsername(),
                 user.getFullName(),
                 user.getAvatarUrl(),
-                user.isVerified()
+                user.isVerified(),
+                false,
+                0
+        );
+    }
+
+    public static FollowUserResponse of(UserProfile user, boolean isFollowing) {
+        return new FollowUserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getAvatarUrl(),
+                user.isVerified(),
+                isFollowing,
+                0
+        );
+    }
+
+    public static FollowUserResponse of(UserProfile user, boolean isFollowing, long mutualCount) {
+        return new FollowUserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getAvatarUrl(),
+                user.isVerified(),
+                isFollowing,
+                mutualCount
         );
     }
 }

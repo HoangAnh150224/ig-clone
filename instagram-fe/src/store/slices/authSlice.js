@@ -29,8 +29,8 @@ export const signup = createAsyncThunk(
     },
 );
 
-export const verifyAuth = createAsyncThunk(
-    "auth/verifyAuth",
+export const fetchCurrentUser = createAsyncThunk(
+    "auth/fetchCurrentUser",
     async (_, { rejectWithValue }) => {
         try {
             const response = await authService.getCurrentUser();
@@ -88,12 +88,13 @@ const authSlice = createSlice({
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isAuthenticated = true;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
+                const { accessToken, ...userData } = action.payload;
+                state.user = userData;
+                state.token = accessToken;
+                localStorage.setItem("token", accessToken);
                 localStorage.setItem(
                     "user",
-                    JSON.stringify(action.payload.user),
+                    JSON.stringify(userData),
                 );
             })
             .addCase(login.rejected, (state, action) => {
@@ -107,28 +108,29 @@ const authSlice = createSlice({
             .addCase(signup.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isAuthenticated = true;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
+                const { accessToken, ...userData } = action.payload;
+                state.user = userData;
+                state.token = accessToken;
+                localStorage.setItem("token", accessToken);
                 localStorage.setItem(
                     "user",
-                    JSON.stringify(action.payload.user),
+                    JSON.stringify(userData),
                 );
             })
             .addCase(signup.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            .addCase(verifyAuth.pending, (state) => {
+            .addCase(fetchCurrentUser.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(verifyAuth.fulfilled, (state, action) => {
+            .addCase(fetchCurrentUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.isAuthenticated = true;
                 state.user = action.payload;
                 localStorage.setItem("user", JSON.stringify(action.payload));
             })
-            .addCase(verifyAuth.rejected, (state) => {
+            .addCase(fetchCurrentUser.rejected, (state) => {
                 state.loading = false;
                 state.isAuthenticated = false;
                 state.user = null;

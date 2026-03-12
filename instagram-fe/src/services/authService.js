@@ -20,7 +20,7 @@ const authService = {
      * @param {Object} userData {username, fullName, email, password}
      */
     signup: async (userData) => {
-        return axiosClient.post("/auth/signup", userData);
+        return axiosClient.post("/auth/register", userData);
     },
 
     /**

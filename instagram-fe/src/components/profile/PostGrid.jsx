@@ -14,7 +14,7 @@ import { BsCollectionPlayFill } from "react-icons/bs";
 import PostDetailModal from "../modals/PostDetailModal";
 
 const PostGridItem = ({ post, onClick }) => {
-    const isReel = post.type === "reel" || !!post.videoUrl;
+    const isReel = post.type === "REEL";
 
     return (
         <Box
@@ -32,7 +32,7 @@ const PostGridItem = ({ post, onClick }) => {
                 {isReel ? (
                     <Box
                         as="video"
-                        src={post.videoUrl}
+                        src={post.media?.[0]?.url}
                         w="100%"
                         h="100%"
                         objectFit="cover"
@@ -47,7 +47,7 @@ const PostGridItem = ({ post, onClick }) => {
                     />
                 ) : (
                     <Image
-                        src={post.imageUrl || (post.images && post.images[0])}
+                        src={post.media?.[0]?.url}
                         alt="User post"
                         w="100%"
                         h="100%"
@@ -115,7 +115,11 @@ const PostGrid = ({ posts, loading }) => {
                 Loading posts...
             </Box>
         );
-    if (!posts || posts.length === 0)
+
+    // Backend returns PaginatedResponse, so posts might be an object with a content array
+    const postList = Array.isArray(posts) ? posts : (posts?.content || []);
+
+    if (postList.length === 0)
         return (
             <Box textAlign="center" py={10} fontWeight="bold">
                 No Photos Yet
@@ -125,7 +129,7 @@ const PostGrid = ({ posts, loading }) => {
     return (
         <>
             <SimpleGrid columns={3} spacing="4px">
-                {posts.map((post) => (
+                {postList.map((post) => (
                     <PostGridItem
                         key={post.id}
                         post={post}
@@ -139,10 +143,6 @@ const PostGrid = ({ posts, loading }) => {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     post={selectedPost}
-                    isLiked={false}
-                    handleLike={() => {}}
-                    isSaved={false}
-                    handleSave={() => {}}
                 />
             )}
         </>

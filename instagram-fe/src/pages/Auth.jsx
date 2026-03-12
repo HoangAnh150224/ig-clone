@@ -17,6 +17,13 @@ import InstagramAlert from "../components/common/InstagramAlert";
 
 const Divider = () => <Box h="1px" bg="gray.200" flex={1} />;
 
+const authImages = [
+    "https://www.instagram.com/static/images/homepage/screenshots/screenshot1-2x.png/cfd999368de3.png",
+    "https://www.instagram.com/static/images/homepage/screenshots/screenshot2-2x.png/80b3ad71f90b.png",
+    "https://www.instagram.com/static/images/homepage/screenshots/screenshot3-2x.png/fe2540681fd5.png",
+    "https://www.instagram.com/static/images/homepage/screenshots/screenshot4-2x.png/8e2292e57938.png",
+];
+
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
@@ -39,13 +46,6 @@ const Auth = () => {
         message: "",
     });
 
-    const authImages = [
-        "https://www.instagram.com/static/images/homepage/screenshots/screenshot1-2x.png/cfd999368de3.png",
-        "https://www.instagram.com/static/images/homepage/screenshots/screenshot2-2x.png/80b3ad71f90b.png",
-        "https://www.instagram.com/static/images/homepage/screenshots/screenshot3-2x.png/fe2540681fd5.png",
-        "https://www.instagram.com/static/images/homepage/screenshots/screenshot4-2x.png/8e2292e57938.png",
-    ];
-
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentImageIndex((prev) => (prev + 1) % authImages.length);
@@ -66,7 +66,7 @@ const Auth = () => {
         if (isLogin) {
             dispatch(
                 login({
-                    username: formData.username,
+                    identifier: formData.username,
                     password: formData.password,
                 }),
             );

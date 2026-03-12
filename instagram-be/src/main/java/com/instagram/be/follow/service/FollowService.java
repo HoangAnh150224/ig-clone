@@ -9,6 +9,8 @@ import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.follow.request.FollowRequest;
 import com.instagram.be.follow.response.FollowResponse;
 import com.instagram.be.base.service.BaseService;
+import com.instagram.be.notification.enums.NotificationType;
+import com.instagram.be.notification.service.CreateNotificationService;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
     private final FollowRepository followRepository;
     private final UserProfileRepository userProfileRepository;
     private final BlockRepository blockRepository;
+    private final CreateNotificationService notificationService;
 
     @Override
     @Transactional
@@ -50,10 +53,11 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
             throw new NotFoundException("User", followingId);
         }
 
-        // Idempotent: return existing follow if already present
+        // Toggle: unfollow if already present
         Optional<Follow> existing = followRepository.findByFollowerIdAndFollowingId(followerId, followingId);
         if (existing.isPresent()) {
-            return FollowResponse.from(existing.get());
+            followRepository.delete(existing.get());
+            return new FollowResponse(followerId, followingId, null);
         }
 
         FollowStatus status = target.isPrivateAccount() ? FollowStatus.PENDING : FollowStatus.ACCEPTED;
@@ -64,6 +68,12 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
                 .status(status)
                 .build();
 
-        return FollowResponse.from(followRepository.save(follow));
+        Follow saved = followRepository.save(follow);
+
+        // Notify target
+        NotificationType type = (status == FollowStatus.ACCEPTED) ? NotificationType.FOLLOW : NotificationType.FOLLOW_REQUEST;
+        notificationService.create(target, follower, type, null, null);
+
+        return FollowResponse.from(saved);
     }
 }

@@ -11,27 +11,34 @@ import {
 } from "@chakra-ui/react";
 import UserAvatar from "../common/UserAvatar";
 import { useSelector } from "react-redux";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import profileService from "../../services/profileService";
-import userService from "../../services/userService";
 
 const RightSidebar = () => {
     const { user: authUser } = useSelector((state) => state.auth);
     const navigate = useNavigate();
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [followingMap, setFollowingMap] = useState({});
 
-    const currentUser = userService.getCurrentUser();
-    const myUsername = authUser?.username || currentUser.username;
-    const myFullName = authUser?.fullName || currentUser.fullName;
-    const myAvatar = authUser?.avatar || currentUser.avatar;
+    const myUsername = authUser?.username;
+    const myFullName = authUser?.fullName;
+    const myAvatar = authUser?.avatarUrl;
 
     useEffect(() => {
         const fetchSuggestions = async () => {
             setLoading(true);
             try {
                 const response = await profileService.getSuggestions();
-                setSuggestions(response);
+                const data = Array.isArray(response) ? response : (response.content || []);
+                setSuggestions(data);
+                
+                // Initialize following status map
+                const initialMap = {};
+                data.forEach(user => {
+                    initialMap[user.id] = user.isFollowing || false;
+                });
+                setFollowingMap(initialMap);
             } catch (error) {
                 console.error("Failed to fetch suggestions", error);
             } finally {
@@ -39,11 +46,26 @@ const RightSidebar = () => {
             }
         };
 
-        fetchSuggestions();
-    }, []);
+        if (authUser) {
+            fetchSuggestions();
+        }
+    }, [authUser]);
 
     const handleUserClick = (username) => {
         navigate(`/${username}`);
+    };
+
+    const handleFollow = async (e, userId) => {
+        e.stopPropagation();
+        try {
+            await profileService.toggleFollow(userId);
+            setFollowingMap(prev => ({
+                ...prev,
+                [userId]: !prev[userId]
+            }));
+        } catch (error) {
+            console.error("Failed to follow/unfollow user", error);
+        }
     };
 
     const footerLinks = [
@@ -63,6 +85,8 @@ const RightSidebar = () => {
         },
         { label: "Language", url: "#" },
     ];
+
+    if (!authUser) return null;
 
     return (
         <Box
@@ -138,7 +162,7 @@ const RightSidebar = () => {
                                 cursor="pointer"
                                 onClick={() => handleUserClick(user.username)}
                             >
-                                <UserAvatar src={user.avatar} size="32px" />
+                                <UserAvatar src={user.avatarUrl} size="32px" />
                                 <VStack align="start" gap={0}>
                                     <Text
                                         fontSize="14px"
@@ -154,7 +178,9 @@ const RightSidebar = () => {
                                         isTruncated
                                         fontWeight="400"
                                     >
-                                        {user.isVerified
+                                        {user.mutualCount > 0
+                                            ? `Followed by ${user.mutualCount} mutual`
+                                            : user.verified
                                             ? "Verified Account"
                                             : "Suggested for you"}
                                     </Text>
@@ -162,17 +188,18 @@ const RightSidebar = () => {
                             </HStack>
                             <Button
                                 variant="ghost"
-                                color="#0095f6"
+                                color={followingMap[user.id] ? "black" : "#0095f6"}
                                 fontSize="12px"
                                 fontWeight="600"
                                 p={0}
                                 height="auto"
+                                onClick={(e) => handleFollow(e, user.id)}
                                 _hover={{
                                     bg: "transparent",
-                                    color: "blue.800",
+                                    color: followingMap[user.id] ? "gray.500" : "blue.800",
                                 }}
                             >
-                                Follow
+                                {followingMap[user.id] ? "Following" : "Follow"}
                             </Button>
                         </HStack>
                     ))

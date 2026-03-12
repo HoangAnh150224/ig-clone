@@ -2,20 +2,23 @@ import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import { useSelector, useDispatch } from "react-redux";
-import LoadingSpinner from "./components/common/LoadingSpinner";
-import { verifyAuth } from "./store/slices/authSlice";
-import { clearGlobalError } from "./store/slices/uiSlice";
+import { fetchCurrentUser } from "./store/slices/authSlice";
+import { setUnreadNotificationCount, incrementUnreadNotificationCount } from "./store/slices/uiSlice";
+import CreatePostModal from "./components/modals/CreatePostModal";
+import useStomp from "./hooks/useStomp";
 import InstagramAlert from "./components/common/InstagramAlert";
+import notificationService from "./services/notificationService";
 
-// Pages
+// Lazy pages
 const Home = lazy(() => import("./pages/Home"));
-const Explore = lazy(() => import("./pages/Explore"));
-const Reels = lazy(() => import("./pages/Reels"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PostDetail = lazy(() => import("./pages/PostDetail"));
+const Archive = lazy(() => import("./pages/Archive"));
+const Explore = lazy(() => import("./pages/Explore"));
+const Reels = lazy(() => import("./pages/Reels"));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -24,125 +27,141 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Public Route Component
-const PublicRoute = ({ children }) => {
-    const { isAuthenticated } = useSelector((state) => state.auth);
-    if (isAuthenticated) return <Navigate to="/" replace />;
-    return children;
-};
-
 const App = () => {
     const dispatch = useDispatch();
-    const { loading, isAuthenticated, token } = useSelector(
-        (state) => state.auth,
-    );
-    const { globalError } = useSelector((state) => state.ui);
+    const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+    const globalError = useSelector((state) => state.ui.error);
 
     useEffect(() => {
-        // Verify token on mount to restore user session
         if (token) {
-            dispatch(verifyAuth());
+            dispatch(fetchCurrentUser());
+            notificationService.getUnreadCount().then(count => {
+                dispatch(setUnreadNotificationCount(count));
+            }).catch(console.error);
         }
     }, [dispatch, token]);
 
+    // GLOBAL WEBSOCKET FOR NOTIFICATIONS
+    const { connected, subscribe } = useStomp("/ws");
+
+    useEffect(() => {
+        if (connected && user?.id) {
+            const sub = subscribe(`/user/${user.id}/queue/notifications`, (notification) => {
+                dispatch(incrementUnreadNotificationCount());
+            });
+            return () => sub?.unsubscribe();
+        }
+    }, [connected, subscribe, user?.id, dispatch]);
+
     return (
-        <div className="min-h-screen bg-white">
-            <Suspense fallback={<LoadingSpinner />}>
-                {loading && !isAuthenticated && token ? (
-                    <LoadingSpinner />
-                ) : (
+        <div className="app-container">
+            <Suspense fallback={null}>
+                <Routes>
+                    {/* Public Routes */}
+                    <Route
+                        path="/accounts/*"
+                        element={
+                            !isAuthenticated ? (
+                                <Auth />
+                            ) : (
+                                <Navigate to="/" replace />
+                            )
+                        }
+                    />
+
+                    {/* Protected Routes */}
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Home />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/explore"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Explore />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/reels"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Reels />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/direct/inbox"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Messages />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/accounts/edit"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Settings />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/:username"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Profile />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/p/:postId"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <PostDetail />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/archive"
+                        element={
+                            <ProtectedRoute>
+                                <MainLayout>
+                                    <Archive />
+                                </MainLayout>
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Catch all */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+
+                {/* Modals & Global UI */}
+                {isAuthenticated && (
                     <>
-                        <Routes>
-                            {/* Public Routes */}
-                            <Route
-                                path="/accounts/login"
-                                element={
-                                    <PublicRoute>
-                                        <Auth />
-                                    </PublicRoute>
-                                }
-                            />
-
-                            {/* Protected Routes */}
-                            <Route
-                                path="/"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Home />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/explore"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Explore />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/reels"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Reels />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/direct/inbox"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Messages />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/accounts/edit"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Settings />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/:username"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <Profile />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/p/:postId"
-                                element={
-                                    <ProtectedRoute>
-                                        <MainLayout>
-                                            <PostDetail />
-                                        </MainLayout>
-                                    </ProtectedRoute>
-                                }
-                            />
-
-                            {/* Catch all */}
-                            <Route path="*" element={<Navigate to="/" replace />} />
-                        </Routes>
-
-                        {/* Global Error Alert */}
+                        <CreatePostModal />
                         <InstagramAlert
                             isOpen={!!globalError}
-                            onClose={() => dispatch(clearGlobalError())}
+                            onClose={() => {}}
                             title="Error"
                             message={globalError}
                         />

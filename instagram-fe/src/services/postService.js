@@ -1,77 +1,134 @@
 import axiosClient from "../api/axiosClient";
 
 /**
- * PostService handles all feed, explore, and single post interactions.
- * All responses are unboxed by axiosClient.
+ * PostService handles post-related API calls.
  */
 const postService = {
     /**
-     * Get feed posts for the authenticated user.
-     * API: GET /posts/feed
-     */
-    getFeedPosts: async (page = 0, size = 10) => {
-        return axiosClient.get(`/posts/feed?page=${page}&size=${size}`);
-    },
-
-    /**
-     * Get explore posts (Discovery).
-     * API: GET /posts/explore
-     */
-    getExplorePosts: async (page = 0, size = 10) => {
-        return axiosClient.get(`/posts/explore?page=${page}&size=${size}`);
-    },
-
-    /**
-     * Get post details by ID.
-     * API: GET /posts/{postId}
-     */
-    getPostById: async (postId) => {
-        return axiosClient.get(`/posts/${postId}`);
-    },
-
-    /**
-     * Create new post.
+     * Create a new post.
      * API: POST /posts
      */
-    createPost: async (formData, onUploadProgress) => {
-        return axiosClient.post("/posts", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress,
-        });
+    createPost: async (postData) => {
+        return axiosClient.post("/posts", postData);
     },
 
     /**
-     * Delete post by ID.
-     * API: DELETE /posts/{postId}
+     * Get a specific post by ID.
+     * API: GET /posts/{id}
      */
-    deletePost: async (postId) => {
-        return axiosClient.delete(`/posts/${postId}`);
+    getPost: async (id) => {
+        return axiosClient.get(`/posts/${id}`);
     },
 
     /**
-     * Toggle Like on a post.
-     * API: POST /posts/{postId}/like
+     * Get feed posts (cursor-based).
+     * API: GET /feed
      */
-    toggleLikePost: async (postId) => {
-        return axiosClient.post(`/posts/${postId}/like`);
+    getFeedPosts: async (cursor = null, size = 12, type = null) => {
+        const params = new URLSearchParams();
+        if (cursor) params.append("cursor", cursor);
+        if (size) params.append("size", size);
+        if (type) params.append("type", type);
+        return axiosClient.get(`/feed?${params.toString()}`);
     },
 
     /**
-     * Toggle Save/Bookmark a post.
-     * API: POST /posts/{postId}/save
+     * Update an existing post.
+     * API: PUT /posts/{id}
      */
-    toggleSavePost: async (postId) => {
-        return axiosClient.post(`/posts/${postId}/save`);
+    updatePost: async (id, data) => {
+        return axiosClient.put(`/posts/${id}`, data);
     },
 
     /**
-     * Get users who liked a post.
-     * API: GET /posts/{postId}/likes
+     * Report a post.
+     * API: POST /posts/{postId}/report
      */
-    getPostLikes: async (postId) => {
-        return axiosClient.get(`/posts/${postId}/likes`);
+    reportPost: async (postId, reason) => {
+        return axiosClient.post(`/posts/${postId}/report`, { reason });
+    },
+
+    /**
+     * Toggle like on a post.
+     * API: POST /posts/{id}/like
+     */
+    likePost: async (id) => {
+        return axiosClient.post(`/posts/${id}/like`);
+    },
+
+    /**
+     * Toggle save on a post.
+     * API: POST /posts/{id}/save
+     */
+    savePost: async (id) => {
+        return axiosClient.post(`/posts/${id}/save`);
+    },
+
+    /**
+     * Archive a post.
+     * API: PATCH /posts/{id}/archive
+     */
+    archivePost: async (id) => {
+        return axiosClient.patch(`/posts/${id}/archive`);
+    },
+
+    /**
+     * Delete a post.
+     * API: DELETE /posts/{id}
+     */
+    deletePost: async (id) => {
+        return axiosClient.delete(`/posts/${id}`);
+    },
+
+    /**
+     * Get list of users who liked a post.
+     * API: GET /posts/{id}/likers
+     */
+    getPostLikers: async (id, page = 0, size = 20) => {
+        return axiosClient.get(`/posts/${id}/likers?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Record a view on a post.
+     * API: POST /posts/{id}/view
+     */
+    viewPost: async (id) => {
+        return axiosClient.post(`/posts/${id}/view`);
+    },
+
+    /**
+     * Get saved posts for current user.
+     * API: GET /posts/saved
+     */
+    getSavedPosts: async (page = 0, size = 12) => {
+        return axiosClient.get(`/posts/saved?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Get archived posts for current user.
+     * API: GET /archive/posts
+     */
+    getArchivedPosts: async (page = 0, size = 12) => {
+        return axiosClient.get(`/archive/posts?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Get explore posts (paginated).
+     * API: GET /explore
+     */
+    getExplorePosts: async (page = 0, size = 18) => {
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (size) params.append("size", size);
+        return axiosClient.get(`/explore?${params.toString()}`);
+    },
+
+    /**
+     * Get posts tagged with current user.
+     * API: GET /posts/tagged/{userId}
+     */
+    getTaggedPosts: async (userId, page = 0, size = 12) => {
+        return axiosClient.get(`/posts/tagged/${userId}?page=${page}&size=${size}`);
     }
 };
 

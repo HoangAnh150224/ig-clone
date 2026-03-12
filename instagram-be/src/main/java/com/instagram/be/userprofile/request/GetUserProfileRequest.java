@@ -6,7 +6,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.UUID;
 
 @Data
 @SuperBuilder
@@ -14,5 +13,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class GetUserProfileRequest extends BaseRequest {
 
-    private UUID targetUserId;
+    private String targetUsername;
 }

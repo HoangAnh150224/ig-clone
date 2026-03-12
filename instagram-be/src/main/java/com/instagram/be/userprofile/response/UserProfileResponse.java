@@ -14,9 +14,11 @@ public record UserProfileResponse(
         String website,
         boolean verified,
         boolean privateAccount,
+        boolean isOnline,
         UserRole role,
         long followersCount,
         long followingCount,
+        long postsCount,
         // Social context — computed relative to the viewer
         boolean isFollowing,
         boolean isPending,
@@ -25,8 +27,10 @@ public record UserProfileResponse(
     public static UserProfileResponse of(UserProfile user,
                                           long followersCount,
                                           long followingCount,
+                                          long postsCount,
                                           boolean isFollowing,
                                           boolean isPending,
+                                          boolean isOnline,
                                           boolean canViewContent) {
         return new UserProfileResponse(
                 user.getId(),
@@ -37,9 +41,11 @@ public record UserProfileResponse(
                 user.getWebsite(),
                 user.isVerified(),
                 user.isPrivateAccount(),
+                isOnline,
                 user.getRole(),
                 followersCount,
                 followingCount,
+                postsCount,
                 isFollowing,
                 isPending,
                 canViewContent

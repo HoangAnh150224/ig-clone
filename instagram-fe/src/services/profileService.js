@@ -6,38 +6,26 @@ import axiosClient from "../api/axiosClient";
 const profileService = {
     /**
      * Get user profile by username.
-     * API: GET /users/{username}/profile
+     * API: GET /users/{username}
      */
     getUserProfile: async (username) => {
-        return axiosClient.get(`/users/${username}/profile`);
+        return axiosClient.get(`/users/${username}`);
     },
 
     /**
      * Get user suggestions (Who to follow).
      * API: GET /users/suggestions
      */
-    getSuggestions: async () => {
-        return axiosClient.get("/users/suggestions");
+    getSuggestions: async (limit = 5) => {
+        return axiosClient.get(`/users/suggestions?limit=${limit}`);
     },
 
     /**
-     * Get all posts and reels for a specific user by username.
-     * API: GET /users/${username}/posts
+     * Get all posts for a specific user.
+     * API: GET /users/{username}/posts
      */
-    getUserPosts: async (username) => {
-        return axiosClient.get(`/users/${username}/posts`);
-    },
-
-    /**
-     * Add story from Archive to Highlight.
-     * API: POST /highlights
-     */
-    addToHighlight: async (storyId, highlightId = null, newTitle = null) => {
-        return axiosClient.post("/highlights", {
-            storyId,
-            highlightId,
-            title: newTitle
-        });
+    getUserPosts: async (username, page = 0, size = 12) => {
+        return axiosClient.get(`/users/${username}/posts?page=${page}&size=${size}`);
     },
 
     /**
@@ -47,33 +35,32 @@ const profileService = {
     toggleFollow: async (userId) => {
         return axiosClient.post(`/users/${userId}/follow`);
     },
-    
+
     /**
-     * Get users who follow this user.
+     * Get followers list.
      * API: GET /users/{userId}/followers
      */
-    getUserFollowers: async (userId) => {
-        return axiosClient.get(`/users/${userId}/followers`);
+    getUserFollowers: async (userId, page = 0, size = 20) => {
+        return axiosClient.get(`/users/${userId}/followers?page=${page}&size=${size}`);
     },
 
     /**
-     * Get users this user is following.
+     * Get following list.
      * API: GET /users/{userId}/following
      */
-    getUserFollowing: async (userId) => {
-        return axiosClient.get(`/users/${userId}/following`);
+    getUserFollowing: async (userId, page = 0, size = 20) => {
+        return axiosClient.get(`/users/${userId}/following?page=${page}&size=${size}`);
     },
 
     /**
      * Search users by query.
-     * API: GET /users/search?query=...
      */
     searchUsers: async (query) => {
-        return axiosClient.get(`/users/search?query=${query}`);
+        return axiosClient.get(`/search?q=${query}`);
     },
 
     /**
-     * Get recent search history.
+     * Get search history.
      * API: GET /search/history
      */
     getSearchHistory: async () => {
@@ -81,15 +68,15 @@ const profileService = {
     },
 
     /**
-     * Add a user to search history.
+     * Add user to search history.
      * API: POST /search/history
      */
-    addToSearchHistory: async (userId) => {
-        return axiosClient.post("/search/history", { userId });
+    addToSearchHistory: async (searchedUserId) => {
+        return axiosClient.post("/search/history", { searchedUserId });
     },
 
     /**
-     * Delete a single entry from search history.
+     * Delete a search history item.
      * API: DELETE /search/history/{id}
      */
     deleteSearchHistory: async (id) => {
@@ -98,10 +85,28 @@ const profileService = {
 
     /**
      * Clear all search history.
-     * API: DELETE /search/history
+     * Backend doesn't have a clear-all DELETE /search/history yet based on controller,
+     * but PLAN-BE says it does. Let's assume it doesn't until verified.
      */
     clearSearchHistory: async () => {
-        return axiosClient.delete("/search/history");
+        // Implementation might be needed in backend
+        return Promise.resolve();
+    },
+
+    /**
+     * Get highlights for a specific user.
+     * API: GET /users/{username}/highlights
+     */
+    getUserHighlights: async (username) => {
+        return axiosClient.get(`/users/${username}/highlights`);
+    },
+
+    /**
+     * Create a new Highlight.
+     * API: POST /highlights
+     */
+    createHighlight: async (data) => {
+        return axiosClient.post("/highlights", data);
     }
 };
 

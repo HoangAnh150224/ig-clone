@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     VStack,
@@ -13,33 +13,58 @@ import {
 } from "@chakra-ui/react";
 import { BsArrowLeft, BsClockHistory, BsGrid3X3 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
-import { currentUser } from "../api/dummyData";
+import { useSelector } from "react-redux";
 import StoryModal from "../components/modals/StoryModal";
 import PostDetailModal from "../components/modals/PostDetailModal";
+import postService from "../services/postService";
+import storyService from "../services/storyService";
 
 const Archive = () => {
     const navigate = useNavigate();
+    const { user: authUser } = useSelector((state) => state.auth);
     const [activeTab, setActiveTab] = useState("stories");
     const [isStoryOpen, setIsStoryOpen] = useState(false);
     const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
     const [selectedPost, setSelectedPost] = useState(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    
+    const [archivedStories, setArchivedStories] = useState([]);
+    const [archivedPosts, setArchivedPosts] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const archivedStories = currentUser.archivedStories || [];
-    const archivedPosts = currentUser.archivedPosts || [];
+    const handlePostAction = (postId, action, changes) => {
+        if (action === "delete") {
+            setArchivedPosts((prev) => prev.filter((p) => p.id !== postId));
+        } else if (action === "archive" && changes.archived === false) {
+            setArchivedPosts((prev) => prev.filter((p) => p.id !== postId));
+        }
+    };
+
+    useEffect(() => {
+        const fetchArchive = async () => {
+            setLoading(true);
+            try {
+                if (activeTab === "stories") {
+                    const response = await storyService.getArchivedStories();
+                    setArchivedStories(response || []);
+                } else {
+                    const response = await postService.getArchivedPosts();
+                    setArchivedPosts(response.content || response || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch archive", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchArchive();
+    }, [activeTab]);
 
     const storyHighlights = archivedStories.map((story) => ({
         id: story.id,
-        title: `${story.day} ${story.month}`,
-        user: currentUser,
-        stories: [
-            {
-                id: story.id,
-                url: story.url,
-                views: [],
-                replies: [],
-            },
-        ],
+        title: "Archive",
+        user: authUser,
+        stories: [story],
     }));
 
     const handleStoryClick = (index) => {
@@ -54,7 +79,7 @@ const Archive = () => {
 
     return (
         <Box bg="white" minH="100vh" color="black">
-            {/* 1. Top Navigation Bar */}
+            {/* Top Navigation Bar */}
             <Flex
                 align="center"
                 px={4}
@@ -68,14 +93,13 @@ const Archive = () => {
                     aria-label="Back"
                     onClick={() => navigate(-1)}
                     mr={4}
-                    _hover={{ bg: "transparent" }}
                 />
                 <Text fontSize="20px" fontWeight="700">
                     Archive
                 </Text>
             </Flex>
 
-            {/* 2. Tabs Section */}
+            {/* Tabs Section */}
             <Flex
                 justify="center"
                 borderBottom="1px solid"
@@ -92,22 +116,12 @@ const Archive = () => {
                     >
                         <HStack>
                             <Icon as={BsClockHistory} boxSize={5} />
-                            <Text
-                                fontWeight="700"
-                                fontSize="12px"
-                                letterSpacing="1px"
-                            >
+                            <Text fontWeight="700" fontSize="12px" letterSpacing="1px">
                                 STORIES
                             </Text>
                         </HStack>
                         {activeTab === "stories" && (
-                            <Box
-                                h="1px"
-                                w="100%"
-                                bg="black"
-                                position="absolute"
-                                bottom="0"
-                            />
+                            <Box h="1px" w="100%" bg="black" position="absolute" bottom="0" />
                         )}
                     </VStack>
 
@@ -121,28 +135,18 @@ const Archive = () => {
                     >
                         <HStack>
                             <Icon as={BsGrid3X3} boxSize={5} />
-                            <Text
-                                fontWeight="700"
-                                fontSize="12px"
-                                letterSpacing="1px"
-                            >
+                            <Text fontWeight="700" fontSize="12px" letterSpacing="1px">
                                 POSTS
                             </Text>
                         </HStack>
                         {activeTab === "posts" && (
-                            <Box
-                                h="1px"
-                                w="100%"
-                                bg="black"
-                                position="absolute"
-                                bottom="0"
-                            />
+                            <Box h="1px" w="100%" bg="black" position="absolute" bottom="0" />
                         )}
                     </VStack>
                 </HStack>
             </Flex>
 
-            {/* 3. Content Section */}
+            {/* Content Section */}
             <VStack gap={0} align="stretch">
                 <Box px={4} py={6}>
                     <Text color="gray.500" fontSize="13px">
@@ -152,7 +156,9 @@ const Archive = () => {
                     </Text>
                 </Box>
 
-                {activeTab === "stories" ? (
+                {loading ? (
+                    <Box textAlign="center" py={10}>Loading...</Box>
+                ) : activeTab === "stories" ? (
                     <Grid templateColumns="repeat(4, 1fr)" gap={1} px={1}>
                         {archivedStories.map((story, index) => (
                             <Box
@@ -160,13 +166,12 @@ const Archive = () => {
                                 position="relative"
                                 pt="177.77%"
                                 overflow="hidden"
-                                borderRadius="4px"
+                                borderRadius="0"
                                 cursor="pointer"
                                 onClick={() => handleStoryClick(index)}
                             >
                                 <Image
-                                    src={story.url}
-                                    alt={`${story.day} ${story.month}`}
+                                    src={story.mediaUrl || story.url}
                                     position="absolute"
                                     top={0}
                                     left={0}
@@ -174,36 +179,6 @@ const Archive = () => {
                                     h="100%"
                                     objectFit="cover"
                                 />
-                                <Box
-                                    position="absolute"
-                                    top="8px"
-                                    left="8px"
-                                    bg="white"
-                                    borderRadius="6px"
-                                    px={1.5}
-                                    py={0.5}
-                                    boxShadow="0 2px 4px rgba(0,0,0,0.15)"
-                                    textAlign="center"
-                                    minW="34px"
-                                >
-                                    <Text
-                                        color="black"
-                                        fontSize="15px"
-                                        fontWeight="800"
-                                        lineHeight="1"
-                                        mb="2px"
-                                    >
-                                        {story.day}
-                                    </Text>
-                                    <Text
-                                        color="black"
-                                        fontSize="9px"
-                                        fontWeight="700"
-                                        lineHeight="1"
-                                    >
-                                        {story.month}
-                                    </Text>
-                                </Box>
                             </Box>
                         ))}
                     </Grid>
@@ -218,7 +193,7 @@ const Archive = () => {
                                 onClick={() => handlePostClick(post)}
                             >
                                 <Image
-                                    src={post.imageUrl}
+                                    src={post.media?.[0]?.url || post.imageUrl}
                                     position="absolute"
                                     top={0}
                                     left={0}
@@ -238,7 +213,6 @@ const Archive = () => {
                 onClose={() => setIsStoryOpen(false)}
                 highlights={storyHighlights}
                 initialHighlightIndex={selectedStoryIndex}
-                isArchiveMode={true}
             />
 
             {/* Post Detail Modal */}
@@ -247,10 +221,7 @@ const Archive = () => {
                     isOpen={isPostModalOpen}
                     onClose={() => setIsPostModalOpen(false)}
                     post={selectedPost}
-                    isLiked={false}
-                    handleLike={() => {}}
-                    isSaved={false}
-                    handleSave={() => {}}
+                    onPostAction={handlePostAction}
                 />
             )}
         </Box>

@@ -1,105 +1,69 @@
-import { allUsers, chatMessages, messageRequests } from "../api/dummyData";
+import axiosClient from "../api/axiosClient";
 
+/**
+ * MessageService handles real-time messaging API calls.
+ */
 const messageService = {
     /**
-     * BACKEND SETUP: Get primary conversation list
-     * API: GET /api/messages/primary
+     * Get primary conversation list.
+     * API: GET /messages
      */
     getPrimaryChats: async () => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const chats = allUsers.slice(0, 3).map((user) => ({
-                    id: user.id,
-                    user: user,
-                    lastMessage:
-                        chatMessages[user.username]?.[
-                            chatMessages[user.username].length - 1
-                        ]?.text || "No messages",
-                    time:
-                        chatMessages[user.username]?.[
-                            chatMessages[user.username].length - 1
-                        ]?.time || "",
-                    unread: false,
-                    messages: chatMessages[user.username] || [],
-                }));
-                resolve(chats);
-            }, 300);
-        });
+        return axiosClient.get("/messages");
     },
 
     /**
-     * BACKEND SETUP: Get chat messages for a conversation
-     * API: GET /api/messages/{chatId}
+     * Get chat messages for a conversation (paginated).
+     * API: GET /messages/{chatId}
      */
-    getChatMessages: async (chatId) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Simulate finding messages by chatId (using username as key here)
-                const user = allUsers.find((u) => u.id === chatId);
-                const messages = chatMessages[user?.username] || [];
-                resolve(messages);
-            }, 200);
-        });
+    getChatMessages: async (chatId, page = 0, size = 20) => {
+        return axiosClient.get(`/messages/${chatId}?page=${page}&size=${size}`);
     },
 
     /**
-     * BACKEND SETUP: Send new message
-     * API: POST /api/messages/send
+     * Send new message.
+     * API: POST /messages
      */
-    sendMessage: async (recipientId, text) => {
-        return new Promise((resolve) => {
-            console.log(
-                `Backend Action: SENDING MESSAGE to ${recipientId}: ${text}`,
-            );
-            setTimeout(() => {
-                const newMessage = {
-                    id: Date.now(),
-                    sender: "me",
-                    text: text,
-                    time: new Date().toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    }),
-                };
-
-                // Update local dummy data
-                const user = allUsers.find((u) => u.id === recipientId);
-                if (user && chatMessages[user.username]) {
-                    chatMessages[user.username].push(newMessage);
-                }
-
-                resolve(newMessage);
-            }, 400);
-        });
+    sendMessage: async (messageBody) => {
+        return axiosClient.post("/messages", messageBody);
     },
 
     /**
      * Get message request list.
-     * API: GET /api/messages/requests
+     * API: GET /messages/requests
      */
     getRequestChats: async () => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const requests = messageRequests.map((req) => ({
-                    ...req,
-                    messages: chatMessages[req.user.username] || [],
-                }));
-                resolve(requests);
-            }, 300);
-        });
+        return axiosClient.get("/messages/requests");
     },
 
     /**
      * Get total message request count.
-     * API: GET /api/messages/requests/count
+     * API: GET /messages/requests
      */
     getRequestCount: async () => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(messageRequests.length);
-            }, 100);
-        });
+        try {
+            const response = await axiosClient.get("/messages/requests");
+            return Array.isArray(response) ? response.length : (response.content?.length || 0);
+        } catch (error) {
+            return 0;
+        }
     },
+
+    /**
+     * Mark messages as read.
+     * API: POST /messages/{chatId}/read
+     */
+    markAsRead: async (chatId) => {
+        return axiosClient.post(`/messages/${chatId}/read`);
+    },
+
+    /**
+     * Delete (unsend) a message.
+     * API: DELETE /messages/{chatId}/{messageId}
+     */
+    deleteMessage: async (chatId, messageId) => {
+        return axiosClient.delete(`/messages/${chatId}/${messageId}`);
+    }
 };
 
 export default messageService;

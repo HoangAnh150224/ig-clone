@@ -41,6 +41,23 @@ const userSlice = createSlice({
                 state.userProfile = { ...state.userProfile, ...action.payload };
             }
         },
+        updatePostInProfile: (state, action) => {
+            const { id, changes } = action.payload;
+            
+            // If post is archived, remove it from the profile view
+            if (changes.archived === true) {
+                state.posts = state.posts.filter(p => p.id !== id);
+                if (state.userProfile) {
+                    state.userProfile.postsCount = Math.max(0, (state.userProfile.postsCount || 0) - 1);
+                }
+                return;
+            }
+
+            const index = state.posts.findIndex(p => p.id === id);
+            if (index !== -1) {
+                state.posts[index] = { ...state.posts[index], ...changes };
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -69,5 +86,6 @@ export const {
     setLoading,
     resetProfile,
     updateUserProfile,
+    updatePostInProfile,
 } = userSlice.actions;
 export default userSlice.reducer;

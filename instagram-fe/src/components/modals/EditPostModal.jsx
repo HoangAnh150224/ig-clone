@@ -5,7 +5,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogBody,
-    DialogFooter,
     DialogPositioner,
     Box,
     Flex,
@@ -15,38 +14,51 @@ import {
     Image,
     Textarea,
     Button,
-    IconButton,
     Separator,
+    Input,
+    Switch,
 } from "@chakra-ui/react";
-import { AiOutlineClose } from "react-icons/ai";
+import { useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
 import postService from "../../services/postService";
-import reelService from "../../services/reelService";
+import { updatePostInStore } from "../../store/slices/postSlice";
 
 const EditPostModal = ({ isOpen, onClose, post }) => {
+    const dispatch = useDispatch();
     const [caption, setCaption] = useState(post?.caption || "");
+    const [locationName, setLocationName] = useState(post?.locationName || "");
+    const [commentsDisabled, setCommentsDisabled] = useState(post?.commentsDisabled || false);
+    const [hideLikeCount, setHideLikeCount] = useState(post?.hideLikeCount || false);
     const [loading, setLoading] = useState(false);
 
     if (!post) return null;
 
-    const isReel = post.type === "reel" || !!post.videoUrl;
+    const isReel = post.type === "REEL";
 
     const handleSave = async () => {
         setLoading(true);
         try {
-            let response;
-            if (isReel) {
-                response = await reelService.updateReel(post.id, { caption });
-            } else {
-                response = await postService.updatePost(post.id, { caption });
-            }
-
-            if (response.success) {
-                console.log("Updated successfully");
-                onClose();
-            }
+            const data = {
+                caption,
+                locationName,
+                commentsDisabled,
+                hideLikeCount
+            };
+            const updatedPost = await postService.updatePost(post.id, data);
+            
+            dispatch(updatePostInStore({ 
+                id: post.id, 
+                changes: { 
+                    caption: updatedPost.caption,
+                    locationName: updatedPost.locationName,
+                    commentsDisabled: updatedPost.commentsDisabled,
+                    hideLikeCount: updatedPost.hideLikeCount
+                } 
+            }));
+            
+            onClose();
         } catch (error) {
-            console.error("Failed to update", error);
+            console.error("Failed to update post", error);
         } finally {
             setLoading(false);
         }
@@ -64,32 +76,20 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
             <DialogBackdrop bg="blackAlpha.600" />
             <DialogPositioner>
                 <DialogContent
-                    borderRadius="12px"
+                    borderRadius="0px"
                     overflow="hidden"
                     bg="white"
                     p={0}
                     maxW="800px"
                     width="90vw"
-                    height="500px"
+                    height="600px"
                 >
-                    <DialogHeader
-                        borderBottom="1px solid"
-                        borderColor="gray.100"
-                        py={3}
-                    >
-                        <Flex
-                            justify="space-between"
-                            align="center"
-                            width="100%"
-                        >
-                            <Text
-                                fontWeight="600"
-                                fontSize="16px"
-                                color="black"
-                                flex={1}
-                                textAlign="center"
-                                ml={8}
-                            >
+                    <DialogHeader borderBottom="1px solid" borderColor="gray.100" py={3}>
+                        <Flex justify="space-between" align="center" width="100%">
+                            <Button variant="ghost" color="black" fontSize="14px" onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Text fontWeight="600" fontSize="16px" color="black">
                                 Edit info
                             </Text>
                             <Button
@@ -107,17 +107,11 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                     <DialogBody p={0}>
                         <Flex height="100%">
                             {/* Media Preview */}
-                            <Box
-                                flex={1.2}
-                                bg="black"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                            >
+                            <Box flex={1.2} bg="black" display="flex" alignItems="center" justifyContent="center">
                                 {isReel ? (
                                     <Box
                                         as="video"
-                                        src={post.videoUrl}
+                                        src={post.media?.[0]?.url}
                                         width="100%"
                                         height="100%"
                                         objectFit="contain"
@@ -125,10 +119,7 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                                     />
                                 ) : (
                                     <Image
-                                        src={
-                                            post.imageUrl ||
-                                            post.media?.[0]?.url
-                                        }
+                                        src={post.media?.[0]?.url}
                                         width="100%"
                                         height="100%"
                                         objectFit="contain"
@@ -137,23 +128,11 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                             </Box>
 
                             {/* Edit Section */}
-                            <Box
-                                flex={1}
-                                p={4}
-                                display="flex"
-                                flexDirection="column"
-                            >
+                            <Box flex={1} p={4} display="flex" flexDirection="column" overflowY="auto">
                                 <HStack gap={3} mb={4}>
-                                    <UserAvatar
-                                        src={post.user?.avatar}
-                                        size="28px"
-                                    />
-                                    <Text
-                                        fontWeight="bold"
-                                        fontSize="14px"
-                                        color="black"
-                                    >
-                                        {post.user?.username}
+                                    <UserAvatar src={post.author?.avatarUrl} size="28px" />
+                                    <Text fontWeight="bold" fontSize="14px" color="black">
+                                        {post.author?.username}
                                     </Text>
                                 </HStack>
 
@@ -166,34 +145,49 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                                     color="black"
                                     border="none"
                                     _focus={{ boxShadow: "none" }}
-                                    flex={1}
+                                    minH="150px"
                                     p={0}
                                     resize="none"
                                 />
 
                                 <Separator my={4} />
-
-                                <VStack align="stretch" gap={3}>
-                                    <Flex
-                                        justify="space-between"
-                                        align="center"
-                                        cursor="pointer"
-                                    >
-                                        <Text fontSize="14px" color="black">
-                                            Accessibility
-                                        </Text>
-                                        <Box
-                                            as="svg"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                        >
-                                            <path d="m6 9 6 6 6-6" />
-                                        </Box>
-                                    </Flex>
+                                
+                                <VStack align="stretch" gap={4}>
+                                    <Input 
+                                        placeholder="Add location" 
+                                        variant="flushed" 
+                                        fontSize="14px" 
+                                        color="black"
+                                        value={locationName}
+                                        onChange={(e) => setLocationName(e.target.value)}
+                                    />
+                                    
+                                    <Box pt={2}>
+                                        <Text fontSize="14px" fontWeight="600" mb={2} color="black">Advanced settings</Text>
+                                        <VStack align="stretch" gap={3}>
+                                            <Flex justify="space-between" align="center">
+                                                <Text fontSize="14px" color="black">Hide like and view counts</Text>
+                                                <Switch 
+                                                    colorPalette="blue" 
+                                                    size="sm" 
+                                                    checked={hideLikeCount} 
+                                                    onCheckedChange={(e) => setHideLikeCount(e.checked)}
+                                                />
+                                            </Flex>
+                                            <Text fontSize="11px" color="gray.500">Only you will see the total number of likes and views on this post.</Text>
+                                            
+                                            <Flex justify="space-between" align="center" mt={2}>
+                                                <Text fontSize="14px" color="black">Turn off commenting</Text>
+                                                <Switch 
+                                                    colorPalette="blue" 
+                                                    size="sm" 
+                                                    checked={commentsDisabled} 
+                                                    onCheckedChange={(e) => setCommentsDisabled(e.checked)}
+                                                />
+                                            </Flex>
+                                            <Text fontSize="11px" color="gray.500">You can change this later by going to the menu at the top of your post.</Text>
+                                        </VStack>
+                                    </Box>
                                 </VStack>
                             </Box>
                         </Flex>

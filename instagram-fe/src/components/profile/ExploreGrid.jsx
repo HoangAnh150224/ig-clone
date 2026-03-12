@@ -15,7 +15,7 @@ import { BsCollectionPlayFill } from "react-icons/bs";
 import PostDetailModal from "../modals/PostDetailModal";
 
 const ExploreItem = ({ post, onClick }) => {
-    const isReel = post.type === "reel" || !!post.videoUrl;
+    const isReel = post.type === "REEL";
 
     return (
         <Box
@@ -32,7 +32,7 @@ const ExploreItem = ({ post, onClick }) => {
             {isReel ? (
                 <Box
                     as="video"
-                    src={post.videoUrl}
+                    src={post.media?.[0]?.url}
                     w="100%"
                     h="100%"
                     objectFit="cover"
@@ -47,7 +47,7 @@ const ExploreItem = ({ post, onClick }) => {
                 />
             ) : (
                 <Image
-                    src={post.imageUrl || (post.images && post.images[0])}
+                    src={post.media?.[0]?.url}
                     alt="Explore post"
                     w="100%"
                     h="100%"

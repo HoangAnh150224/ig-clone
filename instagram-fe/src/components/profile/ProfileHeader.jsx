@@ -12,13 +12,15 @@ import {
 import { BsThreeDots } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { openCreatePostModal } from "../../store/slices/uiSlice";
+import { FiPlus } from "react-icons/fi";
 import StoryModal from "../modals/StoryModal";
 import UserListModal from "../modals/UserListModal";
 import MoreOptionsModal from "../modals/MoreOptionsModal";
 import profileService from "../../services/profileService";
 import { toggleFollow } from "../../store/slices/userSlice";
 
-const ProfileHeader = ({ user }) => {
+const ProfileHeader = ({ user, isOwnProfile }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isStoryOpen, setIsStoryOpen] = useState(false);
@@ -37,6 +39,8 @@ const ProfileHeader = ({ user }) => {
         // ONLY OPEN IF THERE ARE NEW STORIES (Active Story)
         if (user.hasStory && user.stories?.length > 0) {
             setIsStoryOpen(true);
+        } else if (isOwnProfile) {
+            dispatch(openCreatePostModal());
         }
     };
 
@@ -44,13 +48,13 @@ const ProfileHeader = ({ user }) => {
         try {
             if (type === "followers") {
                 setListTitle("Followers");
-                // Note: Ensure these methods exist in profileService or are added as per Task 2.2
-                const followers = await profileService.getUserFollowers?.(user.id) || [];
-                setListUsers(followers);
+                const response = await profileService.getUserFollowers(user.id);
+                // Extract content from PaginatedResponse or fallback to array
+                setListUsers(response.content || (Array.isArray(response) ? response : []));
             } else {
                 setListTitle("Following");
-                const following = await profileService.getUserFollowing?.(user.id) || [];
-                setListUsers(following);
+                const response = await profileService.getUserFollowing(user.id);
+                setListUsers(response.content || (Array.isArray(response) ? response : []));
             }
             setIsListOpen(true);
         } catch (error) {
@@ -76,12 +80,12 @@ const ProfileHeader = ({ user }) => {
 
     return (
         <>
-            <div className="flex flex-col md:flex-row gap-8 md:gap-20 py-8 px-4 items-center">
+            <div className="flex flex-row gap-8 md:gap-20 pt-12 pb-10 px-4 items-start max-w-[935px] mx-auto">
                 {/* Avatar Section */}
-                <Box flexShrink={0}>
+                <Box flexShrink={0} pt={2}>
                     <Box
-                        width={{ base: "84px", md: "150px" }}
-                        height={{ base: "84px", md: "150px" }}
+                        width={{ base: "77px", md: "150px" }}
+                        height={{ base: "77px", md: "150px" }}
                         borderRadius="full"
                         display="flex"
                         alignItems="center"
@@ -112,7 +116,7 @@ const ProfileHeader = ({ user }) => {
                                 overflow="hidden"
                             >
                                 <Image
-                                    src={user.avatar}
+                                    src={user.avatarUrl}
                                     alt={user.username}
                                     w="100%"
                                     h="100%"
@@ -120,16 +124,34 @@ const ProfileHeader = ({ user }) => {
                                 />
                             </Box>
                         </Box>
+                        {isOwnProfile && !user.hasStory && (
+                            <Box
+                                position="absolute"
+                                bottom={{ base: "2px", md: "10px" }}
+                                right={{ base: "2px", md: "10px" }}
+                                bg="#0095f6"
+                                borderRadius="full"
+                                border="3px solid white"
+                                width={{ base: "20px", md: "32px" }}
+                                height={{ base: "20px", md: "32px" }}
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                                color="white"
+                            >
+                                <FiPlus size={18} strokeWidth={4} />
+                            </Box>
+                        )}
                     </Box>
                 </Box>
 
                 {/* Info Section */}
-                <VStack align="start" gap={6} flex={1} width="100%">
+                <VStack align="start" gap={4} flex={1} width="100%">
                     <HStack gap={4} wrap="wrap" width="100%">
                         <Text fontSize="20px" fontWeight="400" color="black">
                             {user.username}
                         </Text>
-                        {user.isOwnProfile ? (
+                        {isOwnProfile ? (
                             <HStack gap={2}>
                                 <Button
                                     size="sm"
@@ -151,7 +173,7 @@ const ProfileHeader = ({ user }) => {
                                     color="black"
                                     borderRadius="8px"
                                     _hover={{ bg: "#dbdbdb" }}
-                                    onClick={() => navigate("/archive/stories")}
+                                    onClick={() => navigate("/archive")}
                                 >
                                     View archive
                                 </Button>
@@ -200,10 +222,10 @@ const ProfileHeader = ({ user }) => {
                         )}
                     </HStack>
 
-                    <HStack gap={10} display={{ base: "none", md: "flex" }}>
+                    <HStack gap={10}>
                         <Text fontSize="16px" color="black">
                             <Text as="span" fontWeight="600">
-                                {user.postCount}
+                                {user.postsCount || 0}
                             </Text>{" "}
                             posts
                         </Text>
@@ -214,7 +236,7 @@ const ProfileHeader = ({ user }) => {
                             onClick={() => handleOpenList("followers")}
                         >
                             <Text as="span" fontWeight="600">
-                                {user.followerCount?.toLocaleString() || 0}
+                                {user.followersCount?.toLocaleString() || 0}
                             </Text>{" "}
                             followers
                         </Text>
@@ -231,7 +253,7 @@ const ProfileHeader = ({ user }) => {
                         </Text>
                     </HStack>
 
-                    <VStack align="start" gap={0}>
+                    <VStack align="start" gap={0} width="100%">
                         <Text fontSize="14px" fontWeight="600" color="black">
                             {user.fullName}
                         </Text>
@@ -239,6 +261,7 @@ const ProfileHeader = ({ user }) => {
                             fontSize="14px"
                             whiteSpace="pre-wrap"
                             color="black"
+                            maxW="100%"
                         >
                             {user.bio}
                         </Text>
@@ -250,7 +273,7 @@ const ProfileHeader = ({ user }) => {
                                 fontSize="14px"
                                 isExternal
                             >
-                                {user.website.replace("https://", "")}
+                                {user.website.replace("https://", "").replace("http://", "")}
                             </ChakraLink>
                         )}
                     </VStack>
@@ -270,7 +293,7 @@ const ProfileHeader = ({ user }) => {
                 onClose={() => setIsListOpen(false)}
                 title={listTitle}
                 users={listUsers}
-                isOwnContext={user.isOwnProfile}
+                isOwnContext={isOwnProfile}
             />
 
             {/* More Options Modal */}
@@ -278,7 +301,7 @@ const ProfileHeader = ({ user }) => {
                 isOpen={isMoreOptionsOpen}
                 onClose={() => setIsMoreOptionsOpen(false)}
                 isProfile={true}
-                isOwnProfile={user.isOwnProfile}
+                isOwnProfile={isOwnProfile}
                 user={user}
             />
         </>

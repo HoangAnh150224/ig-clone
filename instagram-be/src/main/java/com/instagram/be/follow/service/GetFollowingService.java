@@ -11,6 +11,7 @@ import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -22,8 +23,15 @@ public class GetFollowingService extends BaseService<FollowListRequest, Paginate
     private final UserProfileRepository userProfileRepository;
 
     @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
+        return super.execute(request);
+    }
+
+    @Override
     protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
         UUID targetId = request.getTargetUserId();
+        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
 
         if (!userProfileRepository.existsById(targetId)) {
             throw new NotFoundException("User", targetId);
@@ -31,7 +39,13 @@ public class GetFollowingService extends BaseService<FollowListRequest, Paginate
 
         Page<FollowUserResponse> page = followRepository
                 .findFollowingByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable())
-                .map(follow -> FollowUserResponse.from(follow.getFollowing()));
+                .map(follow -> {
+                    boolean isFollowing = false;
+                    if (viewerId != null) {
+                        isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, follow.getFollowing().getId());
+                    }
+                    return FollowUserResponse.of(follow.getFollowing(), isFollowing);
+                });
 
         return PaginatedResponse.from(page);
     }

@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import { Box, Flex, Text, HStack, VStack } from "@chakra-ui/react";
+import { Box, Flex, Text, HStack, VStack, Spinner } from "@chakra-ui/react";
 import UserAvatar from "../common/UserAvatar";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import UserListModal from "../modals/UserListModal";
-import { useSelector } from "react-redux";
 
 import commentService from "../../services/commentService";
 
-const CommentCard = ({ comment, onClose, onReply }) => {
-    const authUser = useSelector((state) => state.auth.user);
+const CommentCard = ({ comment, postId, onClose, onReply }) => {
     const [showReplies, setShowReplies] = useState(false);
-    const [isLiked, setIsLiked] = useState(
-        comment.likedBy?.some((u) => u.id === authUser?.id) || false,
-    );
+    const [replies, setReplies] = useState([]);
+    const [loadingReplies, setLoadingReplies] = useState(false);
+    const [isLiked, setIsLiked] = useState(comment.isLiked || false);
+    const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount || 0);
     const [isLikeListOpen, setIsListOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -26,11 +25,14 @@ const CommentCard = ({ comment, onClose, onReply }) => {
 
     const handleLike = async () => {
         const previousState = isLiked;
+        const previousCount = localLikeCount;
         setIsLiked(!isLiked);
+        setLocalLikeCount(prev => isLiked ? prev - 1 : prev + 1);
         try {
-            await commentService.toggleLikeComment(comment.id);
-        } catch (error) {
+            await commentService.likeComment(postId, comment.id);
+        } catch {
             setIsLiked(previousState);
+            setLocalLikeCount(previousCount);
         }
     };
 
@@ -38,37 +40,33 @@ const CommentCard = ({ comment, onClose, onReply }) => {
         if (onReply) onReply(comment);
     };
 
-    // Calculate the dynamic list of likers based on the like status
-    const likedUsers = (() => {
-        const baseList = comment.likedBy || [];
-        const alreadyLikedInDB = baseList.some((u) => u.id === authUser?.id);
-
-        if (isLiked) {
-            if (alreadyLikedInDB) return baseList;
-            return [
-                ...baseList,
-                {
-                    id: authUser?.id,
-                    username: authUser?.username,
-                    avatar: authUser?.avatar,
-                    fullName: "You",
-                },
-            ];
-        } else {
-            return baseList.filter((u) => u.id !== authUser?.id);
+    const toggleReplies = async () => {
+        if (!showReplies && replies.length === 0) {
+            setLoadingReplies(true);
+            try {
+                // Fetch replies from backend - pass 0 for page, 20 for size, and comment.id for parentId
+                const response = await commentService.getComments(postId, 0, 20, comment.id);
+                const replyList = Array.isArray(response) ? response : (response?.content || []);
+                setReplies(replyList);
+            } catch (error) {
+                console.error("Failed to fetch replies", error);
+            } finally {
+                setLoadingReplies(false);
+            }
         }
-    })();
+        setShowReplies(!showReplies);
+    };
 
-    const likeCount = likedUsers.length;
+    const likedUsers = []; 
 
     return (
         <Box mb={4} width="100%">
             <Flex gap={3} align="start" width="100%">
                 <Box
                     cursor="pointer"
-                    onClick={() => handleNavigate(comment.user.username)}
+                    onClick={() => handleNavigate(comment.author?.username)}
                 >
-                    <UserAvatar src={comment.user.avatar} size="32px" />
+                    <UserAvatar src={comment.author?.avatarUrl} size="32px" />
                 </Box>
                 <Box flex={1}>
                     <Text fontSize="14px" lineHeight="1.4" color="black">
@@ -78,19 +76,19 @@ const CommentCard = ({ comment, onClose, onReply }) => {
                             mr={2}
                             cursor="pointer"
                             onClick={() =>
-                                handleNavigate(comment.user.username)
+                                handleNavigate(comment.author?.username)
                             }
                             _hover={{ opacity: 0.7 }}
                         >
-                            {comment.user.username}
+                            {comment.author?.username}
                         </Text>
                         {comment.content}
                     </Text>
                     <HStack gap={4} mt={2}>
                         <Text fontSize="12px" color="gray.500">
-                            {comment.timeAgo}
+                            {comment.timeAgo || 'just now'}
                         </Text>
-                        {likeCount > 0 && (
+                        {localLikeCount > 0 && (
                             <Text
                                 fontSize="12px"
                                 color="gray.500"
@@ -99,7 +97,7 @@ const CommentCard = ({ comment, onClose, onReply }) => {
                                 _hover={{ color: "black" }}
                                 onClick={() => setIsListOpen(true)}
                             >
-                                {likeCount.toLocaleString()} likes
+                                {localLikeCount.toLocaleString()} likes
                             </Text>
                         )}
                         <Text
@@ -128,44 +126,55 @@ const CommentCard = ({ comment, onClose, onReply }) => {
             </Flex>
 
             {/* REPLIES SECTION */}
-            {comment.replies && comment.replies.length > 0 && (
+            {comment.replyCount > 0 && (
                 <Box ml="44px" mt={3}>
                     {!showReplies ? (
-                        <Text
-                            fontSize="12px"
-                            color="gray.500"
-                            fontWeight="bold"
-                            cursor="pointer"
-                            onClick={() => setShowReplies(true)}
+                        <HStack 
+                            cursor="pointer" 
+                            spacing={3} 
+                            onClick={toggleReplies}
+                            _hover={{ opacity: 0.8 }}
                         >
-                            ——— View all {comment.replies.length} replies
-                        </Text>
+                            <Box h="1px" w="24px" bg="gray.300" />
+                            <Text fontSize="12px" color="gray.500" fontWeight="bold">
+                                View all {comment.replyCount} replies
+                            </Text>
+                        </HStack>
                     ) : (
                         <VStack align="stretch" gap={4} mt={2}>
-                            <Text
-                                fontSize="12px"
-                                color="gray.500"
-                                fontWeight="bold"
-                                cursor="pointer"
+                            <HStack 
+                                cursor="pointer" 
+                                spacing={3} 
                                 onClick={() => setShowReplies(false)}
+                                _hover={{ opacity: 0.8 }}
                             >
-                                ——— Hide replies
-                            </Text>
-                            {comment.replies.map((reply) => (
-                                <ReplyItem
-                                    key={reply.id}
-                                    reply={reply}
-                                    onNavigate={handleNavigate}
-                                    onReply={onReply}
-                                    parentComment={comment}
-                                />
-                            ))}
+                                <Box h="1px" w="24px" bg="gray.300" />
+                                <Text fontSize="12px" color="gray.500" fontWeight="bold">
+                                    Hide replies
+                                </Text>
+                            </HStack>
+                            
+                            {loadingReplies ? (
+                                <Flex py={2} justify="start" pl={2}>
+                                    <Spinner size="xs" color="gray.400" />
+                                </Flex>
+                            ) : (
+                                replies.map((reply) => (
+                                    <ReplyItem
+                                        key={reply.id}
+                                        reply={reply}
+                                        postId={postId}
+                                        onNavigate={handleNavigate}
+                                        onReply={onReply}
+                                        parentComment={comment}
+                                    />
+                                ))
+                            )}
                         </VStack>
                     )}
                 </Box>
             )}
 
-            {/* Modal displaying people who liked the comment */}
             <UserListModal
                 isOpen={isLikeListOpen}
                 onClose={() => setIsListOpen(false)}
@@ -176,20 +185,21 @@ const CommentCard = ({ comment, onClose, onReply }) => {
     );
 };
 
-const ReplyItem = ({ reply, onNavigate, onReply, parentComment }) => {
-    const authUser = useSelector((state) => state.auth.user);
-    const [isLiked, setIsLiked] = useState(
-        reply.likedBy?.some((u) => u.id === authUser?.id) || false,
-    );
+const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment }) => {
+    const [isLiked, setIsLiked] = useState(reply.isLiked || false);
+    const [localLikeCount, setLocalLikeCount] = useState(reply.likeCount || 0);
     const [isListOpen, setIsListOpen] = useState(false);
 
     const handleLike = async () => {
         const previousState = isLiked;
+        const previousCount = localLikeCount;
         setIsLiked(!isLiked);
+        setLocalLikeCount(prev => isLiked ? prev - 1 : prev + 1);
         try {
-            await commentService.toggleLikeComment(reply.id);
-        } catch (error) {
+            await commentService.likeComment(postId, reply.id);
+        } catch {
             setIsLiked(previousState);
+            setLocalLikeCount(previousCount);
         }
     };
 
@@ -197,35 +207,15 @@ const ReplyItem = ({ reply, onNavigate, onReply, parentComment }) => {
         if (onReply) onReply(parentComment || reply);
     };
 
-    const likedUsers = (() => {
-        const baseList = reply.likedBy || [];
-        const alreadyLikedInDB = baseList.some((u) => u.id === authUser?.id);
-
-        if (isLiked) {
-            if (alreadyLikedInDB) return baseList;
-            return [
-                ...baseList,
-                {
-                    id: authUser?.id,
-                    username: authUser?.username,
-                    avatar: authUser?.avatar,
-                    fullName: "You",
-                },
-            ];
-        } else {
-            return baseList.filter((u) => u.id !== authUser?.id);
-        }
-    })();
-
-    const likeCount = likedUsers.length;
+    const likedUsers = [];
 
     return (
         <Flex gap={3} align="start">
             <Box
                 cursor="pointer"
-                onClick={() => onNavigate(reply.user.username)}
+                onClick={() => onNavigate(reply.author?.username)}
             >
-                <UserAvatar src={reply.user.avatar} size="24px" />
+                <UserAvatar src={reply.author?.avatarUrl} size="24px" />
             </Box>
             <Box flex={1}>
                 <Text fontSize="14px" color="black" lineHeight="1.4">
@@ -234,17 +224,17 @@ const ReplyItem = ({ reply, onNavigate, onReply, parentComment }) => {
                         fontWeight="bold"
                         mr={2}
                         cursor="pointer"
-                        onClick={() => onNavigate(reply.user.username)}
+                        onClick={() => onNavigate(reply.author?.username)}
                     >
-                        {reply.user.username}
+                        {reply.author?.username}
                     </Text>
                     {reply.content}
                 </Text>
                 <HStack gap={4} mt={1}>
                     <Text fontSize="12px" color="gray.500">
-                        {reply.timeAgo}
+                        {reply.timeAgo || 'just now'}
                     </Text>
-                    {likeCount > 0 && (
+                    {localLikeCount > 0 && (
                         <Text
                             fontSize="12px"
                             color="gray.500"
@@ -252,7 +242,7 @@ const ReplyItem = ({ reply, onNavigate, onReply, parentComment }) => {
                             cursor="pointer"
                             onClick={() => setIsListOpen(true)}
                         >
-                            {likeCount.toLocaleString()} likes
+                            {localLikeCount.toLocaleString()} likes
                         </Text>
                     )}
                     <Text

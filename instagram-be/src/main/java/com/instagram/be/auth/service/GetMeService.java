@@ -7,6 +7,7 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -15,6 +16,12 @@ import java.util.UUID;
 public class GetMeService extends BaseService<GetMeRequest, MeResponse> {
 
     private final AuthRepository authRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public MeResponse execute(GetMeRequest request) {
+        return super.execute(request);
+    }
 
     @Override
     protected MeResponse doProcess(GetMeRequest request) {

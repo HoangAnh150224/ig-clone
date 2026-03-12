@@ -31,4 +31,7 @@ public class ConversationParticipant extends BaseEntity {
 
     @Column(name = "last_read_at")
     private LocalDateTime lastReadAt;
+
+    @Column(name = "last_deleted_at")
+    private LocalDateTime lastDeletedAt;
 }

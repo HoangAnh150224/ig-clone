@@ -4,6 +4,7 @@ import UserAvatar from "../common/UserAvatar";
 import { LuChevronDown, LuArrowLeft } from "react-icons/lu";
 import { PiNotePencilLight } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const ChatList = ({
     chats,
@@ -12,8 +13,10 @@ const ChatList = ({
     currentView,
     onViewChange,
     requestCount,
+    onOpenNewMessage,
 }) => {
     const navigate = useNavigate();
+    const { user: authUser } = useSelector((state) => state.auth);
 
     return (
         <Box
@@ -50,15 +53,19 @@ const ChatList = ({
                     <HStack
                         gap={1}
                         cursor="pointer"
-                        onClick={() => navigate("/antigravity_dev")}
+                        onClick={() => navigate(`/${authUser?.username}`)}
                     >
                         <Text fontWeight="bold" fontSize="20px">
-                            antigravity_dev
+                            {authUser?.username || "Direct"}
                         </Text>
                         <LuChevronDown />
                     </HStack>
                 )}
-                <PiNotePencilLight size={24} cursor="pointer" />
+                <PiNotePencilLight 
+                    size={24} 
+                    cursor="pointer" 
+                    onClick={onOpenNewMessage} 
+                />
             </Flex>
 
             {/* Primary / Requests Tabs */}
@@ -83,51 +90,52 @@ const ChatList = ({
 
             {/* List */}
             <VStack align="stretch" gap={0} overflowY="auto" flex={1}>
-                {chats.map((chat) => (
-                    <Flex
-                        key={chat.id}
-                        px={5}
-                        py={3}
-                        align="center"
-                        gap={3}
-                        cursor="pointer"
-                        bg={
-                            activeChatId === chat.id ? "gray.50" : "transparent"
-                        }
-                        _hover={{ bg: "gray.50" }}
-                        onClick={() => onSelectChat(chat.id)}
-                        transition="0.2s"
-                    >
-                        <UserAvatar src={chat.user.avatar} size="56px" />
-                        <Box overflow="hidden">
-                            <Text
-                                fontWeight={chat.unread ? "bold" : "normal"}
-                                fontSize="14px"
-                                color="black"
-                            >
-                                {chat.user.username}
-                            </Text>
-                            <Text
-                                fontSize="12px"
-                                color={chat.unread ? "black" : "gray.500"}
-                                isTruncated
-                            >
-                                {typeof chat.lastMessage === "object"
-                                    ? chat.lastMessage.text
-                                    : chat.lastMessage}{" "}
-                                • {chat.time}
-                            </Text>
-                        </Box>
-                        {chat.unread && (
-                            <Box
-                                boxSize="8px"
-                                bg="#0095f6"
-                                borderRadius="full"
-                                ml="auto"
-                            />
-                        )}
-                    </Flex>
-                ))}
+                {chats.map((chat) => {
+                    const participant = chat.user || chat.participant;
+                    return (
+                        <Flex
+                            key={chat.id}
+                            px={5}
+                            py={3}
+                            align="center"
+                            gap={3}
+                            cursor="pointer"
+                            bg={
+                                activeChatId === chat.id ? "gray.50" : "transparent"
+                            }
+                            _hover={{ bg: "gray.50" }}
+                            onClick={() => onSelectChat(chat.id)}
+                            transition="0.2s"
+                        >
+                            <UserAvatar src={participant?.avatarUrl || participant?.avatar} size="56px" />
+                            <Box overflow="hidden">
+                                <Text
+                                    fontWeight={chat.unread ? "bold" : "normal"}
+                                    fontSize="14px"
+                                    color="black"
+                                >
+                                    {participant?.username}
+                                </Text>
+                                <Text
+                                    fontSize="12px"
+                                    color={chat.unread ? "black" : "gray.500"}
+                                    isTruncated
+                                    fontWeight={chat.unread ? "600" : "400"}
+                                >
+                                    {chat.lastMessage || "No messages yet"} • {chat.time || ""}
+                                </Text>
+                            </Box>
+                            {chat.unread && (
+                                <Box
+                                    boxSize="8px"
+                                    bg="#0095f6"
+                                    borderRadius="full"
+                                    ml="auto"
+                                />
+                            )}
+                        </Flex>
+                    );
+                })}
             </VStack>
         </Box>
     );

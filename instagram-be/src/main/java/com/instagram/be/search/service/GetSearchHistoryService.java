@@ -7,6 +7,7 @@ import com.instagram.be.search.response.SearchHistoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,12 @@ public class GetSearchHistoryService extends BaseService<GetSearchHistoryRequest
     private static final int MAX_HISTORY = 20;
 
     private final SearchHistoryRepository searchHistoryRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SearchHistoryResponse> execute(GetSearchHistoryRequest request) {
+        return super.execute(request);
+    }
 
     @Override
     protected List<SearchHistoryResponse> doProcess(GetSearchHistoryRequest request) {

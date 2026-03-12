@@ -1,14 +1,15 @@
 import React from "react";
-import { Flex, HStack, Text, Icon, Box } from "@chakra-ui/react";
+import { Flex, HStack, Text, Icon } from "@chakra-ui/react";
 import {
     BsGrid3X3,
     BsBookmark,
     BsBookmarkFill,
     BsCollectionPlay,
     BsCollectionPlayFill,
+    BsPersonBoundingBox,
 } from "react-icons/bs";
 
-const ProfileTabs = ({ activeTab, setActiveTab }) => {
+const ProfileTabs = ({ activeTab, setActiveTab, isOwnProfile }) => {
     const tabs = [
         { id: "posts", label: "POSTS", icon: BsGrid3X3, activeIcon: BsGrid3X3 },
         {
@@ -22,9 +23,17 @@ const ProfileTabs = ({ activeTab, setActiveTab }) => {
             label: "SAVED",
             icon: BsBookmark,
             activeIcon: BsBookmarkFill,
-            activeColor: "#FFD700",
+            isOwnOnly: true,
+        },
+        {
+            id: "tagged",
+            label: "TAGGED",
+            icon: BsPersonBoundingBox,
+            activeIcon: BsPersonBoundingBox,
         },
     ];
+
+    const visibleTabs = tabs.filter(tab => !tab.isOwnOnly || isOwnProfile);
 
     return (
         <Flex
@@ -33,7 +42,7 @@ const ProfileTabs = ({ activeTab, setActiveTab }) => {
             justify="center"
             gap={12}
         >
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const CurrentIcon = isActive ? tab.activeIcon : tab.icon;
 
@@ -45,9 +54,7 @@ const ProfileTabs = ({ activeTab, setActiveTab }) => {
                         borderTop={isActive ? "1px solid" : "none"}
                         borderColor={isActive ? "black" : "transparent"}
                         mt="-1px"
-                        color={
-                            isActive ? tab.activeColor || "black" : "gray.500"
-                        }
+                        color={isActive ? "black" : "gray.500"}
                         onClick={() => setActiveTab(tab.id)}
                         gap={2}
                         transition="all 0.2s"
@@ -55,17 +62,12 @@ const ProfileTabs = ({ activeTab, setActiveTab }) => {
                         <Icon
                             as={CurrentIcon}
                             boxSize={3}
-                            color={
-                                isActive
-                                    ? tab.activeColor || "black"
-                                    : "gray.500"
-                            }
+                            color={isActive ? "black" : "gray.500"}
                         />
                         <Text
                             fontSize="xs"
                             fontWeight="bold"
                             letterSpacing="widest"
-                            color={isActive ? "black" : "gray.500"}
                         >
                             {tab.label}
                         </Text>

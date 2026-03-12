@@ -1,64 +1,160 @@
 import React from "react";
+import {
+    Box,
+    HStack,
+    VStack,
+    Skeleton,
+    SkeletonCircle,
+    SkeletonText,
+    Grid,
+    Flex,
+} from "@chakra-ui/react";
 
 const ProfileSkeleton = () => {
     return (
-        <div className="mx-auto max-w-[935px] bg-white px-4">
+        <Box width="100%" bg="white">
             {/* Header Skeleton */}
-            <div className="flex flex-col items-center gap-8 py-8 md:flex-row md:gap-20">
+            <Flex
+                flexDirection="row"
+                gap={{ base: 8, md: 20 }}
+                pt={12}
+                pb={10}
+                px={4}
+                alignItems="start"
+                maxW="935px"
+                mx="auto"
+            >
                 {/* Avatar Section */}
-                <div className="h-20 w-20 shrink-0 animate-pulse rounded-full bg-gray-200 md:h-[150px] md:w-[150px]"></div>
+                <Box flexShrink={0} pt={2}>
+                    <SkeletonCircle
+                        size={{ base: "77px", md: "150px" }}
+                        startColor="gray.100"
+                        endColor="gray.200"
+                    />
+                </Box>
 
                 {/* Info Section */}
-                <div className="flex flex-1 flex-col gap-6 w-full">
-                    <div className="flex w-full gap-4">
-                        <div className="h-6 w-36 animate-pulse rounded bg-gray-200"></div>
-                        <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-200"></div>
-                        <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-200"></div>
-                    </div>
+                <VStack align="start" gap={4} flex={1} width="100%">
+                    <HStack gap={4} wrap="wrap" width="100%">
+                        <Skeleton
+                            height="24px"
+                            width="120px"
+                            borderRadius="4px"
+                        />
+                        <HStack gap={2}>
+                            <Skeleton
+                                height="32px"
+                                width="90px"
+                                borderRadius="8px"
+                            />
+                            <Skeleton
+                                height="32px"
+                                width="110px"
+                                borderRadius="8px"
+                            />
+                            <Skeleton
+                                height="24px"
+                                width="24px"
+                                borderRadius="full"
+                            />
+                        </HStack>
+                    </HStack>
 
-                    <div className="hidden w-full gap-10 md:flex">
-                        <div className="h-[18px] w-20 animate-pulse rounded bg-gray-200"></div>
-                        <div className="h-[18px] w-20 animate-pulse rounded bg-gray-200"></div>
-                        <div className="h-[18px] w-20 animate-pulse rounded bg-gray-200"></div>
-                    </div>
+                    <HStack gap={10}>
+                        <Skeleton
+                            height="18px"
+                            width="60px"
+                            borderRadius="4px"
+                        />
+                        <Skeleton
+                            height="18px"
+                            width="80px"
+                            borderRadius="4px"
+                        />
+                        <Skeleton
+                            height="18px"
+                            width="80px"
+                            borderRadius="4px"
+                        />
+                    </HStack>
 
-                    <div className="flex w-full flex-col gap-2">
-                        <div className="h-4 w-32 animate-pulse rounded bg-gray-200"></div>
-                        <div className="h-3.5 w-64 animate-pulse rounded bg-gray-200"></div>
-                        <div className="h-3.5 w-48 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                </div>
-            </div>
+                    <VStack align="start" gap={2} width="100%">
+                        <Skeleton
+                            height="16px"
+                            width="140px"
+                            borderRadius="4px"
+                        />
+                        <Skeleton
+                            height="14px"
+                            width="240px"
+                            borderRadius="4px"
+                        />
+                        <Skeleton
+                            height="14px"
+                            width="180px"
+                            borderRadius="4px"
+                        />
+                    </VStack>
+                </VStack>
+            </Flex>
 
             {/* Highlights Skeleton */}
-            <div className="mb-10 flex gap-10 overflow-x-hidden py-4 px-6">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex flex-col items-center gap-2">
-                        <div className="h-[87px] w-[87px] animate-pulse rounded-full border border-gray-100 bg-gray-200 p-[3px]"></div>
-                        <div className="h-3 w-12 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                ))}
-            </div>
+            <Box py={8} px={4} overflowX="hidden">
+                <HStack gap={10} align="start">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <VStack key={i} gap={2} minW="87px">
+                            <SkeletonCircle
+                                size="87px"
+                                startColor="gray.50"
+                                endColor="gray.100"
+                                border="1px solid"
+                                borderColor="gray.100"
+                            />
+                            <Skeleton
+                                height="12px"
+                                width="40px"
+                                borderRadius="4px"
+                            />
+                        </VStack>
+                    ))}
+                </HStack>
+            </Box>
 
             {/* Tabs Skeleton */}
-            <div className="flex justify-center gap-16 border-t border-gray-200">
-                <div className="-mt-px h-px w-[60px] animate-pulse bg-gray-300"></div>
-                <div className="-mt-px h-px w-[60px] animate-pulse bg-gray-300"></div>
-                <div className="-mt-px h-px w-[60px] animate-pulse bg-gray-300"></div>
-            </div>
-            <div className="flex justify-center gap-16 py-4">
-                <div className="h-4 w-[60px] animate-pulse rounded bg-gray-200"></div>
-                <div className="h-4 w-[60px] animate-pulse rounded bg-gray-200"></div>
-                <div className="h-4 w-[60px] animate-pulse rounded bg-gray-200"></div>
-            </div>
+            <Flex
+                borderTop="1px solid"
+                borderColor="gray.200"
+                justify="center"
+                gap={12}
+            >
+                {[1, 2, 3].map((i) => (
+                    <HStack key={i} py={4} gap={2}>
+                        <Skeleton height="12px" width="12px" />
+                        <Skeleton
+                            height="12px"
+                            width="50px"
+                            borderRadius="2px"
+                        />
+                    </HStack>
+                ))}
+            </Flex>
 
             {/* Grid Skeleton */}
-            <div className="grid grid-cols-3 gap-1 md:gap-7 py-4">
+            <Grid templateColumns="repeat(3, 1fr)" gap="4px" py={4}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                    <div key={i} className="aspect-square w-full animate-pulse bg-gray-200"></div>
+                    <Box key={i} position="relative" paddingBottom="100%">
+                        <Skeleton
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            width="100%"
+                            height="100%"
+                            borderRadius="0"
+                        />
+                    </Box>
                 ))}
-            </div>
-        </div>
+            </Grid>
+        </Box>
     );
 };
 

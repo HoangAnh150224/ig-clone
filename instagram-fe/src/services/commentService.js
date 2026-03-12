@@ -1,47 +1,51 @@
 import axiosClient from "../api/axiosClient";
 
 /**
- * CommentService handles all comment-related API calls.
+ * CommentService handles comment-related API calls.
  */
 const commentService = {
     /**
-     * Get comments by post ID.
-     * API: GET /posts/{postId}/comments
-     */
-    getCommentsByPostId: async (postId) => {
-        return axiosClient.get(`/posts/${postId}/comments`);
-    },
-
-    /**
-     * Add new comment to a post.
+     * Add a comment to a post.
      * API: POST /posts/{postId}/comments
      */
-    addComment: async (postId, content) => {
-        return axiosClient.post(`/posts/${postId}/comments`, { content });
+    addComment: async (postId, content, parentId = null) => {
+        return axiosClient.post(`/posts/${postId}/comments`, { content, parentCommentId: parentId });
     },
 
     /**
-     * Reply to a specific comment.
-     * API: POST /comments/{commentId}/replies
+     * Get comments for a post (paginated).
+     * API: GET /posts/{postId}/comments
      */
-    addReply: async (commentId, content) => {
-        return axiosClient.post(`/comments/${commentId}/replies`, { content });
-    },
-
-    /**
-     * Toggle Like on a comment.
-     * API: POST /comments/{commentId}/like
-     */
-    toggleLikeComment: async (commentId) => {
-        return axiosClient.post(`/comments/${commentId}/like`);
+    getComments: async (postId, page = 0, size = 20, parentId = null) => {
+        const params = new URLSearchParams();
+        if (page) params.append("page", page);
+        if (size) params.append("size", size);
+        if (parentId) params.append("parentId", parentId);
+        return axiosClient.get(`/posts/${postId}/comments?${params.toString()}`);
     },
 
     /**
      * Delete a comment.
-     * API: DELETE /comments/{commentId}
+     * API: DELETE /posts/{postId}/comments/{commentId}
      */
-    deleteComment: async (commentId) => {
-        return axiosClient.delete(`/comments/${commentId}`);
+    deleteComment: async (postId, commentId) => {
+        return axiosClient.delete(`/posts/${postId}/comments/${commentId}`);
+    },
+
+    /**
+     * Toggle like on a comment.
+     * API: POST /posts/{postId}/comments/{commentId}/like
+     */
+    likeComment: async (postId, commentId) => {
+        return axiosClient.post(`/posts/${postId}/comments/${commentId}/like`);
+    },
+
+    /**
+     * Toggle pin on a comment.
+     * API: POST /posts/{postId}/comments/{commentId}/pin
+     */
+    pinComment: async (postId, commentId) => {
+        return axiosClient.post(`/posts/${postId}/comments/${commentId}/pin`);
     }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Image, Flex, HStack, Text, VStack } from "@chakra-ui/react";
+import { Box, Image, Flex, HStack, Text, VStack, Spinner, Center } from "@chakra-ui/react";
 import {
     AiOutlineClose,
     AiOutlineLeft,
@@ -13,6 +13,7 @@ import { FiHeart, FiPlus } from "react-icons/fi";
 import UserAvatar from "../common/UserAvatar";
 import { useSelector } from "react-redux";
 import profileService from "../../services/profileService";
+import storyService from "../../services/storyService";
 import InstagramAlert from "../common/InstagramAlert";
 
 const StoryModal = ({
@@ -32,6 +33,8 @@ const StoryModal = ({
     const [progress, setProgress] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
+    const [viewers, setViewers] = useState([]);
+    const [loadingViewers, setLoadingViewers] = useState(false);
     const [isHighlighting, setIsHighlighting] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         isOpen: false,
@@ -82,6 +85,20 @@ const StoryModal = ({
         }
     };
 
+    const handleOpenActivity = async () => {
+        if (!currentStory?.id) return;
+        setIsActivityOpen(true);
+        setLoadingViewers(true);
+        try {
+            const response = await storyService.getStoryViewers(currentStory.id);
+            setViewers(response.content || (Array.isArray(response) ? response : []));
+        } catch (error) {
+            console.error("Failed to fetch story viewers", error);
+        } finally {
+            setLoadingViewers(false);
+        }
+    };
+
     useEffect(() => {
         if (isOpen) {
             setHighlightIndex(initialHighlightIndex || 0);
@@ -89,6 +106,7 @@ const StoryModal = ({
             setProgress(0);
             setIsLiked(false);
             setIsActivityOpen(false);
+            setViewers([]);
         }
     }, [isOpen, initialHighlightIndex]);
 
@@ -211,14 +229,24 @@ const StoryModal = ({
                 position="relative"
                 borderRadius={{ base: "0", md: "12px" }}
                 overflow="hidden"
-                bg="black"
+                bg="#000000"
+                isolation="isolate"
+                transform="translate3d(0, 0, 0)"
+                backfaceVisibility="hidden"
+                outline="none"
+                border="none"
+                boxShadow="none"
+                style={{
+                    maskImage: "radial-gradient(white, black)",
+                    WebkitMaskImage: "-webkit-radial-gradient(white, black)",
+                }}
             >
                 <HStack
                     position="absolute"
-                    top={3}
-                    left={4}
-                    right={4}
-                    spacing={1.5}
+                    top={4}
+                    left={2}
+                    right={2}
+                    spacing={1}
                     zIndex={20}
                     opacity={isActivityOpen ? 0 : 1}
                     transition="0.3s"
@@ -228,7 +256,7 @@ const StoryModal = ({
                             key={idx}
                             flex={1}
                             height="2px"
-                            bg="whiteAlpha.400"
+                            bg="rgba(255, 255, 255, 0.35)"
                             borderRadius="full"
                             overflow="hidden"
                         >
@@ -265,7 +293,11 @@ const StoryModal = ({
                         onClick={handleNavigateToUser}
                         width="fit-content"
                     >
-                        <UserAvatar src={storyUser?.avatar} size="32px" />
+                        <UserAvatar 
+                            src={storyUser?.avatar || storyUser?.avatarUrl} 
+                            size="32px" 
+                            hasBorder={false}
+                        />
                         <Box
                             display="flex"
                             flexDirection="column"
@@ -355,7 +387,7 @@ const StoryModal = ({
                                     <VStack
                                         gap={1}
                                         cursor="pointer"
-                                        onClick={() => setIsActivityOpen(true)}
+                                        onClick={handleOpenActivity}
                                         _hover={{ opacity: 0.8 }}
                                         align="start"
                                     >
@@ -467,6 +499,8 @@ const StoryModal = ({
                     transition="height 0.3s ease-out"
                     overflow="hidden"
                     borderRadius={isActivityOpen ? "0" : "12px 12px 0 0"}
+                    visibility={isActivityOpen ? "visible" : "hidden"}
+                    pointerEvents={isActivityOpen ? "auto" : "none"}
                 >
                     {isActivityOpen && (
                         <Flex direction="column" height="100%" color="black">
@@ -503,9 +537,9 @@ const StoryModal = ({
                                         >
                                             Replies
                                         </Text>
-                                        {currentStory.replies.map((rep) => (
+                                        {currentStory.replies.map((rep, index) => (
                                             <Flex
-                                                key={rep.id}
+                                                key={rep.id || `reply-${index}`}
                                                 align="center"
                                                 gap={3}
                                                 mb={4}
@@ -553,48 +587,65 @@ const StoryModal = ({
                                     >
                                         Viewers
                                     </Text>
-                                    {currentStory?.views?.map((viewer) => (
-                                        <Flex
-                                            key={viewer.id}
-                                            align="center"
-                                            gap={3}
-                                            mb={4}
-                                            justify="space-between"
-                                            cursor="pointer"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onClose();
-                                                navigate(`/${viewer.username}`);
-                                            }}
-                                        >
-                                            <HStack gap={3}>
-                                                <UserAvatar
-                                                    src={viewer.avatar}
-                                                    size="44px"
-                                                />
-                                                <Box>
-                                                    <Text
-                                                        fontWeight="bold"
-                                                        fontSize="sm"
-                                                    >
-                                                        {viewer.username}
-                                                    </Text>
-                                                    <Text
-                                                        fontSize="xs"
-                                                        color="gray.500"
-                                                    >
-                                                        Viewed
-                                                    </Text>
-                                                </Box>
-                                            </HStack>
-                                            {viewer.liked && (
-                                                <AiFillHeart
-                                                    color="#ff3040"
-                                                    size={20}
-                                                />
-                                            )}
+                                    {loadingViewers ? (
+                                        <Flex justify="center" p={8}>
+                                            <Spinner color="#0095f6" />
                                         </Flex>
-                                    ))}
+                                    ) : viewers.length > 0 ? (
+                                        viewers.map((viewer, index) => (
+                                            <Flex
+                                                key={viewer.id || `viewer-${index}`}
+                                                align="center"
+                                                gap={3}
+                                                mb={4}
+                                                justify="space-between"
+                                                cursor="pointer"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onClose();
+                                                    navigate(`/${viewer.username}`);
+                                                }}
+                                            >
+                                                <HStack gap={3}>
+                                                    <UserAvatar
+                                                        src={viewer.avatar || viewer.avatarUrl}
+                                                        size="44px"
+                                                    />
+                                                    <Box>
+                                                        <HStack gap={1}>
+                                                            <Text
+                                                                fontWeight="bold"
+                                                                fontSize="sm"
+                                                            >
+                                                                {viewer.username}
+                                                            </Text>
+                                                            {viewer.verified && (
+                                                                <Image src="/verified.png" w="14px" h="14px" />
+                                                            )}
+                                                        </HStack>
+                                                        <Text
+                                                            fontSize="xs"
+                                                            color="gray.500"
+                                                        >
+                                                            {viewer.mutualCount > 0 
+                                                                ? `Followed by ${viewer.mutualCount} mutual` 
+                                                                : viewer.fullName}
+                                                        </Text>
+                                                    </Box>
+                                                </HStack>
+                                                {viewer.liked && (
+                                                    <AiFillHeart
+                                                        color="#ff3040"
+                                                        size={20}
+                                                    />
+                                                )}
+                                            </Flex>
+                                        ))
+                                    ) : (
+                                        <Center p={8}>
+                                            <Text color="gray.500" fontSize="sm">No viewers yet</Text>
+                                        </Center>
+                                    )}
                                 </Box>
                             </Box>
                         </Flex>
