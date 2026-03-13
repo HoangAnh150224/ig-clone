@@ -4,9 +4,9 @@ import com.instagram.be.base.request.PaginatedRequest;
 import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.post.Post;
+import com.instagram.be.post.PostResponseAssembler;
 import com.instagram.be.post.repository.PostLikeRepository;
 import com.instagram.be.post.repository.PostRepository;
-import com.instagram.be.post.PostResponseAssembler;
 import com.instagram.be.post.response.PostResponse;
 import com.instagram.be.saved.repository.SavedPostRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,45 +25,45 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetExplorePostsService extends BaseService<PaginatedRequest, PaginatedResponse<PostResponse>> {
 
-    private final PostRepository postRepository;
-    private final PostResponseAssembler postResponseAssembler;
-    private final PostLikeRepository postLikeRepository;
-    private final SavedPostRepository savedPostRepository;
+  private final PostRepository postRepository;
+  private final PostResponseAssembler postResponseAssembler;
+  private final PostLikeRepository postLikeRepository;
+  private final SavedPostRepository savedPostRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<PostResponse> execute(PaginatedRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<PostResponse> execute(PaginatedRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected PaginatedResponse<PostResponse> doProcess(PaginatedRequest request) {
+    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+    PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
+
+    Page<Post> page = postRepository.findExplore(pageRequest);
+    List<Post> posts = page.getContent();
+
+    Set<UUID> likedIds = Collections.emptySet();
+    Set<UUID> savedIds = Collections.emptySet();
+
+    if (viewerId != null && !posts.isEmpty()) {
+      Set<UUID> postIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
+      likedIds = postLikeRepository.findLikedPostIds(viewerId, postIds);
+      savedIds = savedPostRepository.findSavedPostIds(viewerId, postIds);
     }
 
-    @Override
-    protected PaginatedResponse<PostResponse> doProcess(PaginatedRequest request) {
-        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
-        PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
+    List<PostResponse> content = postResponseAssembler.toResponseList(posts, viewerId, likedIds, savedIds);
 
-        Page<Post> page = postRepository.findExplore(pageRequest);
-        List<Post> posts = page.getContent();
-
-        Set<UUID> likedIds = Collections.emptySet();
-        Set<UUID> savedIds = Collections.emptySet();
-
-        if (viewerId != null && !posts.isEmpty()) {
-            Set<UUID> postIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
-            likedIds = postLikeRepository.findLikedPostIds(viewerId, postIds);
-            savedIds = savedPostRepository.findSavedPostIds(viewerId, postIds);
-        }
-
-        List<PostResponse> content = postResponseAssembler.toResponseList(posts, viewerId, likedIds, savedIds);
-
-        return new PaginatedResponse<>(
-                content,
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.isFirst(),
-                page.isLast(),
-                page.isEmpty()
-        );
-    }
+    return new PaginatedResponse<>(
+      content,
+      page.getNumber(),
+      page.getSize(),
+      page.getTotalElements(),
+      page.getTotalPages(),
+      page.isFirst(),
+      page.isLast(),
+      page.isEmpty()
+    );
+  }
 }

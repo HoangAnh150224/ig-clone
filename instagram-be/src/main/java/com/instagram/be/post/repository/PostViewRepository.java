@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface PostViewRepository extends JpaRepository<PostView, UUID> {
 
-    Optional<PostView> findByPostIdAndViewerId(UUID postId, UUID viewerId);
+  Optional<PostView> findByPostIdAndViewerId(UUID postId, UUID viewerId);
 
-    long countByPostId(UUID postId);
+  long countByPostId(UUID postId);
 }

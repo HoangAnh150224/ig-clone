@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class HighlightActionRequest extends BaseRequest {
 
-    private UUID highlightId;
+  private UUID highlightId;
 }

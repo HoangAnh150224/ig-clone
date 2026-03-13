@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class FollowRequest extends BaseRequest {
 
-    private UUID targetUserId;
+  private UUID targetUserId;
 }

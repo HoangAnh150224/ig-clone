@@ -16,31 +16,31 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HashtagUpsertService {
 
-    private final HashtagRepository hashtagRepository;
+  private final HashtagRepository hashtagRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Set<Hashtag> upsertAll(Set<String> names) {
-        if (names == null || names.isEmpty()) return Set.of();
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public Set<Hashtag> upsertAll(Set<String> names) {
+    if (names == null || names.isEmpty()) return Set.of();
 
-        Set<String> lowerNames = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
-        Set<Hashtag> existing = hashtagRepository.findByNameIn(lowerNames);
-        Set<String> existingNames = existing.stream().map(Hashtag::getName).collect(Collectors.toSet());
+    Set<String> lowerNames = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
+    Set<Hashtag> existing = hashtagRepository.findByNameIn(lowerNames);
+    Set<String> existingNames = existing.stream().map(Hashtag::getName).collect(Collectors.toSet());
 
-        Set<String> missing = lowerNames.stream()
-                .filter(n -> !existingNames.contains(n))
-                .collect(Collectors.toSet());
+    Set<String> missing = lowerNames.stream()
+      .filter(n -> !existingNames.contains(n))
+      .collect(Collectors.toSet());
 
-        for (String name : missing) {
-            try {
-                Hashtag saved = hashtagRepository.save(Hashtag.builder().name(name).build());
-                existing.add(saved);
-            } catch (DataIntegrityViolationException e) {
-                // Concurrent insert — retry find
-                log.debug("Concurrent hashtag insert for '{}', retrying find", name);
-                hashtagRepository.findByName(name).ifPresent(existing::add);
-            }
-        }
-
-        return existing;
+    for (String name : missing) {
+      try {
+        Hashtag saved = hashtagRepository.save(Hashtag.builder().name(name).build());
+        existing.add(saved);
+      } catch (DataIntegrityViolationException e) {
+        // Concurrent insert — retry find
+        log.debug("Concurrent hashtag insert for '{}', retrying find", name);
+        hashtagRepository.findByName(name).ifPresent(existing::add);
+      }
     }
+
+    return existing;
+  }
 }

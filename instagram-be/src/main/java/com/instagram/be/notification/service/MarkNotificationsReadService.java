@@ -13,18 +13,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MarkNotificationsReadService extends BaseService<UserOnlyRequest, Void> {
 
-    private final NotificationRepository notificationRepository;
+  private final NotificationRepository notificationRepository;
 
-    @Override
-    @Transactional
-    public Void execute(UserOnlyRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(UserOnlyRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(UserOnlyRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        notificationRepository.markAllReadByUserId(userId);
-        return null;
-    }
+  @Override
+  protected Void doProcess(UserOnlyRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    notificationRepository.markAllReadByUserId(userId);
+    return null;
+  }
 }

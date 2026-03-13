@@ -16,11 +16,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class StoryMention extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "story_id", nullable = false)
-    private Story story;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "story_id", nullable = false)
+  private Story story;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mentioned_user_id", nullable = false)
-    private UserProfile mentionedUser;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "mentioned_user_id", nullable = false)
+  private UserProfile mentionedUser;
 }

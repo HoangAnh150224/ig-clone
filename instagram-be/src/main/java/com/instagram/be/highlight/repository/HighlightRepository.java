@@ -12,9 +12,9 @@ import java.util.UUID;
 @Repository
 public interface HighlightRepository extends JpaRepository<Highlight, UUID> {
 
-    @Query("SELECT DISTINCT h FROM Highlight h LEFT JOIN FETCH h.stories WHERE h.user.id = :userId ORDER BY h.createdAt DESC")
-    List<Highlight> findByUserId(@Param("userId") UUID userId);
+  @Query("SELECT DISTINCT h FROM Highlight h LEFT JOIN FETCH h.stories WHERE h.user.id = :userId ORDER BY h.createdAt DESC")
+  List<Highlight> findByUserId(@Param("userId") UUID userId);
 
-    @Query("SELECT h FROM Highlight h LEFT JOIN FETCH h.stories s LEFT JOIN FETCH s.user WHERE h.id = :id")
-    java.util.Optional<Highlight> findByIdWithStories(@Param("id") UUID id);
+  @Query("SELECT h FROM Highlight h LEFT JOIN FETCH h.stories s LEFT JOIN FETCH s.user WHERE h.id = :id")
+  java.util.Optional<Highlight> findByIdWithStories(@Param("id") UUID id);
 }

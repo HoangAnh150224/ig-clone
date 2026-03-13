@@ -21,40 +21,40 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetCommentsService extends BaseService<GetCommentsRequest, PaginatedResponse<CommentResponse>> {
 
-    private final CommentRepository commentRepository;
-    private final CommentLikeRepository commentLikeRepository;
+  private final CommentRepository commentRepository;
+  private final CommentLikeRepository commentLikeRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<CommentResponse> execute(GetCommentsRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<CommentResponse> execute(GetCommentsRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected PaginatedResponse<CommentResponse> doProcess(GetCommentsRequest request) {
-        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
-        PageRequest pageable = PageRequest.of(request.getPage(), request.getSize());
+  @Override
+  protected PaginatedResponse<CommentResponse> doProcess(GetCommentsRequest request) {
+    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+    PageRequest pageable = PageRequest.of(request.getPage(), request.getSize());
 
-        Page<com.instagram.be.comment.Comment> page = request.getParentCommentId() == null
-                ? commentRepository.findTopLevelByPostId(request.getPostId(), pageable)
-                : commentRepository.findRepliesByParentId(request.getParentCommentId(), pageable);
+    Page<com.instagram.be.comment.Comment> page = request.getParentCommentId() == null
+      ? commentRepository.findTopLevelByPostId(request.getPostId(), pageable)
+      : commentRepository.findRepliesByParentId(request.getParentCommentId(), pageable);
 
-        List<com.instagram.be.comment.Comment> comments = page.getContent();
-        Set<UUID> commentIds = comments.stream().map(c -> c.getId()).collect(Collectors.toSet());
+    List<com.instagram.be.comment.Comment> comments = page.getContent();
+    Set<UUID> commentIds = comments.stream().map(c -> c.getId()).collect(Collectors.toSet());
 
-        Set<UUID> likedCommentIds = viewerId != null && !commentIds.isEmpty()
-                ? commentRepository.findLikedCommentIds(viewerId, commentIds) : Set.of();
+    Set<UUID> likedCommentIds = viewerId != null && !commentIds.isEmpty()
+      ? commentRepository.findLikedCommentIds(viewerId, commentIds) : Set.of();
 
-        List<CommentResponse> responses = comments.stream().map(c -> {
-            long replyCount = c.getParentComment() == null
-                    ? commentRepository.countByParentCommentId(c.getId()) : 0;
-            long likeCount = commentLikeRepository.countByCommentId(c.getId());
-            boolean isLiked = likedCommentIds.contains(c.getId());
-            boolean isOwner = viewerId != null && viewerId.equals(c.getUser().getId());
-            return CommentResponse.of(c, replyCount, likeCount, isLiked, isOwner);
-        }).collect(Collectors.toList());
+    List<CommentResponse> responses = comments.stream().map(c -> {
+      long replyCount = c.getParentComment() == null
+        ? commentRepository.countByParentCommentId(c.getId()) : 0;
+      long likeCount = commentLikeRepository.countByCommentId(c.getId());
+      boolean isLiked = likedCommentIds.contains(c.getId());
+      boolean isOwner = viewerId != null && viewerId.equals(c.getUser().getId());
+      return CommentResponse.of(c, replyCount, likeCount, isLiked, isOwner);
+    }).collect(Collectors.toList());
 
-        return new PaginatedResponse<>(responses, page.getNumber(), page.getSize(),
-                page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast(), page.isEmpty());
-    }
+    return new PaginatedResponse<>(responses, page.getNumber(), page.getSize(),
+      page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast(), page.isEmpty());
+  }
 }

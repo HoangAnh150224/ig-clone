@@ -15,23 +15,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RemoveFollowerService extends BaseService<FollowRequest, Void> {
 
-    private final FollowRepository followRepository;
+  private final FollowRepository followRepository;
 
-    @Override
-    @Transactional
-    public Void execute(FollowRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(FollowRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(FollowRequest request) {
-        UUID currentUserId = request.getUserContext().getUserId();
-        UUID followerToRemoveId = request.getTargetUserId();
+  @Override
+  protected Void doProcess(FollowRequest request) {
+    UUID currentUserId = request.getUserContext().getUserId();
+    UUID followerToRemoveId = request.getTargetUserId();
 
-        Follow follow = followRepository.findByFollowerIdAndFollowingId(followerToRemoveId, currentUserId)
-                .orElseThrow(() -> new NotFoundException("Follow relationship", followerToRemoveId));
+    Follow follow = followRepository.findByFollowerIdAndFollowingId(followerToRemoveId, currentUserId)
+      .orElseThrow(() -> new NotFoundException("Follow relationship", followerToRemoveId));
 
-        followRepository.delete(follow);
-        return null;
-    }
+    followRepository.delete(follow);
+    return null;
+  }
 }

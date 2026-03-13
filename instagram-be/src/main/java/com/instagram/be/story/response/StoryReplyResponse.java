@@ -8,12 +8,12 @@ import java.util.UUID;
 
 public record StoryReplyResponse(UUID id, String text, FollowUserResponse sender, LocalDateTime createdAt) {
 
-    public static StoryReplyResponse from(StoryReply reply) {
-        return new StoryReplyResponse(
-                reply.getId(),
-                reply.getText(),
-                FollowUserResponse.from(reply.getUser()),
-                reply.getCreatedAt()
-        );
-    }
+  public static StoryReplyResponse from(StoryReply reply) {
+    return new StoryReplyResponse(
+      reply.getId(),
+      reply.getText(),
+      FollowUserResponse.from(reply.getUser()),
+      reply.getCreatedAt()
+    );
+  }
 }

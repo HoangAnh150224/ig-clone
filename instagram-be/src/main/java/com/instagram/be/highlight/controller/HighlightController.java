@@ -3,7 +3,10 @@ package com.instagram.be.highlight.controller;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.UserContext;
 import com.instagram.be.base.api.ApiResponse;
-import com.instagram.be.highlight.request.*;
+import com.instagram.be.highlight.request.CreateHighlightRequest;
+import com.instagram.be.highlight.request.GetUserHighlightsRequest;
+import com.instagram.be.highlight.request.HighlightActionRequest;
+import com.instagram.be.highlight.request.HighlightStoryRequest;
 import com.instagram.be.highlight.response.HighlightResponse;
 import com.instagram.be.highlight.service.*;
 import com.instagram.be.storage.CloudinaryService;
@@ -23,70 +26,70 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class HighlightController {
 
-    private final CloudinaryService cloudinaryService;
-    private final CreateHighlightService createHighlightService;
-    private final AddStoryToHighlightService addStoryToHighlightService;
-    private final DeleteHighlightService deleteHighlightService;
-    private final GetUserHighlightsService getUserHighlightsService;
-    private final GetHighlightStoriesService getHighlightStoriesService;
+  private final CloudinaryService cloudinaryService;
+  private final CreateHighlightService createHighlightService;
+  private final AddStoryToHighlightService addStoryToHighlightService;
+  private final DeleteHighlightService deleteHighlightService;
+  private final GetUserHighlightsService getUserHighlightsService;
+  private final GetHighlightStoriesService getHighlightStoriesService;
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<HighlightResponse>>> getUserHighlights(
-            @RequestParam String username) {
-        GetUserHighlightsRequest request = GetUserHighlightsRequest.builder()
-                .targetUsername(username)
-                .userContext(currentUser())
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(getUserHighlightsService.execute(request), "Highlights retrieved", 200));
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<List<HighlightResponse>>> getUserHighlights(
+    @RequestParam String username) {
+    GetUserHighlightsRequest request = GetUserHighlightsRequest.builder()
+      .targetUsername(username)
+      .userContext(currentUser())
+      .build();
+    return ResponseEntity.ok(ApiResponse.success(getUserHighlightsService.execute(request), "Highlights retrieved", 200));
+  }
+
+  @GetMapping("/{id}/stories")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<List<StoryResponse>>> getHighlightStories(@PathVariable UUID id) {
+    HighlightActionRequest request = HighlightActionRequest.builder()
+      .highlightId(id)
+      .userContext(currentUser())
+      .build();
+    return ResponseEntity.ok(ApiResponse.success(getHighlightStoriesService.execute(request), "Stories retrieved", 200));
+  }
+
+  @PostMapping(consumes = "multipart/form-data")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<HighlightResponse>> createHighlight(
+    @RequestPart(value = "cover", required = false) MultipartFile cover,
+    @RequestPart("data") CreateHighlightRequest request) {
+
+    if (cover != null && !cover.isEmpty()) {
+      String coverUrl = cloudinaryService.upload(cover, "highlights").url();
+      request.setCoverUrl(coverUrl);
     }
+    request.setUserContext(currentUser());
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(ApiResponse.success(createHighlightService.execute(request), "Highlight created", 201));
+  }
 
-    @GetMapping("/{id}/stories")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<StoryResponse>>> getHighlightStories(@PathVariable UUID id) {
-        HighlightActionRequest request = HighlightActionRequest.builder()
-                .highlightId(id)
-                .userContext(currentUser())
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(getHighlightStoriesService.execute(request), "Stories retrieved", 200));
-    }
+  @PostMapping("/{id}/stories")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<HighlightResponse>> addStory(
+    @PathVariable UUID id,
+    @RequestBody HighlightStoryRequest request) {
+    request.setHighlightId(id);
+    request.setUserContext(currentUser());
+    return ResponseEntity.ok(ApiResponse.success(addStoryToHighlightService.execute(request), "Story added", 200));
+  }
 
-    @PostMapping(consumes = "multipart/form-data")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<HighlightResponse>> createHighlight(
-            @RequestPart(value = "cover", required = false) MultipartFile cover,
-            @RequestPart("data") CreateHighlightRequest request) {
+  @DeleteMapping("/{id}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<Void>> deleteHighlight(@PathVariable UUID id) {
+    HighlightActionRequest request = HighlightActionRequest.builder()
+      .highlightId(id).userContext(currentUser()).build();
+    deleteHighlightService.execute(request);
+    return ResponseEntity.ok(ApiResponse.success(null, "Highlight deleted", 200));
+  }
 
-        if (cover != null && !cover.isEmpty()) {
-            String coverUrl = cloudinaryService.upload(cover, "highlights").url();
-            request.setCoverUrl(coverUrl);
-        }
-        request.setUserContext(currentUser());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(createHighlightService.execute(request), "Highlight created", 201));
-    }
-
-    @PostMapping("/{id}/stories")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<HighlightResponse>> addStory(
-            @PathVariable UUID id,
-            @RequestBody HighlightStoryRequest request) {
-        request.setHighlightId(id);
-        request.setUserContext(currentUser());
-        return ResponseEntity.ok(ApiResponse.success(addStoryToHighlightService.execute(request), "Story added", 200));
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Void>> deleteHighlight(@PathVariable UUID id) {
-        HighlightActionRequest request = HighlightActionRequest.builder()
-                .highlightId(id).userContext(currentUser()).build();
-        deleteHighlightService.execute(request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Highlight deleted", 200));
-    }
-
-    private UserContext currentUser() {
-        return SecurityUtils.getCurrentUserContext()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
-    }
+  private UserContext currentUser() {
+    return SecurityUtils.getCurrentUserContext()
+      .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+  }
 }

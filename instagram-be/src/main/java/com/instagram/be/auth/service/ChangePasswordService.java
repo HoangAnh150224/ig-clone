@@ -17,31 +17,31 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChangePasswordService extends BaseService<ChangePasswordRequest, Void> {
 
-    private final AuthRepository authRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final AuthRepository authRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    @Override
-    @Transactional
-    public Void execute(ChangePasswordRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public Void execute(ChangePasswordRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected Void doProcess(ChangePasswordRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    UserProfile user = authRepository.findById(userId)
+      .orElseThrow(() -> new NotFoundException("User", userId));
+
+    if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+      throw new AppValidationException("Current password is incorrect");
     }
 
-    @Override
-    protected Void doProcess(ChangePasswordRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        UserProfile user = authRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User", userId));
-
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
-            throw new AppValidationException("Current password is incorrect");
-        }
-
-        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
-            throw new AppValidationException("New password must differ from current password");
-        }
-
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        authRepository.save(user);
-        return null;
+    if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+      throw new AppValidationException("New password must differ from current password");
     }
+
+    user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+    authRepository.save(user);
+    return null;
+  }
 }

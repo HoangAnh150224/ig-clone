@@ -21,38 +21,38 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetLikersService extends BaseService<GetPostListRequest, PaginatedResponse<FollowUserResponse>> {
 
-    private final PostRepository postRepository;
-    private final PostLikeRepository postLikeRepository;
-    private final FollowRepository followRepository;
+  private final PostRepository postRepository;
+  private final PostLikeRepository postLikeRepository;
+  private final FollowRepository followRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<FollowUserResponse> execute(GetPostListRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<FollowUserResponse> execute(GetPostListRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected PaginatedResponse<FollowUserResponse> doProcess(GetPostListRequest request) {
+    UUID postId = request.getPostId();
+    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+
+    Post post = postRepository.findById(postId)
+      .orElseThrow(() -> new NotFoundException("Post", postId));
+
+    boolean isOwner = viewerId != null && viewerId.equals(post.getUser().getId());
+    if (post.isHideLikeCount() && !isOwner) {
+      throw new BusinessException("Like count is hidden for this post");
     }
 
-    @Override
-    protected PaginatedResponse<FollowUserResponse> doProcess(GetPostListRequest request) {
-        UUID postId = request.getPostId();
-        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+    var page = postLikeRepository.findWithUserByPostId(
+      postId, PageRequest.of(request.getPage(), request.getSize()));
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("Post", postId));
-
-        boolean isOwner = viewerId != null && viewerId.equals(post.getUser().getId());
-        if (post.isHideLikeCount() && !isOwner) {
-            throw new BusinessException("Like count is hidden for this post");
-        }
-
-        var page = postLikeRepository.findWithUserByPostId(
-                postId, PageRequest.of(request.getPage(), request.getSize()));
-
-        return PaginatedResponse.from(page.map(like -> {
-            boolean isFollowing = false;
-            if (viewerId != null) {
-                isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, like.getUser().getId());
-            }
-            return FollowUserResponse.of(like.getUser(), isFollowing);
-        }));
-    }
+    return PaginatedResponse.from(page.map(like -> {
+      boolean isFollowing = false;
+      if (viewerId != null) {
+        isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, like.getUser().getId());
+      }
+      return FollowUserResponse.of(like.getUser(), isFollowing);
+    }));
+  }
 }

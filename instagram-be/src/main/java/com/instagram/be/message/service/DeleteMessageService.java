@@ -18,32 +18,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeleteMessageService extends BaseService<MessageActionRequest, Void> {
 
-    private final MessageRepository messageRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+  private final MessageRepository messageRepository;
+  private final SimpMessagingTemplate messagingTemplate;
 
-    @Override
-    @Transactional
-    public Void execute(MessageActionRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public Void execute(MessageActionRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected Void doProcess(MessageActionRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    Message message = messageRepository.findById(request.getMessageId())
+      .orElseThrow(() -> new NotFoundException("Message", request.getMessageId()));
+
+    if (!message.getSender().getId().equals(userId)) {
+      throw new BusinessException("You do not have permission to delete this message");
     }
 
-    @Override
-    protected Void doProcess(MessageActionRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        Message message = messageRepository.findById(request.getMessageId())
-                .orElseThrow(() -> new NotFoundException("Message", request.getMessageId()));
+    message.setDeleted(true);
+    Message saved = messageRepository.save(message);
 
-        if (!message.getSender().getId().equals(userId)) {
-            throw new BusinessException("You do not have permission to delete this message");
-        }
+    // Push delete event via WebSocket
+    MessageResponse response = MessageResponse.from(saved);
+    messagingTemplate.convertAndSend("/topic/messages/" + message.getConversation().getId(), response);
 
-        message.setDeleted(true);
-        Message saved = messageRepository.save(message);
-
-        // Push delete event via WebSocket
-        MessageResponse response = MessageResponse.from(saved);
-        messagingTemplate.convertAndSend("/topic/messages/" + message.getConversation().getId(), response);
-
-        return null;
-    }
+    return null;
+  }
 }

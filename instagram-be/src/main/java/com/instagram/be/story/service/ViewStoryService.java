@@ -3,8 +3,8 @@ package com.instagram.be.story.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.story.Story;
-import com.instagram.be.story.repository.StoryRepository;
 import com.instagram.be.story.StoryView;
+import com.instagram.be.story.repository.StoryRepository;
 import com.instagram.be.story.repository.StoryViewRepository;
 import com.instagram.be.story.request.StoryActionRequest;
 import com.instagram.be.userprofile.UserProfile;
@@ -19,29 +19,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ViewStoryService extends BaseService<StoryActionRequest, Void> {
 
-    private final StoryRepository storyRepository;
-    private final StoryViewRepository storyViewRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final StoryRepository storyRepository;
+  private final StoryViewRepository storyViewRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public Void execute(StoryActionRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(StoryActionRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(StoryActionRequest request) {
-        UUID viewerId = request.getUserContext().getUserId();
-        UUID storyId = request.getStoryId();
+  @Override
+  protected Void doProcess(StoryActionRequest request) {
+    UUID viewerId = request.getUserContext().getUserId();
+    UUID storyId = request.getStoryId();
 
-        Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> new NotFoundException("Story", storyId));
+    Story story = storyRepository.findById(storyId)
+      .orElseThrow(() -> new NotFoundException("Story", storyId));
 
-        storyViewRepository.findByStoryIdAndViewerId(storyId, viewerId).orElseGet(() -> {
-            UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
-            return storyViewRepository.save(StoryView.builder().story(story).viewer(viewer).build());
-        });
+    storyViewRepository.findByStoryIdAndViewerId(storyId, viewerId).orElseGet(() -> {
+      UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
+      return storyViewRepository.save(StoryView.builder().story(story).viewer(viewer).build());
+    });
 
-        return null;
-    }
+    return null;
+  }
 }

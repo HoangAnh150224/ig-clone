@@ -12,6 +12,6 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class GetNotificationsRequest extends BaseRequest {
 
-    private int page = 0;
-    private int size = 20;
+  private int page = 0;
+  private int size = 20;
 }

@@ -9,18 +9,18 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(
-                title = "Instagram Clone API",
-                version = "1.0.0",
-                description = "REST API for Instagram Clone backend"
-        )
+  info = @Info(
+    title = "Instagram Clone API",
+    version = "1.0.0",
+    description = "REST API for Instagram Clone backend"
+  )
 )
 @SecurityScheme(
-        name = "bearerAuth",
-        type = SecuritySchemeType.HTTP,
-        scheme = "bearer",
-        bearerFormat = "JWT",
-        in = SecuritySchemeIn.HEADER
+  name = "bearerAuth",
+  type = SecuritySchemeType.HTTP,
+  scheme = "bearer",
+  bearerFormat = "JWT",
+  in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
 }

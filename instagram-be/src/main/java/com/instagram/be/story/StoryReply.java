@@ -16,14 +16,14 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class StoryReply extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "story_id", nullable = false)
-    private Story story;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "story_id", nullable = false)
+  private Story story;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserProfile user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserProfile user;
 
-    @Column(name = "text", nullable = false, columnDefinition = "TEXT")
-    private String text;
+  @Column(name = "text", nullable = false, columnDefinition = "TEXT")
+  private String text;
 }

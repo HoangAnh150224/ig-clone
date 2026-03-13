@@ -5,7 +5,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-/** Minimal request that only carries a UserContext. */
+/**
+ * Minimal request that only carries a UserContext.
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor

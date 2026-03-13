@@ -13,8 +13,8 @@ import java.util.UUID;
 @Repository
 public interface FavoritePostRepository extends JpaRepository<FavoritePost, UUID> {
 
-    Optional<FavoritePost> findByUserIdAndPostId(UUID userId, UUID postId);
+  Optional<FavoritePost> findByUserIdAndPostId(UUID userId, UUID postId);
 
-    @Query("SELECT fp FROM FavoritePost fp JOIN FETCH fp.post WHERE fp.user.id = :userId ORDER BY fp.createdAt DESC")
-    List<FavoritePost> findByUserId(@Param("userId") UUID userId);
+  @Query("SELECT fp FROM FavoritePost fp JOIN FETCH fp.post WHERE fp.user.id = :userId ORDER BY fp.createdAt DESC")
+  List<FavoritePost> findByUserId(@Param("userId") UUID userId);
 }

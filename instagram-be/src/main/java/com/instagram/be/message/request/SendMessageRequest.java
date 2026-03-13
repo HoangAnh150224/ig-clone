@@ -18,9 +18,9 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SendMessageRequest extends BaseRequest {
 
-    private UUID recipientId;
-    private String content;
-    private String mediaUrl;
-    private String mediaType;
-    private UUID sharedPostId;
+  private UUID recipientId;
+  private String content;
+  private String mediaUrl;
+  private String mediaType;
+  private UUID sharedPostId;
 }

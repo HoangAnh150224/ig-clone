@@ -16,22 +16,22 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetSearchHistoryService extends BaseService<GetSearchHistoryRequest, List<SearchHistoryResponse>> {
 
-    private static final int MAX_HISTORY = 20;
+  private static final int MAX_HISTORY = 20;
 
-    private final SearchHistoryRepository searchHistoryRepository;
+  private final SearchHistoryRepository searchHistoryRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<SearchHistoryResponse> execute(GetSearchHistoryRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<SearchHistoryResponse> execute(GetSearchHistoryRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected List<SearchHistoryResponse> doProcess(GetSearchHistoryRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        return searchHistoryRepository.findRecentByUserId(userId, PageRequest.of(0, MAX_HISTORY))
-                .stream()
-                .map(SearchHistoryResponse::from)
-                .toList();
-    }
+  @Override
+  protected List<SearchHistoryResponse> doProcess(GetSearchHistoryRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    return searchHistoryRepository.findRecentByUserId(userId, PageRequest.of(0, MAX_HISTORY))
+      .stream()
+      .map(SearchHistoryResponse::from)
+      .toList();
+  }
 }

@@ -19,34 +19,34 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreateStoryService extends BaseService<CreateStoryRequest, StoryResponse> {
 
-    private final StoryRepository storyRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final StoryRepository storyRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public StoryResponse execute(CreateStoryRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public StoryResponse execute(CreateStoryRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected StoryResponse doProcess(CreateStoryRequest request) {
+    if (request.getMediaUrl() == null || request.getMediaUrl().isBlank()) {
+      throw new AppValidationException("Media URL is required for story");
     }
 
-    @Override
-    protected StoryResponse doProcess(CreateStoryRequest request) {
-        if (request.getMediaUrl() == null || request.getMediaUrl().isBlank()) {
-            throw new AppValidationException("Media URL is required for story");
-        }
+    UUID userId = request.getUserContext().getUserId();
+    UserProfile user = userProfileRepository.getReferenceById(userId);
 
-        UUID userId = request.getUserContext().getUserId();
-        UserProfile user = userProfileRepository.getReferenceById(userId);
+    Story story = Story.builder()
+      .user(user)
+      .mediaUrl(request.getMediaUrl())
+      .mediaType(request.getMediaType())
+      .closeFriends(request.isCloseFriends())
+      .expiresAt(LocalDateTime.now().plusHours(24))
+      .archived(false)
+      .build();
 
-        Story story = Story.builder()
-                .user(user)
-                .mediaUrl(request.getMediaUrl())
-                .mediaType(request.getMediaType())
-                .closeFriends(request.isCloseFriends())
-                .expiresAt(LocalDateTime.now().plusHours(24))
-                .archived(false)
-                .build();
-
-        Story saved = storyRepository.save(story);
-        return StoryResponse.from(saved);
-    }
+    Story saved = storyRepository.save(story);
+    return StoryResponse.from(saved);
+  }
 }

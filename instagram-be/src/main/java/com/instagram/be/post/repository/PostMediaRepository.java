@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface PostMediaRepository extends JpaRepository<PostMedia, UUID> {
 
-    List<PostMedia> findByPostIdOrderByDisplayOrderAsc(UUID postId);
+  List<PostMedia> findByPostIdOrderByDisplayOrderAsc(UUID postId);
 }

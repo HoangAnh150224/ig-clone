@@ -19,15 +19,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ArchiveController {
 
-    private final GetArchivedStoriesService getArchivedStoriesService;
+  private final GetArchivedStoriesService getArchivedStoriesService;
 
-    @GetMapping("/stories")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<StoryResponse>>> getArchivedStories() {
-        UserOnlyRequest request = UserOnlyRequest.builder()
-                .userContext(SecurityUtils.getCurrentUserContext()
-                        .orElseThrow(() -> new IllegalStateException("No authenticated user")))
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(getArchivedStoriesService.execute(request), "Archived stories retrieved", 200));
-    }
+  @GetMapping("/stories")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<List<StoryResponse>>> getArchivedStories() {
+    UserOnlyRequest request = UserOnlyRequest.builder()
+      .userContext(SecurityUtils.getCurrentUserContext()
+        .orElseThrow(() -> new IllegalStateException("No authenticated user")))
+      .build();
+    return ResponseEntity.ok(ApiResponse.success(getArchivedStoriesService.execute(request), "Archived stories retrieved", 200));
+  }
 }

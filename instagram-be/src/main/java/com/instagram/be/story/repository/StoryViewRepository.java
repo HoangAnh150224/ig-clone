@@ -15,13 +15,13 @@ import java.util.UUID;
 @Repository
 public interface StoryViewRepository extends JpaRepository<StoryView, UUID> {
 
-    Optional<StoryView> findByStoryIdAndViewerId(UUID storyId, UUID viewerId);
+  Optional<StoryView> findByStoryIdAndViewerId(UUID storyId, UUID viewerId);
 
-    @Query("SELECT sv.story.id FROM StoryView sv WHERE sv.viewer.id = :viewerId AND sv.story.id IN :storyIds")
-    Set<UUID> findViewedStoryIds(@Param("viewerId") UUID viewerId, @Param("storyIds") Set<UUID> storyIds);
+  @Query("SELECT sv.story.id FROM StoryView sv WHERE sv.viewer.id = :viewerId AND sv.story.id IN :storyIds")
+  Set<UUID> findViewedStoryIds(@Param("viewerId") UUID viewerId, @Param("storyIds") Set<UUID> storyIds);
 
-    @Query("SELECT sv FROM StoryView sv JOIN FETCH sv.viewer WHERE sv.story.id = :storyId ORDER BY sv.createdAt DESC")
-    List<StoryView> findViewersByStoryId(@Param("storyId") UUID storyId);
+  @Query("SELECT sv FROM StoryView sv JOIN FETCH sv.viewer WHERE sv.story.id = :storyId ORDER BY sv.createdAt DESC")
+  List<StoryView> findViewersByStoryId(@Param("storyId") UUID storyId);
 
-    void deleteAllByStory(Story story);
+  void deleteAllByStory(Story story);
 }

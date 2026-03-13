@@ -19,27 +19,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetMessagesService extends BaseService<GetMessagesRequest, PaginatedResponse<MessageResponse>> {
 
-    private final MessageRepository messageRepository;
-    private final ConversationParticipantRepository participantRepository;
+  private final MessageRepository messageRepository;
+  private final ConversationParticipantRepository participantRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<MessageResponse> execute(GetMessagesRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<MessageResponse> execute(GetMessagesRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected PaginatedResponse<MessageResponse> doProcess(GetMessagesRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        UUID convId = request.getConversationId();
+  @Override
+  protected PaginatedResponse<MessageResponse> doProcess(GetMessagesRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    UUID convId = request.getConversationId();
 
-        ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(convId, userId)
-                .orElseThrow(() -> new BusinessException("You are not a participant in this conversation"));
+    ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(convId, userId)
+      .orElseThrow(() -> new BusinessException("You are not a participant in this conversation"));
 
-        var page = messageRepository.findByConversationId(convId,
-                participant.getLastDeletedAt(),
-                PageRequest.of(request.getPage(), request.getSize()));
+    var page = messageRepository.findByConversationId(convId,
+      participant.getLastDeletedAt(),
+      PageRequest.of(request.getPage(), request.getSize()));
 
-        return PaginatedResponse.from(page.map(MessageResponse::from));
-    }
+    return PaginatedResponse.from(page.map(MessageResponse::from));
+  }
 }

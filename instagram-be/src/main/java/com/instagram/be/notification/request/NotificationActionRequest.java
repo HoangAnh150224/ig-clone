@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class NotificationActionRequest extends BaseRequest {
 
-    private UUID notificationId;
+  private UUID notificationId;
 }

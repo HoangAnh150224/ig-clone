@@ -21,30 +21,30 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetStoryRepliesService extends BaseService<StoryActionRequest, List<StoryReplyResponse>> {
 
-    private final StoryRepository storyRepository;
-    private final StoryReplyRepository storyReplyRepository;
+  private final StoryRepository storyRepository;
+  private final StoryReplyRepository storyReplyRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<StoryReplyResponse> execute(StoryActionRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional(readOnly = true)
+  public List<StoryReplyResponse> execute(StoryActionRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected List<StoryReplyResponse> doProcess(StoryActionRequest request) {
+    UUID viewerId = request.getUserContext().getUserId();
+    Story story = storyRepository.findById(request.getStoryId())
+      .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
+
+    // Restriction: Only story owner can fetch replies
+    if (!story.getUser().getId().equals(viewerId)) {
+      throw new BusinessException("You do not have permission to view replies for this story");
     }
 
-    @Override
-    protected List<StoryReplyResponse> doProcess(StoryActionRequest request) {
-        UUID viewerId = request.getUserContext().getUserId();
-        Story story = storyRepository.findById(request.getStoryId())
-                .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
+    List<StoryReply> replies = storyReplyRepository.findRepliesByStoryId(request.getStoryId());
 
-        // Restriction: Only story owner can fetch replies
-        if (!story.getUser().getId().equals(viewerId)) {
-            throw new BusinessException("You do not have permission to view replies for this story");
-        }
-
-        List<StoryReply> replies = storyReplyRepository.findRepliesByStoryId(request.getStoryId());
-
-        return replies.stream()
-                .map(StoryReplyResponse::from)
-                .collect(Collectors.toList());
-    }
+    return replies.stream()
+      .map(StoryReplyResponse::from)
+      .collect(Collectors.toList());
+  }
 }

@@ -16,14 +16,14 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class StoryView extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "story_id", nullable = false)
-    private Story story;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "story_id", nullable = false)
+  private Story story;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "viewer_id", nullable = false)
-    private UserProfile viewer;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "viewer_id", nullable = false)
+  private UserProfile viewer;
 
-    @Column(name = "liked", nullable = false)
-    private boolean liked = false;
+  @Column(name = "liked", nullable = false)
+  private boolean liked = false;
 }

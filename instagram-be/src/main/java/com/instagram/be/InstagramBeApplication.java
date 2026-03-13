@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties(JwtProperties.class)
 public class InstagramBeApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(InstagramBeApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(InstagramBeApplication.class, args);
+  }
 }

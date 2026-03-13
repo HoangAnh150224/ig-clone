@@ -18,21 +18,21 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetMessageRequestsService extends BaseService<UserOnlyRequest, List<ConversationResponse>> {
 
-    private final ConversationParticipantRepository participantRepository;
-    private final ConversationAssembler assembler;
+  private final ConversationParticipantRepository participantRepository;
+  private final ConversationAssembler assembler;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ConversationResponse> execute(UserOnlyRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<ConversationResponse> execute(UserOnlyRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected List<ConversationResponse> doProcess(UserOnlyRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        return participantRepository.findRequestsByUserId(userId).stream()
-                .map(cp -> assembler.assemble(cp, userId))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
+  @Override
+  protected List<ConversationResponse> doProcess(UserOnlyRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    return participantRepository.findRequestsByUserId(userId).stream()
+      .map(cp -> assembler.assemble(cp, userId))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
 }

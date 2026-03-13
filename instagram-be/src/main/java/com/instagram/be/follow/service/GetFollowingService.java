@@ -19,34 +19,34 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetFollowingService extends BaseService<FollowListRequest, PaginatedResponse<FollowUserResponse>> {
 
-    private final FollowRepository followRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final FollowRepository followRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
+    UUID targetId = request.getTargetUserId();
+    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+
+    if (!userProfileRepository.existsById(targetId)) {
+      throw new NotFoundException("User", targetId);
     }
 
-    @Override
-    protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
-        UUID targetId = request.getTargetUserId();
-        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
-
-        if (!userProfileRepository.existsById(targetId)) {
-            throw new NotFoundException("User", targetId);
+    Page<FollowUserResponse> page = followRepository
+      .findFollowingByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable())
+      .map(follow -> {
+        boolean isFollowing = false;
+        if (viewerId != null) {
+          isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, follow.getFollowing().getId());
         }
+        return FollowUserResponse.of(follow.getFollowing(), isFollowing);
+      });
 
-        Page<FollowUserResponse> page = followRepository
-                .findFollowingByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable())
-                .map(follow -> {
-                    boolean isFollowing = false;
-                    if (viewerId != null) {
-                        isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, follow.getFollowing().getId());
-                    }
-                    return FollowUserResponse.of(follow.getFollowing(), isFollowing);
-                });
-
-        return PaginatedResponse.from(page);
-    }
+    return PaginatedResponse.from(page);
+  }
 }

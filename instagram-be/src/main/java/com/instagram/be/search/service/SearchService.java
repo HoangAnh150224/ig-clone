@@ -20,36 +20,36 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SearchService extends BaseService<SearchRequest, SearchResultResponse> {
 
-    private final UserProfileRepository userProfileRepository;
-    private final HashtagRepository hashtagRepository;
+  private final UserProfileRepository userProfileRepository;
+  private final HashtagRepository hashtagRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public SearchResultResponse execute(SearchRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional(readOnly = true)
+  public SearchResultResponse execute(SearchRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected SearchResultResponse doProcess(SearchRequest request) {
+    String query = request.getQuery();
+    if (query == null || query.isBlank()) {
+      return new SearchResultResponse(List.of(), List.of());
     }
 
-    @Override
-    protected SearchResultResponse doProcess(SearchRequest request) {
-        String query = request.getQuery();
-        if (query == null || query.isBlank()) {
-            return new SearchResultResponse(List.of(), List.of());
-        }
+    PageRequest pageRequest = PageRequest.of(0, 20); // Limit search results
 
-        PageRequest pageRequest = PageRequest.of(0, 20); // Limit search results
+    // Search Users
+    List<UserProfile> users = userProfileRepository.searchByKeyword(query, pageRequest);
+    List<FollowUserResponse> userResponses = users.stream()
+      .map(FollowUserResponse::from)
+      .collect(Collectors.toList());
 
-        // Search Users
-        List<UserProfile> users = userProfileRepository.searchByKeyword(query, pageRequest);
-        List<FollowUserResponse> userResponses = users.stream()
-                .map(FollowUserResponse::from)
-                .collect(Collectors.toList());
+    // Search Hashtags
+    List<Hashtag> hashtags = hashtagRepository.findByNameStartingWith(query, pageRequest);
+    List<SearchResultResponse.HashtagInfo> hashtagResponses = hashtags.stream()
+      .map(h -> new SearchResultResponse.HashtagInfo(h.getName(), 0L)) // Post count can be added later
+      .collect(Collectors.toList());
 
-        // Search Hashtags
-        List<Hashtag> hashtags = hashtagRepository.findByNameStartingWith(query, pageRequest);
-        List<SearchResultResponse.HashtagInfo> hashtagResponses = hashtags.stream()
-                .map(h -> new SearchResultResponse.HashtagInfo(h.getName(), 0L)) // Post count can be added later
-                .collect(Collectors.toList());
-
-        return new SearchResultResponse(userResponses, hashtagResponses);
-    }
+    return new SearchResultResponse(userResponses, hashtagResponses);
+  }
 }

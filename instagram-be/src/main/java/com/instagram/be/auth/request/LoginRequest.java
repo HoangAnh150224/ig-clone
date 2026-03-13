@@ -13,9 +13,9 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class LoginRequest extends BaseRequest {
 
-    @NotBlank(message = "Identifier is required")
-    private String identifier;
+  @NotBlank(message = "Identifier is required")
+  private String identifier;
 
-    @NotBlank(message = "Password is required")
-    private String password;
+  @NotBlank(message = "Password is required")
+  private String password;
 }

@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class PostActionRequest extends BaseRequest {
 
-    private UUID postId;
+  private UUID postId;
 }

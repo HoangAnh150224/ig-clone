@@ -14,6 +14,6 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class ReplyToStoryRequest extends BaseRequest {
 
-    private UUID storyId;
-    private String text;
+  private UUID storyId;
+  private String text;
 }

@@ -10,30 +10,31 @@ import java.util.stream.Collectors;
 
 public class SecurityUtils {
 
-    private SecurityUtils() {}
+  private SecurityUtils() {
+  }
 
-    public static Optional<UserPrincipal> getCurrentPrincipal() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
-            return Optional.of(principal);
-        }
-        return Optional.empty();
+  public static Optional<UserPrincipal> getCurrentPrincipal() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+      return Optional.of(principal);
     }
+    return Optional.empty();
+  }
 
-    public static Optional<UserContext> getCurrentUserContext() {
-        return getCurrentPrincipal().map(principal ->
-                UserContext.builder()
-                        .userId(principal.getUserId())
-                        .username(principal.getUsername())
-                        .email(principal.getEmail())
-                        .roles(principal.getAuthorities().stream()
-                                .map(a -> a.getAuthority().replace("ROLE_", ""))
-                                .collect(Collectors.toSet()))
-                        .build()
-        );
-    }
+  public static Optional<UserContext> getCurrentUserContext() {
+    return getCurrentPrincipal().map(principal ->
+      UserContext.builder()
+        .userId(principal.getUserId())
+        .username(principal.getUsername())
+        .email(principal.getEmail())
+        .roles(principal.getAuthorities().stream()
+          .map(a -> a.getAuthority().replace("ROLE_", ""))
+          .collect(Collectors.toSet()))
+        .build()
+    );
+  }
 
-    public static Optional<UUID> getCurrentUserId() {
-        return getCurrentPrincipal().map(UserPrincipal::getUserId);
-    }
+  public static Optional<UUID> getCurrentUserId() {
+    return getCurrentPrincipal().map(UserPrincipal::getUserId);
+  }
 }

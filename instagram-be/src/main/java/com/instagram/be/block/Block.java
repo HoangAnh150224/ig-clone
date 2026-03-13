@@ -16,11 +16,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Block extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocker_id", nullable = false)
-    private UserProfile blocker;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "blocker_id", nullable = false)
+  private UserProfile blocker;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocked_id", nullable = false)
-    private UserProfile blocked;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "blocked_id", nullable = false)
+  private UserProfile blocked;
 }

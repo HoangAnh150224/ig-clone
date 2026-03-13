@@ -18,23 +18,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetBlockedUsersService extends BaseService<PaginatedRequest, PaginatedResponse<FollowUserResponse>> {
 
-    private final BlockRepository blockRepository;
+  private final BlockRepository blockRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PaginatedResponse<FollowUserResponse> execute(PaginatedRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public PaginatedResponse<FollowUserResponse> execute(PaginatedRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected PaginatedResponse<FollowUserResponse> doProcess(PaginatedRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
-        
-        Page<UserProfile> blockedUsers = blockRepository.findBlockedUsersByUserId(userId, pageRequest);
-        
-        return PaginatedResponse.from(
-                blockedUsers.map(u -> FollowUserResponse.of(u, false))
-        );
-    }
+  @Override
+  protected PaginatedResponse<FollowUserResponse> doProcess(PaginatedRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
+
+    Page<UserProfile> blockedUsers = blockRepository.findBlockedUsersByUserId(userId, pageRequest);
+
+    return PaginatedResponse.from(
+      blockedUsers.map(u -> FollowUserResponse.of(u, false))
+    );
+  }
 }

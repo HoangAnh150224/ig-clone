@@ -11,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class GetUserStoriesRequest extends BaseRequest {
-    private String targetUsername;
+  private String targetUsername;
 }

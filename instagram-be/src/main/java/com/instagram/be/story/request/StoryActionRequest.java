@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class StoryActionRequest extends BaseRequest {
 
-    private UUID storyId;
+  private UUID storyId;
 }

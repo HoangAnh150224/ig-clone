@@ -18,30 +18,30 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeleteCommentService extends BaseService<CommentActionRequest, Void> {
 
-    private final CommentRepository commentRepository;
-    private final PostRepository postRepository;
+  private final CommentRepository commentRepository;
+  private final PostRepository postRepository;
 
-    @Override
-    @Transactional
-    public Void execute(CommentActionRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public Void execute(CommentActionRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected Void doProcess(CommentActionRequest request) {
+    UUID viewerId = request.getUserContext().getUserId();
+    Comment comment = commentRepository.findById(request.getCommentId())
+      .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
+
+    Post post = comment.getPost();
+    boolean isCommentOwner = comment.getUser().getId().equals(viewerId);
+    boolean isPostOwner = post.getUser().getId().equals(viewerId);
+
+    if (!isCommentOwner && !isPostOwner) {
+      throw new BusinessException("You do not have permission to delete this comment");
     }
 
-    @Override
-    protected Void doProcess(CommentActionRequest request) {
-        UUID viewerId = request.getUserContext().getUserId();
-        Comment comment = commentRepository.findById(request.getCommentId())
-                .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
-
-        Post post = comment.getPost();
-        boolean isCommentOwner = comment.getUser().getId().equals(viewerId);
-        boolean isPostOwner = post.getUser().getId().equals(viewerId);
-
-        if (!isCommentOwner && !isPostOwner) {
-            throw new BusinessException("You do not have permission to delete this comment");
-        }
-
-        commentRepository.delete(comment);
-        return null;
-    }
+    commentRepository.delete(comment);
+    return null;
+  }
 }

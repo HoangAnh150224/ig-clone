@@ -18,37 +18,37 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UpdateCommentService extends BaseService<UpdateCommentRequest, CommentResponse> {
 
-    private final CommentRepository commentRepository;
-    private final CommentLikeRepository commentLikeRepository;
+  private final CommentRepository commentRepository;
+  private final CommentLikeRepository commentLikeRepository;
 
-    @Override
-    @Transactional
-    public CommentResponse execute(UpdateCommentRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public CommentResponse execute(UpdateCommentRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected CommentResponse doProcess(UpdateCommentRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+
+    Comment comment = commentRepository.findById(request.getCommentId())
+      .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
+
+    if (!comment.getPost().getId().equals(request.getPostId())) {
+      throw new NotFoundException("Comment", request.getCommentId());
     }
 
-    @Override
-    protected CommentResponse doProcess(UpdateCommentRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-
-        Comment comment = commentRepository.findById(request.getCommentId())
-                .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
-
-        if (!comment.getPost().getId().equals(request.getPostId())) {
-            throw new NotFoundException("Comment", request.getCommentId());
-        }
-
-        if (!comment.getUser().getId().equals(userId)) {
-            throw new BusinessException("You can only edit your own comments");
-        }
-
-        comment.setContent(request.getContent());
-        Comment saved = commentRepository.save(comment);
-
-        long replyCount = commentRepository.countByParentCommentId(saved.getId());
-        long likeCount = commentLikeRepository.countByCommentId(saved.getId());
-        boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(saved.getId(), userId);
-
-        return CommentResponse.of(saved, replyCount, likeCount, isLiked, true);
+    if (!comment.getUser().getId().equals(userId)) {
+      throw new BusinessException("You can only edit your own comments");
     }
+
+    comment.setContent(request.getContent());
+    Comment saved = commentRepository.save(comment);
+
+    long replyCount = commentRepository.countByParentCommentId(saved.getId());
+    long likeCount = commentLikeRepository.countByCommentId(saved.getId());
+    boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(saved.getId(), userId);
+
+    return CommentResponse.of(saved, replyCount, likeCount, isLiked, true);
+  }
 }

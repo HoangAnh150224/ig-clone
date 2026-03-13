@@ -11,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class GetHashtagPostsRequest extends PaginatedRequest {
-    private String hashtagName;
+  private String hashtagName;
 }

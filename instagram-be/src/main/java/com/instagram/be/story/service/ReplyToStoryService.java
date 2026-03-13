@@ -21,33 +21,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReplyToStoryService extends BaseService<ReplyToStoryRequest, StoryReplyResponse> {
 
-    private final StoryRepository storyRepository;
-    private final StoryReplyRepository storyReplyRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final StoryRepository storyRepository;
+  private final StoryReplyRepository storyReplyRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public StoryReplyResponse execute(ReplyToStoryRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public StoryReplyResponse execute(ReplyToStoryRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected StoryReplyResponse doProcess(ReplyToStoryRequest request) {
+    if (request.getText() == null || request.getText().isBlank()) {
+      throw new AppValidationException("Reply text cannot be empty");
     }
 
-    @Override
-    protected StoryReplyResponse doProcess(ReplyToStoryRequest request) {
-        if (request.getText() == null || request.getText().isBlank()) {
-            throw new AppValidationException("Reply text cannot be empty");
-        }
+    UUID viewerId = request.getUserContext().getUserId();
+    Story story = storyRepository.findById(request.getStoryId())
+      .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
 
-        UUID viewerId = request.getUserContext().getUserId();
-        Story story = storyRepository.findById(request.getStoryId())
-                .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
+    UserProfile user = userProfileRepository.getReferenceById(viewerId);
+    StoryReply reply = StoryReply.builder()
+      .story(story)
+      .user(user)
+      .text(request.getText())
+      .build();
 
-        UserProfile user = userProfileRepository.getReferenceById(viewerId);
-        StoryReply reply = StoryReply.builder()
-                .story(story)
-                .user(user)
-                .text(request.getText())
-                .build();
-
-        return StoryReplyResponse.from(storyReplyRepository.save(reply));
-    }
+    return StoryReplyResponse.from(storyReplyRepository.save(reply));
+  }
 }

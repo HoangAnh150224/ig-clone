@@ -20,35 +20,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreateReportService extends BaseService<CreateReportRequest, Void> {
 
-    private final ReportRepository reportRepository;
-    private final PostRepository postRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final ReportRepository reportRepository;
+  private final PostRepository postRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public Void execute(CreateReportRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public Void execute(CreateReportRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected Void doProcess(CreateReportRequest request) {
+    UUID reporterId = request.getUserContext().getUserId();
+    UUID postId = request.getPostId();
+
+    if (reportRepository.existsByReporterIdAndPostId(reporterId, postId)) {
+      throw new BusinessException("You have already reported this post");
     }
 
-    @Override
-    protected Void doProcess(CreateReportRequest request) {
-        UUID reporterId = request.getUserContext().getUserId();
-        UUID postId = request.getPostId();
+    UserProfile reporter = userProfileRepository.getReferenceById(reporterId);
+    Post post = postRepository.findById(postId)
+      .orElseThrow(() -> new NotFoundException("Post", postId));
 
-        if (reportRepository.existsByReporterIdAndPostId(reporterId, postId)) {
-            throw new BusinessException("You have already reported this post");
-        }
+    reportRepository.save(Report.builder()
+      .reporter(reporter)
+      .post(post)
+      .reason(request.getReason())
+      .build());
 
-        UserProfile reporter = userProfileRepository.getReferenceById(reporterId);
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("Post", postId));
-
-        reportRepository.save(Report.builder()
-                .reporter(reporter)
-                .post(post)
-                .reason(request.getReason())
-                .build());
-
-        return null;
-    }
+    return null;
+  }
 }

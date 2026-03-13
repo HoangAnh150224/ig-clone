@@ -16,25 +16,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeletePostService extends BaseService<PostActionRequest, Void> {
 
-    private final PostRepository postRepository;
+  private final PostRepository postRepository;
 
-    @Override
-    @Transactional
-    public Void execute(PostActionRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public Void execute(PostActionRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected Void doProcess(PostActionRequest request) {
+    UUID viewerId = request.getUserContext().getUserId();
+    Post post = postRepository.findById(request.getPostId())
+      .orElseThrow(() -> new NotFoundException("Post", request.getPostId()));
+
+    if (!post.getUser().getId().equals(viewerId)) {
+      throw new BusinessException("You do not have permission to delete this post");
     }
 
-    @Override
-    protected Void doProcess(PostActionRequest request) {
-        UUID viewerId = request.getUserContext().getUserId();
-        Post post = postRepository.findById(request.getPostId())
-                .orElseThrow(() -> new NotFoundException("Post", request.getPostId()));
-
-        if (!post.getUser().getId().equals(viewerId)) {
-            throw new BusinessException("You do not have permission to delete this post");
-        }
-
-        postRepository.delete(post);
-        return null;
-    }
+    postRepository.delete(post);
+    return null;
+  }
 }

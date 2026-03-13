@@ -13,18 +13,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ClearSearchHistoryService extends BaseService<ClearSearchHistoryRequest, Void> {
 
-    private final SearchHistoryRepository searchHistoryRepository;
+  private final SearchHistoryRepository searchHistoryRepository;
 
-    @Override
-    @Transactional
-    public Void execute(ClearSearchHistoryRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(ClearSearchHistoryRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(ClearSearchHistoryRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        searchHistoryRepository.deleteAllByUserId(userId);
-        return null;
-    }
+  @Override
+  protected Void doProcess(ClearSearchHistoryRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    searchHistoryRepository.deleteAllByUserId(userId);
+    return null;
+  }
 }

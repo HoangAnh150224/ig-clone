@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseMetadata {
-    private String requestId;
-    private String apiVersion;
-    private String traceId;
+  private String requestId;
+  private String apiVersion;
+  private String traceId;
 }

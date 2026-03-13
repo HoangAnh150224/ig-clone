@@ -18,20 +18,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ConversationParticipant extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id", nullable = false)
-    private Conversation conversation;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "conversation_id", nullable = false)
+  private Conversation conversation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserProfile user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserProfile user;
 
-    @Column(name = "is_accepted", nullable = false)
-    private boolean accepted = true;
+  @Column(name = "is_accepted", nullable = false)
+  private boolean accepted = true;
 
-    @Column(name = "last_read_at")
-    private LocalDateTime lastReadAt;
+  @Column(name = "last_read_at")
+  private LocalDateTime lastReadAt;
 
-    @Column(name = "last_deleted_at")
-    private LocalDateTime lastDeletedAt;
+  @Column(name = "last_deleted_at")
+  private LocalDateTime lastDeletedAt;
 }

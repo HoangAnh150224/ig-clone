@@ -20,17 +20,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HashtagController {
 
-    private final HashtagSearchService hashtagSearchService;
+  private final HashtagSearchService hashtagSearchService;
 
-    @GetMapping("/search")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<HashtagSuggestionResponse>>> search(
-            @RequestParam(required = false) String q,
-            @RequestParam(defaultValue = "10") int limit) {
-        HashtagSearchRequest request = HashtagSearchRequest.builder()
-                .q(q).limit(limit)
-                .userContext(SecurityUtils.getCurrentUserContext().orElse(null))
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(hashtagSearchService.execute(request), "Hashtags retrieved", 200));
-    }
+  @GetMapping("/search")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<List<HashtagSuggestionResponse>>> search(
+    @RequestParam(required = false) String q,
+    @RequestParam(defaultValue = "10") int limit) {
+    HashtagSearchRequest request = HashtagSearchRequest.builder()
+      .q(q).limit(limit)
+      .userContext(SecurityUtils.getCurrentUserContext().orElse(null))
+      .build();
+    return ResponseEntity.ok(ApiResponse.success(hashtagSearchService.execute(request), "Hashtags retrieved", 200));
+  }
 }

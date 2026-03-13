@@ -15,15 +15,15 @@ import java.util.UUID;
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, UUID> {
 
-    Optional<PostLike> findByPostIdAndUserId(UUID postId, UUID userId);
+  Optional<PostLike> findByPostIdAndUserId(UUID postId, UUID userId);
 
-    boolean existsByPostIdAndUserId(UUID postId, UUID userId);
+  boolean existsByPostIdAndUserId(UUID postId, UUID userId);
 
-    long countByPostId(UUID postId);
+  long countByPostId(UUID postId);
 
-    @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
-    Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+  @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
+  Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
 
-    @Query("SELECT pl FROM PostLike pl JOIN FETCH pl.user WHERE pl.post.id = :postId")
-    Page<PostLike> findWithUserByPostId(@Param("postId") UUID postId, Pageable pageable);
+  @Query("SELECT pl FROM PostLike pl JOIN FETCH pl.user WHERE pl.post.id = :postId")
+  Page<PostLike> findWithUserByPostId(@Param("postId") UUID postId, Pageable pageable);
 }

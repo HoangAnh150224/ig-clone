@@ -14,23 +14,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AcceptMessageRequestService extends BaseService<MessageActionRequest, Void> {
 
-    private final ConversationParticipantRepository participantRepository;
+  private final ConversationParticipantRepository participantRepository;
 
-    @Override
-    @Transactional
-    public Void execute(MessageActionRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(MessageActionRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(MessageActionRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        var participant = participantRepository
-                .findByConversationIdAndUserId(request.getConversationId(), userId)
-                .orElseThrow(() -> new NotFoundException("Conversation not found"));
+  @Override
+  protected Void doProcess(MessageActionRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    var participant = participantRepository
+      .findByConversationIdAndUserId(request.getConversationId(), userId)
+      .orElseThrow(() -> new NotFoundException("Conversation not found"));
 
-        participant.setAccepted(true);
-        participantRepository.save(participant);
-        return null;
-    }
+    participant.setAccepted(true);
+    participantRepository.save(participant);
+    return null;
+  }
 }

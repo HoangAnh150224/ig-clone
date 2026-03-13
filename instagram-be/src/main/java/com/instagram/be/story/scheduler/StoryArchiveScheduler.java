@@ -16,22 +16,22 @@ import java.util.List;
 @Slf4j
 public class StoryArchiveScheduler {
 
-    private final StoryRepository storyRepository;
+  private final StoryRepository storyRepository;
 
-    /**
-     * Every hour, archive expired stories.
-     * Story is active for 24 hours (based on expiresAt).
-     */
-    @Scheduled(cron = "0 0 * * * *")
-    @Transactional
-    public void archiveExpiredStories() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Story> expired = storyRepository.findExpiredStories(now);
+  /**
+   * Every hour, archive expired stories.
+   * Story is active for 24 hours (based on expiresAt).
+   */
+  @Scheduled(cron = "0 0 * * * *")
+  @Transactional
+  public void archiveExpiredStories() {
+    LocalDateTime now = LocalDateTime.now();
+    List<Story> expired = storyRepository.findExpiredStories(now);
 
-        if (!expired.isEmpty()) {
-            log.info("Archiving {} expired stories", expired.size());
-            expired.forEach(s -> s.setArchived(true));
-            storyRepository.saveAll(expired);
-        }
+    if (!expired.isEmpty()) {
+      log.info("Archiving {} expired stories", expired.size());
+      expired.forEach(s -> s.setArchived(true));
+      storyRepository.saveAll(expired);
     }
+  }
 }

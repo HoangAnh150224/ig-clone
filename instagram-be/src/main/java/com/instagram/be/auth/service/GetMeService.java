@@ -15,19 +15,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetMeService extends BaseService<GetMeRequest, MeResponse> {
 
-    private final AuthRepository authRepository;
+  private final AuthRepository authRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public MeResponse execute(GetMeRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public MeResponse execute(GetMeRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected MeResponse doProcess(GetMeRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        return authRepository.findById(userId)
-                .map(MeResponse::from)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-    }
+  @Override
+  protected MeResponse doProcess(GetMeRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    return authRepository.findById(userId)
+      .map(MeResponse::from)
+      .orElseThrow(() -> new NotFoundException("User not found"));
+  }
 }

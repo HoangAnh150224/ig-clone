@@ -14,20 +14,20 @@ import java.util.UUID;
 @Repository
 public interface SearchHistoryRepository extends JpaRepository<SearchHistory, UUID> {
 
-    @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId ORDER BY s.createdAt DESC")
-    List<SearchHistory> findRecentByUserId(@Param("userId") UUID userId, Pageable pageable);
+  @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId ORDER BY s.createdAt DESC")
+  List<SearchHistory> findRecentByUserId(@Param("userId") UUID userId, Pageable pageable);
 
-    @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId AND s.searchedUser.id = :searchedUserId")
-    Optional<SearchHistory> findByUserIdAndSearchedUserId(@Param("userId") UUID userId,
-                                                           @Param("searchedUserId") UUID searchedUserId);
+  @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId AND s.searchedUser.id = :searchedUserId")
+  Optional<SearchHistory> findByUserIdAndSearchedUserId(@Param("userId") UUID userId,
+                                                        @Param("searchedUserId") UUID searchedUserId);
 
-    @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId AND s.hashtag.id = :hashtagId")
-    Optional<SearchHistory> findByUserIdAndHashtagId(@Param("userId") UUID userId,
-                                                      @Param("hashtagId") UUID hashtagId);
+  @Query("SELECT s FROM SearchHistory s WHERE s.user.id = :userId AND s.hashtag.id = :hashtagId")
+  Optional<SearchHistory> findByUserIdAndHashtagId(@Param("userId") UUID userId,
+                                                   @Param("hashtagId") UUID hashtagId);
 
-    Optional<SearchHistory> findByIdAndUserId(UUID id, UUID userId);
+  Optional<SearchHistory> findByIdAndUserId(UUID id, UUID userId);
 
-    @Query("DELETE FROM SearchHistory s WHERE s.user.id = :userId")
-    @org.springframework.data.jpa.repository.Modifying
-    void deleteAllByUserId(@Param("userId") UUID userId);
+  @Query("DELETE FROM SearchHistory s WHERE s.user.id = :userId")
+  @org.springframework.data.jpa.repository.Modifying
+  void deleteAllByUserId(@Param("userId") UUID userId);
 }

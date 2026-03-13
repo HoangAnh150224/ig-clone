@@ -14,6 +14,6 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class CommentActionRequest extends BaseRequest {
 
-    private UUID postId;
-    private UUID commentId;
+  private UUID postId;
+  private UUID commentId;
 }

@@ -13,26 +13,26 @@ import java.util.UUID;
 @Repository
 public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipant, UUID> {
 
-    @Query("""
-            SELECT cp FROM ConversationParticipant cp
-            JOIN FETCH cp.conversation c
-            WHERE cp.user.id = :userId AND cp.accepted = true
-            ORDER BY c.updatedAt DESC
-            """)
-    List<ConversationParticipant> findAcceptedByUserId(@Param("userId") UUID userId);
+  @Query("""
+    SELECT cp FROM ConversationParticipant cp
+    JOIN FETCH cp.conversation c
+    WHERE cp.user.id = :userId AND cp.accepted = true
+    ORDER BY c.updatedAt DESC
+    """)
+  List<ConversationParticipant> findAcceptedByUserId(@Param("userId") UUID userId);
 
-    @Query("""
-            SELECT cp FROM ConversationParticipant cp
-            JOIN FETCH cp.conversation c
-            WHERE cp.user.id = :userId AND cp.accepted = false
-            ORDER BY c.updatedAt DESC
-            """)
-    List<ConversationParticipant> findRequestsByUserId(@Param("userId") UUID userId);
+  @Query("""
+    SELECT cp FROM ConversationParticipant cp
+    JOIN FETCH cp.conversation c
+    WHERE cp.user.id = :userId AND cp.accepted = false
+    ORDER BY c.updatedAt DESC
+    """)
+  List<ConversationParticipant> findRequestsByUserId(@Param("userId") UUID userId);
 
-    Optional<ConversationParticipant> findByConversationIdAndUserId(UUID conversationId, UUID userId);
+  Optional<ConversationParticipant> findByConversationIdAndUserId(UUID conversationId, UUID userId);
 
-    @Query("SELECT cp FROM ConversationParticipant cp JOIN FETCH cp.user WHERE cp.conversation.id = :convId AND cp.user.id != :userId")
-    Optional<ConversationParticipant> findOtherParticipant(@Param("convId") UUID convId, @Param("userId") UUID userId);
+  @Query("SELECT cp FROM ConversationParticipant cp JOIN FETCH cp.user WHERE cp.conversation.id = :convId AND cp.user.id != :userId")
+  Optional<ConversationParticipant> findOtherParticipant(@Param("convId") UUID convId, @Param("userId") UUID userId);
 
-    long countByConversationIdAndAcceptedFalseAndUserIdNot(UUID conversationId, UUID userId);
+  long countByConversationIdAndAcceptedFalseAndUserIdNot(UUID conversationId, UUID userId);
 }

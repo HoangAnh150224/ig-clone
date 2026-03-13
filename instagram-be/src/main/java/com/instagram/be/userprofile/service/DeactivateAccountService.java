@@ -15,21 +15,21 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeactivateAccountService extends BaseService<DeactivateAccountRequest, Void> {
 
-    private final UserProfileRepository userProfileRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public Void execute(DeactivateAccountRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional
+  public Void execute(DeactivateAccountRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected Void doProcess(DeactivateAccountRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        UserProfile user = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User", userId));
-        user.setActive(false);
-        userProfileRepository.save(user);
-        return null;
-    }
+  @Override
+  protected Void doProcess(DeactivateAccountRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    UserProfile user = userProfileRepository.findById(userId)
+      .orElseThrow(() -> new NotFoundException("User", userId));
+    user.setActive(false);
+    userProfileRepository.save(user);
+    return null;
+  }
 }

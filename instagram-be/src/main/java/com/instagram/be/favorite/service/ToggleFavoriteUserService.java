@@ -19,31 +19,31 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ToggleFavoriteUserService extends BaseService<FavoriteRequest, FavoriteResponse> {
 
-    private final FavoriteUserRepository favoriteUserRepository;
-    private final UserProfileRepository userProfileRepository;
+  private final FavoriteUserRepository favoriteUserRepository;
+  private final UserProfileRepository userProfileRepository;
 
-    @Override
-    @Transactional
-    public FavoriteResponse execute(FavoriteRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public FavoriteResponse execute(FavoriteRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected FavoriteResponse doProcess(FavoriteRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    UUID targetId = request.getTargetId();
+
+    Optional<FavoriteUser> existing = favoriteUserRepository.findByUserIdAndFavoriteId(userId, targetId);
+    if (existing.isPresent()) {
+      favoriteUserRepository.delete(existing.get());
+      return new FavoriteResponse(false);
     }
 
-    @Override
-    protected FavoriteResponse doProcess(FavoriteRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        UUID targetId = request.getTargetId();
+    UserProfile user = userProfileRepository.getReferenceById(userId);
+    UserProfile target = userProfileRepository.findById(targetId)
+      .orElseThrow(() -> new NotFoundException("User", targetId));
 
-        Optional<FavoriteUser> existing = favoriteUserRepository.findByUserIdAndFavoriteId(userId, targetId);
-        if (existing.isPresent()) {
-            favoriteUserRepository.delete(existing.get());
-            return new FavoriteResponse(false);
-        }
-
-        UserProfile user = userProfileRepository.getReferenceById(userId);
-        UserProfile target = userProfileRepository.findById(targetId)
-                .orElseThrow(() -> new NotFoundException("User", targetId));
-
-        favoriteUserRepository.save(FavoriteUser.builder().user(user).favorite(target).build());
-        return new FavoriteResponse(true);
-    }
+    favoriteUserRepository.save(FavoriteUser.builder().user(user).favorite(target).build());
+    return new FavoriteResponse(true);
+  }
 }

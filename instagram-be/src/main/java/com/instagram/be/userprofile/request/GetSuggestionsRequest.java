@@ -11,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class GetSuggestionsRequest extends BaseRequest {
-    private int limit;
+  private int limit;
 }

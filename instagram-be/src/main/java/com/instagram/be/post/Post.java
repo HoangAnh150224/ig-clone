@@ -21,40 +21,40 @@ import java.util.Set;
 @NoArgsConstructor
 public class Post extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserProfile user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserProfile user;
 
-    @Column(name = "caption", columnDefinition = "TEXT")
-    private String caption;
+  @Column(name = "caption", columnDefinition = "TEXT")
+  private String caption;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private PostType type = PostType.POST;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "type", nullable = false)
+  private PostType type = PostType.POST;
 
-    @Column(name = "music")
-    private String music;
+  @Column(name = "music")
+  private String music;
 
-    @Column(name = "location_name")
-    private String locationName;
+  @Column(name = "location_name")
+  private String locationName;
 
-    @Column(name = "is_archived", nullable = false)
-    private boolean archived = false;
+  @Column(name = "is_archived", nullable = false)
+  private boolean archived = false;
 
-    @Column(name = "comments_disabled", nullable = false)
-    private boolean commentsDisabled = false;
+  @Column(name = "comments_disabled", nullable = false)
+  private boolean commentsDisabled = false;
 
-    @Column(name = "hide_like_count", nullable = false)
-    private boolean hideLikeCount = false;
+  @Column(name = "hide_like_count", nullable = false)
+  private boolean hideLikeCount = false;
 
-    @Column(name = "share_count", nullable = false)
-    private int shareCount = 0;
+  @Column(name = "share_count", nullable = false)
+  private int shareCount = 0;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "post_hashtag",
-            joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "hashtag_id")
-    )
-    private Set<Hashtag> hashtags = new HashSet<>();
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "post_hashtag",
+    joinColumns = @JoinColumn(name = "post_id"),
+    inverseJoinColumns = @JoinColumn(name = "hashtag_id")
+  )
+  private Set<Hashtag> hashtags = new HashSet<>();
 }

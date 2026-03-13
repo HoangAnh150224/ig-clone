@@ -17,46 +17,46 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RegisterService extends BaseService<RegisterRequest, AuthResponse> {
 
-    private final AuthRepository authRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+  private final AuthRepository authRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtUtil jwtUtil;
 
-    @Override
-    @Transactional
-    public AuthResponse execute(RegisterRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public AuthResponse execute(RegisterRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected AuthResponse doProcess(RegisterRequest request) {
+    if (authRepository.existsByUsername(request.getUsername())) {
+      throw new DuplicateResourceException("Username already exists");
+    }
+    if (authRepository.existsByEmail(request.getEmail())) {
+      throw new DuplicateResourceException("Email already exists");
     }
 
-    @Override
-    protected AuthResponse doProcess(RegisterRequest request) {
-        if (authRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("Username already exists");
-        }
-        if (authRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email already exists");
-        }
+    UserProfile user = UserProfile.builder()
+      .username(request.getUsername())
+      .email(request.getEmail())
+      .passwordHash(passwordEncoder.encode(request.getPassword()))
+      .fullName(request.getFullName())
+      .role(UserRole.USER)
+      .build();
 
-        UserProfile user = UserProfile.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .role(UserRole.USER)
-                .build();
+    user = authRepository.save(user);
 
-        user = authRepository.save(user);
+    String token = jwtUtil.generateToken(
+      user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
+    );
 
-        String token = jwtUtil.generateToken(
-                user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
-        );
-
-        return AuthResponse.of(
-                token,
-                jwtUtil.getRemainingTtlSeconds(token),
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole().name()
-        );
-    }
+    return AuthResponse.of(
+      token,
+      jwtUtil.getRemainingTtlSeconds(token),
+      user.getId(),
+      user.getUsername(),
+      user.getEmail(),
+      user.getRole().name()
+    );
+  }
 }

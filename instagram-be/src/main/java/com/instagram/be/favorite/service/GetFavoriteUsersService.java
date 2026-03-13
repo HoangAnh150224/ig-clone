@@ -16,23 +16,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetFavoriteUsersService extends BaseService<UserOnlyRequest, List<FollowUserResponse>> {
 
-    private final FavoriteUserRepository favoriteUserRepository;
-    private final FollowRepository followRepository;
+  private final FavoriteUserRepository favoriteUserRepository;
+  private final FollowRepository followRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<FollowUserResponse> execute(UserOnlyRequest request) {
-        return super.execute(request);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<FollowUserResponse> execute(UserOnlyRequest request) {
+    return super.execute(request);
+  }
 
-    @Override
-    protected List<FollowUserResponse> doProcess(UserOnlyRequest request) {
-        UUID userId = request.getUserContext().getUserId();
-        return favoriteUserRepository.findByUserId(userId).stream()
-                .map(fu -> {
-                    boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(userId, fu.getFavorite().getId());
-                    return FollowUserResponse.of(fu.getFavorite(), isFollowing);
-                })
-                .toList();
-    }
+  @Override
+  protected List<FollowUserResponse> doProcess(UserOnlyRequest request) {
+    UUID userId = request.getUserContext().getUserId();
+    return favoriteUserRepository.findByUserId(userId).stream()
+      .map(fu -> {
+        boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(userId, fu.getFavorite().getId());
+        return FollowUserResponse.of(fu.getFavorite(), isFollowing);
+      })
+      .toList();
+  }
 }

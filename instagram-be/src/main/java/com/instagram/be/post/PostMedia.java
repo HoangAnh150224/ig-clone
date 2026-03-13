@@ -16,17 +16,17 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class PostMedia extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id", nullable = false)
+  private Post post;
 
-    @Column(name = "url", nullable = false, length = 500)
-    private String url;
+  @Column(name = "url", nullable = false, length = 500)
+  private String url;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "media_type", nullable = false)
-    private MediaType mediaType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "media_type", nullable = false)
+  private MediaType mediaType;
 
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder = 0;
+  @Column(name = "display_order", nullable = false)
+  private int displayOrder = 0;
 }

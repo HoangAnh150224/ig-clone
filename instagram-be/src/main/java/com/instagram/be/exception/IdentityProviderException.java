@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 public class IdentityProviderException extends BaseException {
 
-    public IdentityProviderException(String message) {
-        super(message, "IDENTITY_PROVIDER_ERROR", HttpStatus.BAD_GATEWAY);
-    }
+  public IdentityProviderException(String message) {
+    super(message, "IDENTITY_PROVIDER_ERROR", HttpStatus.BAD_GATEWAY);
+  }
 }

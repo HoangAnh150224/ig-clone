@@ -21,35 +21,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SavePostService extends BaseService<PostActionRequest, SaveResponse> {
 
-    private final PostRepository postRepository;
-    private final SavedPostRepository savedPostRepository;
-    private final UserProfileRepository userProfileRepository;
-    private final PostAccessGuard postAccessGuard;
+  private final PostRepository postRepository;
+  private final SavedPostRepository savedPostRepository;
+  private final UserProfileRepository userProfileRepository;
+  private final PostAccessGuard postAccessGuard;
 
-    @Override
-    @Transactional
-    public SaveResponse execute(PostActionRequest request) {
-        return super.execute(request);
+  @Override
+  @Transactional
+  public SaveResponse execute(PostActionRequest request) {
+    return super.execute(request);
+  }
+
+  @Override
+  protected SaveResponse doProcess(PostActionRequest request) {
+    UUID viewerId = request.getUserContext().getUserId();
+    UUID postId = request.getPostId();
+
+    Post post = postRepository.findById(postId)
+      .orElseThrow(() -> new NotFoundException("Post", postId));
+
+    postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
+
+    var existing = savedPostRepository.findByUserIdAndPostId(viewerId, postId);
+    if (existing.isPresent()) {
+      savedPostRepository.delete(existing.get());
+      return new SaveResponse(false);
     }
 
-    @Override
-    protected SaveResponse doProcess(PostActionRequest request) {
-        UUID viewerId = request.getUserContext().getUserId();
-        UUID postId = request.getPostId();
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new NotFoundException("Post", postId));
-
-        postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
-
-        var existing = savedPostRepository.findByUserIdAndPostId(viewerId, postId);
-        if (existing.isPresent()) {
-            savedPostRepository.delete(existing.get());
-            return new SaveResponse(false);
-        }
-
-        UserProfile user = userProfileRepository.getReferenceById(viewerId);
-        savedPostRepository.save(SavedPost.builder().user(user).post(post).build());
-        return new SaveResponse(true);
-    }
+    UserProfile user = userProfileRepository.getReferenceById(viewerId);
+    savedPostRepository.save(SavedPost.builder().user(user).post(post).build());
+    return new SaveResponse(true);
+  }
 }

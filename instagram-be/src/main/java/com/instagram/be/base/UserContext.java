@@ -9,18 +9,18 @@ import java.util.UUID;
 @Data
 @Builder
 public class UserContext {
-    private UUID userId;
-    private String username;
-    private String email;
-    private Set<String> roles;
-    private String ipAddress;
-    private String userAgent;
+  private UUID userId;
+  private String username;
+  private String email;
+  private Set<String> roles;
+  private String ipAddress;
+  private String userAgent;
 
-    public boolean hasRole(String role) {
-        return roles != null && roles.contains(role);
-    }
+  public boolean hasRole(String role) {
+    return roles != null && roles.contains(role);
+  }
 
-    public boolean isAdmin() {
-        return hasRole("ADMIN");
-    }
+  public boolean isAdmin() {
+    return hasRole("ADMIN");
+  }
 }

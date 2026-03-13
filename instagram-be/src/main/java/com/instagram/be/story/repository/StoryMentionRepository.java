@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface StoryMentionRepository extends JpaRepository<StoryMention, UUID> {
-    void deleteAllByStory(Story story);
+  void deleteAllByStory(Story story);
 }

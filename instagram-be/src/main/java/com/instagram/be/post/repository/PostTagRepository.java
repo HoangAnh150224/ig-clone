@@ -14,11 +14,11 @@ import java.util.UUID;
 @Repository
 public interface PostTagRepository extends JpaRepository<PostTag, UUID> {
 
-    @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id = :postId")
-    List<PostTag> findWithUserByPostId(@Param("postId") UUID postId);
+  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id = :postId")
+  List<PostTag> findWithUserByPostId(@Param("postId") UUID postId);
 
-    void deleteByPostId(UUID postId);
+  void deleteByPostId(UUID postId);
 
-    @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.post p JOIN FETCH p.user WHERE pt.taggedUser.id = :userId AND p.archived = false")
-    Page<PostTag> findByTaggedUserIdAndNotArchived(@Param("userId") UUID userId, Pageable pageable);
+  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.post p JOIN FETCH p.user WHERE pt.taggedUser.id = :userId AND p.archived = false")
+  Page<PostTag> findByTaggedUserIdAndNotArchived(@Param("userId") UUID userId, Pageable pageable);
 }
