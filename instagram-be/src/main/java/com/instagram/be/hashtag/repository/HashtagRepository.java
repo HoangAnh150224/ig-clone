@@ -1,5 +1,6 @@
-package com.instagram.be.hashtag;
+package com.instagram.be.hashtag.repository;
 
+import com.instagram.be.hashtag.Hashtag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

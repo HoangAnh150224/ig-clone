@@ -1,5 +1,6 @@
-package com.instagram.be.message;
+package com.instagram.be.message.repository;
 
+import com.instagram.be.message.ConversationParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

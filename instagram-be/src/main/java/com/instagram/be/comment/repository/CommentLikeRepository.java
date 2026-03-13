@@ -1,5 +1,6 @@
-package com.instagram.be.comment;
+package com.instagram.be.comment.repository;
 
+import com.instagram.be.comment.CommentLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

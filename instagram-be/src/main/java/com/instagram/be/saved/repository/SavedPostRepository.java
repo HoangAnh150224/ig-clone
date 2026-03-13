@@ -1,5 +1,6 @@
-package com.instagram.be.saved;
+package com.instagram.be.saved.repository;
 
+import com.instagram.be.saved.SavedPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

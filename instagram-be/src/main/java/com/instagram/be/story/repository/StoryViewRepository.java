@@ -1,5 +1,7 @@
-package com.instagram.be.story;
+package com.instagram.be.story.repository;
 
+import com.instagram.be.story.Story;
+import com.instagram.be.story.StoryView;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

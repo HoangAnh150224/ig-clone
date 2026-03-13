@@ -1,5 +1,6 @@
-package com.instagram.be.post;
+package com.instagram.be.post.repository;
 
+import com.instagram.be.post.PostView;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

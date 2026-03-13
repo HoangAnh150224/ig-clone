@@ -1,5 +1,6 @@
-package com.instagram.be.comment;
+package com.instagram.be.comment.repository;
 
+import com.instagram.be.comment.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

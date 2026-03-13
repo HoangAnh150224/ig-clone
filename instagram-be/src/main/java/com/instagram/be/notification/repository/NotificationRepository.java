@@ -1,5 +1,6 @@
-package com.instagram.be.notification;
+package com.instagram.be.notification.repository;
 
+import com.instagram.be.notification.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

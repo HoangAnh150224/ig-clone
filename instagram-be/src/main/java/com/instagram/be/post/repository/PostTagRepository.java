@@ -1,5 +1,6 @@
-package com.instagram.be.post;
+package com.instagram.be.post.repository;
 
+import com.instagram.be.post.PostTag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

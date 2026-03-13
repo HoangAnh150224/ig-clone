@@ -1,5 +1,6 @@
-package com.instagram.be.report;
+package com.instagram.be.report.repository;
 
+import com.instagram.be.report.Report;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

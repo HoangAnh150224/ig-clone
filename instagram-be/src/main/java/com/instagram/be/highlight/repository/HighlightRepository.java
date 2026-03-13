@@ -1,5 +1,6 @@
-package com.instagram.be.highlight;
+package com.instagram.be.highlight.repository;
 
+import com.instagram.be.highlight.Highlight;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

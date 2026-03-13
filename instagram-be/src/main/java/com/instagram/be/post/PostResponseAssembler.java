@@ -1,8 +1,12 @@
 package com.instagram.be.post;
 
-import com.instagram.be.comment.CommentRepository;
+import com.instagram.be.comment.repository.CommentRepository;
 import com.instagram.be.follow.enums.FollowStatus;
 import com.instagram.be.follow.repository.FollowRepository;
+import com.instagram.be.post.repository.PostLikeRepository;
+import com.instagram.be.post.repository.PostMediaRepository;
+import com.instagram.be.post.repository.PostTagRepository;
+import com.instagram.be.post.repository.PostViewRepository;
 import com.instagram.be.post.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
