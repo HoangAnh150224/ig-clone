@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,11 +45,13 @@ public class GetStoryViewersService extends BaseService<StoryActionRequest, List
 
     List<StoryView> views = storyViewRepository.findViewersByStoryId(request.getStoryId());
 
+    Set<UUID> viewerIds = views.stream().map(v -> v.getViewer().getId()).collect(Collectors.toSet());
+    Set<UUID> followedViewerIds = viewerIds.isEmpty()
+      ? Set.of()
+      : followRepository.findFollowedIds(userId, viewerIds);
+
     return views.stream()
-      .map(view -> {
-        boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(userId, view.getViewer().getId());
-        return StoryViewResponse.of(view, isFollowing);
-      })
+      .map(view -> StoryViewResponse.of(view, followedViewerIds.contains(view.getViewer().getId())))
       .collect(Collectors.toList());
   }
 }

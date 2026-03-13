@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -18,6 +19,9 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
   Optional<Follow> findByFollowerIdAndFollowingId(UUID followerId, UUID followingId);
 
   boolean existsByFollowerIdAndFollowingId(UUID followerId, UUID followingId);
+
+  @Query("SELECT f.following.id FROM Follow f WHERE f.follower.id = :followerId AND f.following.id IN :targetIds AND f.status = 'ACCEPTED'")
+  Set<UUID> findFollowedIds(@Param("followerId") UUID followerId, @Param("targetIds") Set<UUID> targetIds);
 
   long countByFollowingIdAndStatus(UUID followingId, FollowStatus status);
 

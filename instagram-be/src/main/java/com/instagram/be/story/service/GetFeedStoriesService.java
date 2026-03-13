@@ -52,6 +52,16 @@ public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, Li
     Set<UUID> allStoryIds = stories.stream().map(Story::getId).collect(Collectors.toSet());
     Set<UUID> viewedIds = storyViewRepository.findViewedStoryIds(viewerId, allStoryIds);
 
+    // Batch-load own story viewers (avoid N+1)
+    Set<UUID> ownStoryIds = stories.stream()
+      .filter(s -> s.getUser().getId().equals(viewerId))
+      .map(Story::getId)
+      .collect(Collectors.toSet());
+    Map<UUID, List<com.instagram.be.story.StoryView>> ownViewsByStory = ownStoryIds.isEmpty()
+      ? Collections.emptyMap()
+      : storyViewRepository.findViewersByStoryIds(ownStoryIds)
+          .stream().collect(Collectors.groupingBy(sv -> sv.getStory().getId()));
+
     // Group by user (preserving order: self first, then followed)
     Map<UUID, List<Story>> byUser = new LinkedHashMap<>();
     userIds.forEach(uid -> byUser.put(uid, new ArrayList<>()));
@@ -69,8 +79,7 @@ public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, Li
           .map(s -> {
             boolean seen = viewedIds.contains(s.getId());
             if (ownerId.equals(viewerId)) {
-              // Owner story: load preview viewers
-              List<com.instagram.be.story.StoryView> views = storyViewRepository.findViewersByStoryId(s.getId());
+              var views = ownViewsByStory.getOrDefault(s.getId(), Collections.emptyList());
               var previewViews = views.stream().limit(2)
                 .map(com.instagram.be.story.response.StoryViewResponse::from)
                 .collect(Collectors.toList());

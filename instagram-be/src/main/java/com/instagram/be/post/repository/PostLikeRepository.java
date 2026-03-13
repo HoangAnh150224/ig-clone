@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +24,9 @@ public interface PostLikeRepository extends JpaRepository<PostLike, UUID> {
 
   @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
   Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+
+  @Query("SELECT pl.post.id, COUNT(pl) FROM PostLike pl WHERE pl.post.id IN :postIds GROUP BY pl.post.id")
+  List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
 
   @Query("SELECT pl FROM PostLike pl JOIN FETCH pl.user WHERE pl.post.id = :postId")
   Page<PostLike> findWithUserByPostId(@Param("postId") UUID postId, Pageable pageable);

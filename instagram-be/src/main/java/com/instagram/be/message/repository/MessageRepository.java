@@ -23,7 +23,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     "ORDER BY m.createdAt DESC")
   Page<Message> findByConversationId(@Param("convId") UUID convId, @Param("afterDate") LocalDateTime afterDate, Pageable pageable);
 
-  @Query("SELECT m FROM Message m " +
+  @Query("SELECT m FROM Message m JOIN FETCH m.sender " +
     "WHERE m.conversation.id = :convId " +
     "AND m.deleted = false " +
     "AND (:afterDate IS NULL OR m.createdAt > :afterDate) " +

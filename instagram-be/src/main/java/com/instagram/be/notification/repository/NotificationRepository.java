@@ -14,7 +14,8 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-  @Query("SELECT n FROM Notification n JOIN FETCH n.actor WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC")
+  @Query(value = "SELECT n FROM Notification n JOIN FETCH n.actor LEFT JOIN FETCH n.post LEFT JOIN FETCH n.comment WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC",
+         countQuery = "SELECT COUNT(n) FROM Notification n WHERE n.recipient.id = :userId")
   Page<Notification> findByRecipientId(@Param("userId") UUID userId, Pageable pageable);
 
   long countByRecipientIdAndReadFalse(UUID recipientId);

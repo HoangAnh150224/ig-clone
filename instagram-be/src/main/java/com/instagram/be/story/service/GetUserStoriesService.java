@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,11 +73,19 @@ public class GetUserStoriesService extends BaseService<GetUserStoriesRequest, Li
     Set<UUID> allIds = stories.stream().map(s -> s.getId()).collect(Collectors.toSet());
     Set<UUID> viewedIds = storyViewRepository.findViewedStoryIds(viewerId, allIds);
 
+    // Batch-load all viewers at once (owner only)
+    Map<UUID, List<com.instagram.be.story.StoryView>> viewsByStory = Collections.emptyMap();
+    if (isOwner) {
+      viewsByStory = storyViewRepository.findViewersByStoryIds(allIds)
+        .stream().collect(Collectors.groupingBy(sv -> sv.getStory().getId()));
+    }
+    final Map<UUID, List<com.instagram.be.story.StoryView>> viewsMap = viewsByStory;
+
     return stories.stream()
       .map(s -> {
         boolean seen = viewedIds.contains(s.getId());
         if (isOwner) {
-          var views = storyViewRepository.findViewersByStoryId(s.getId());
+          var views = viewsMap.getOrDefault(s.getId(), Collections.emptyList());
           var previewViews = views.stream().limit(2)
             .map(com.instagram.be.story.response.StoryViewResponse::from)
             .collect(Collectors.toList());

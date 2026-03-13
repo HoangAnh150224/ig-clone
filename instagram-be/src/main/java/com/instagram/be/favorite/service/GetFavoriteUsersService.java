@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,11 +30,17 @@ public class GetFavoriteUsersService extends BaseService<UserOnlyRequest, List<F
   @Override
   protected List<FollowUserResponse> doProcess(UserOnlyRequest request) {
     UUID userId = request.getUserContext().getUserId();
-    return favoriteUserRepository.findByUserId(userId).stream()
-      .map(fu -> {
-        boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(userId, fu.getFavorite().getId());
-        return FollowUserResponse.of(fu.getFavorite(), isFollowing);
-      })
+    var favorites = favoriteUserRepository.findByUserId(userId);
+
+    Set<UUID> favoriteIds = favorites.stream()
+      .map(fu -> fu.getFavorite().getId()).collect(Collectors.toSet());
+
+    Set<UUID> followedIds = favoriteIds.isEmpty()
+      ? Set.of()
+      : followRepository.findFollowedIds(userId, favoriteIds);
+
+    return favorites.stream()
+      .map(fu -> FollowUserResponse.of(fu.getFavorite(), followedIds.contains(fu.getFavorite().getId())))
       .toList();
   }
 }

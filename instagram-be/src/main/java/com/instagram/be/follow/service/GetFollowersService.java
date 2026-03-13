@@ -3,6 +3,7 @@ package com.instagram.be.follow.service;
 import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
+import com.instagram.be.follow.Follow;
 import com.instagram.be.follow.enums.FollowStatus;
 import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.follow.request.FollowListRequest;
@@ -13,7 +14,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,15 +41,18 @@ public class GetFollowersService extends BaseService<FollowListRequest, Paginate
       throw new NotFoundException("User", targetId);
     }
 
-    Page<FollowUserResponse> page = followRepository
-      .findFollowersByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable())
-      .map(follow -> {
-        boolean isFollowing = false;
-        if (viewerId != null) {
-          isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, follow.getFollower().getId());
-        }
-        return FollowUserResponse.of(follow.getFollower(), isFollowing);
-      });
+    Page<Follow> followPage = followRepository
+      .findFollowersByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable());
+
+    Set<UUID> followerIds = followPage.getContent().stream()
+      .map(f -> f.getFollower().getId()).collect(Collectors.toSet());
+
+    Set<UUID> followedByViewer = (viewerId != null && !followerIds.isEmpty())
+      ? followRepository.findFollowedIds(viewerId, followerIds)
+      : Set.of();
+
+    Page<FollowUserResponse> page = followPage.map(follow ->
+      FollowUserResponse.of(follow.getFollower(), followedByViewer.contains(follow.getFollower().getId())));
 
     return PaginatedResponse.from(page);
   }

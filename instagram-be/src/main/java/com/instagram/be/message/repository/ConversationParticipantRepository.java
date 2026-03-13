@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -33,6 +34,9 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
 
   @Query("SELECT cp FROM ConversationParticipant cp JOIN FETCH cp.user WHERE cp.conversation.id = :convId AND cp.user.id != :userId")
   Optional<ConversationParticipant> findOtherParticipant(@Param("convId") UUID convId, @Param("userId") UUID userId);
+
+  @Query("SELECT cp FROM ConversationParticipant cp JOIN FETCH cp.user WHERE cp.conversation.id IN :convIds AND cp.user.id != :userId")
+  List<ConversationParticipant> findOtherParticipants(@Param("convIds") Set<UUID> convIds, @Param("userId") UUID userId);
 
   long countByConversationIdAndAcceptedFalseAndUserIdNot(UUID conversationId, UUID userId);
 }

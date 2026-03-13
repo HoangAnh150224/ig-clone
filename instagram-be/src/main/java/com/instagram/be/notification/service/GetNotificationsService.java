@@ -16,7 +16,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,19 +43,36 @@ public class GetNotificationsService extends BaseService<GetNotificationsRequest
     PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
 
     Page<Notification> page = notificationRepository.findByRecipientId(userId, pageRequest);
+    List<Notification> notifications = page.getContent();
 
-    List<NotificationResponse> content = page.getContent().stream()
+    // Batch-load follow statuses for all actors
+    Set<UUID> actorIds = notifications.stream().map(n -> n.getActor().getId()).collect(Collectors.toSet());
+    Set<UUID> followedActorIds = actorIds.isEmpty()
+      ? Collections.emptySet()
+      : followRepository.findFollowedIds(userId, actorIds);
+
+    // Batch-load first media URL for all posts in notifications
+    Set<UUID> postIds = notifications.stream()
+      .filter(n -> n.getPost() != null)
+      .map(n -> n.getPost().getId())
+      .collect(Collectors.toSet());
+
+    Map<UUID, String> thumbUrlByPost = Collections.emptyMap();
+    if (!postIds.isEmpty()) {
+      thumbUrlByPost = postMediaRepository.findByPostIds(postIds).stream()
+        .collect(Collectors.toMap(
+          pm -> pm.getPost().getId(),
+          PostMedia::getUrl,
+          (existing, replacement) -> existing  // keep first (lowest displayOrder)
+        ));
+    }
+
+    final Map<UUID, String> thumbs = thumbUrlByPost;
+    List<NotificationResponse> content = notifications.stream()
       .map(n -> {
-        boolean isFollowingActor = followRepository.existsByFollowerIdAndFollowingId(userId, n.getActor().getId());
+        boolean isFollowingActor = followedActorIds.contains(n.getActor().getId());
         FollowUserResponse actorResponse = FollowUserResponse.of(n.getActor(), isFollowingActor, 0);
-
-        String thumbUrl = null;
-        if (n.getPost() != null) {
-          List<PostMedia> media = postMediaRepository.findByPostIdOrderByDisplayOrderAsc(n.getPost().getId());
-          if (!media.isEmpty()) {
-            thumbUrl = media.get(0).getUrl();
-          }
-        }
+        String thumbUrl = n.getPost() != null ? thumbs.get(n.getPost().getId()) : null;
 
         return new NotificationResponse(
           n.getId(),

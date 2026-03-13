@@ -15,7 +15,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,12 +50,14 @@ public class GetLikersService extends BaseService<GetPostListRequest, PaginatedR
     var page = postLikeRepository.findWithUserByPostId(
       postId, PageRequest.of(request.getPage(), request.getSize()));
 
-    return PaginatedResponse.from(page.map(like -> {
-      boolean isFollowing = false;
-      if (viewerId != null) {
-        isFollowing = followRepository.existsByFollowerIdAndFollowingId(viewerId, like.getUser().getId());
-      }
-      return FollowUserResponse.of(like.getUser(), isFollowing);
-    }));
+    Set<UUID> likerIds = page.getContent().stream()
+      .map(l -> l.getUser().getId()).collect(Collectors.toSet());
+
+    Set<UUID> followedLikerIds = (viewerId != null && !likerIds.isEmpty())
+      ? followRepository.findFollowedIds(viewerId, likerIds)
+      : Set.of();
+
+    return PaginatedResponse.from(page.map(like ->
+      FollowUserResponse.of(like.getUser(), followedLikerIds.contains(like.getUser().getId()))));
   }
 }

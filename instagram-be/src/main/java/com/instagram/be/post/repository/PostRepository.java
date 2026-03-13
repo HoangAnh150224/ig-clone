@@ -104,4 +104,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
   // Batch: liked post IDs
   @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
   Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+
+  // Batch: hashtag names per post (avoids N+1 lazy collection access)
+  @Query("SELECT p.id, h.name FROM Post p JOIN p.hashtags h WHERE p.id IN :postIds")
+  List<Object[]> findHashtagNamesByPostIds(@Param("postIds") Set<UUID> postIds);
 }

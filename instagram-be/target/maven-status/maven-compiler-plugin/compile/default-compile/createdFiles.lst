@@ -26,7 +26,6 @@ com\instagram\be\comment\request\AddCommentRequest$AddCommentRequestBuilder.clas
 com\instagram\be\favorite\service\GetFavoritePostsService.class
 com\instagram\be\story\response\StoryFeedResponse.class
 com\instagram\be\message\service\MarkReadService.class
-com\instagram\be\post\PostViewRepository.class
 com\instagram\be\comment\request\CommentActionRequest$CommentActionRequestBuilderImpl.class
 com\instagram\be\search\request\DeleteSearchHistoryRequest$DeleteSearchHistoryRequestBuilder.class
 com\instagram\be\comment\response\CommentResponse.class
@@ -38,7 +37,6 @@ com\instagram\be\report\Report$ReportBuilderImpl.class
 com\instagram\be\search\repository\SearchHistoryRepository.class
 com\instagram\be\base\response\PaginatedResponse.class
 com\instagram\be\base\SecurityUtils.class
-com\instagram\be\notification\NotificationRepository.class
 com\instagram\be\base\request\UserOnlyRequest$UserOnlyRequestBuilderImpl.class
 com\instagram\be\saved\SavedPost.class
 com\instagram\be\search\response\SearchResultResponse$SearchResultResponseBuilder.class
@@ -71,11 +69,9 @@ com\instagram\be\message\service\GetMessageRequestsService.class
 com\instagram\be\highlight\Highlight.class
 com\instagram\be\post\service\GetHashtagPostsService.class
 com\instagram\be\comment\request\GetCommentsRequest$GetCommentsRequestBuilder.class
-com\instagram\be\comment\CommentLikeRepository.class
 com\instagram\be\base\request\BaseRequest.class
 com\instagram\be\auth\request\RegisterRequest$RegisterRequestBuilderImpl.class
 com\instagram\be\message\request\GetMessagesRequest$GetMessagesRequestBuilderImpl.class
-com\instagram\be\favorite\FavoritePostRepository.class
 com\instagram\be\search\request\DeleteSearchHistoryRequest.class
 com\instagram\be\message\Conversation$ConversationBuilderImpl.class
 com\instagram\be\notification\Notification.class
@@ -91,7 +87,6 @@ com\instagram\be\post\PostLike.class
 com\instagram\be\favorite\service\GetFavoriteUsersService.class
 com\instagram\be\base\request\BaseRequest$BaseRequestBuilder.class
 com\instagram\be\post\PostMedia$PostMediaBuilderImpl.class
-com\instagram\be\story\StoryReplyRepository.class
 com\instagram\be\story\StoryView$StoryViewBuilder.class
 com\instagram\be\auth\service\RegisterService.class
 com\instagram\be\notification\request\NotificationActionRequest$NotificationActionRequestBuilderImpl.class
@@ -105,7 +100,6 @@ com\instagram\be\post\request\CreatePostRequest$CreatePostRequestBuilder.class
 com\instagram\be\message\Conversation.class
 com\instagram\be\post\request\GetExploreRequest$GetExploreRequestBuilder.class
 com\instagram\be\userprofile\request\UpdateUserProfileRequest$UpdateUserProfileRequestBuilder.class
-com\instagram\be\story\StoryRepository.class
 com\instagram\be\auth\request\GetMeRequest$GetMeRequestBuilder.class
 com\instagram\be\post\request\UpdatePostRequest$UpdatePostRequestBuilder.class
 com\instagram\be\report\request\CreateReportRequest$CreateReportRequestBuilderImpl.class
@@ -138,13 +132,11 @@ com\instagram\be\story\request\StoryActionRequest$StoryActionRequestBuilder.clas
 com\instagram\be\userprofile\enums\UserRole.class
 com\instagram\be\post\enums\PostType.class
 com\instagram\be\search\request\DeleteSearchHistoryRequest$DeleteSearchHistoryRequestBuilderImpl.class
-com\instagram\be\favorite\FavoriteUserRepository.class
 com\instagram\be\story\StoryReply$StoryReplyBuilder.class
 com\instagram\be\message\ConversationParticipant.class
 com\instagram\be\auth\request\LoginRequest.class
 com\instagram\be\highlight\request\GetUserHighlightsRequest$GetUserHighlightsRequestBuilderImpl.class
 com\instagram\be\base\UserContext$UserContextBuilder.class
-com\instagram\be\message\ConversationRepository.class
 com\instagram\be\post\service\GetFeedService.class
 com\instagram\be\message\response\ConversationResponse.class
 com\instagram\be\post\controller\PostController.class
@@ -185,23 +177,19 @@ com\instagram\be\userprofile\request\GetUserProfileRequest.class
 com\instagram\be\base\api\ErrorDetail.class
 com\instagram\be\post\request\UpdatePostRequest$UpdatePostRequestBuilderImpl.class
 com\instagram\be\userprofile\request\UpdateUserProfileRequest$UpdateUserProfileRequestBuilderImpl.class
-com\instagram\be\post\PostTagRepository.class
 com\instagram\be\auth\service\LoginService.class
 com\instagram\be\notification\request\GetNotificationsRequest$GetNotificationsRequestBuilderImpl.class
 com\instagram\be\post\response\SaveResponse.class
 com\instagram\be\story\request\CreateStoryRequest.class
 com\instagram\be\post\response\PostResponse$TaggedUserInfo.class
 com\instagram\be\report\service\CreateReportService.class
-com\instagram\be\comment\CommentRepository.class
 com\instagram\be\exception\GlobalExceptionHandler.class
-com\instagram\be\story\StoryViewRepository.class
 com\instagram\be\post\service\CreatePostService.class
 com\instagram\be\story\Story$StoryBuilder.class
 com\instagram\be\message\request\SendMessageRequest.class
 com\instagram\be\search\request\AddSearchHistoryRequest$AddSearchHistoryRequestBuilderImpl.class
 com\instagram\be\base\api\ResponseMetadata$ResponseMetadataBuilder.class
 com\instagram\be\highlight\service\AddStoryToHighlightService.class
-com\instagram\be\post\PostMediaRepository.class
 com\instagram\be\post\service\GetLikersService.class
 com\instagram\be\userprofile\controller\UserProfileController.class
 com\instagram\be\story\service\DeleteStoryService.class
@@ -216,7 +204,6 @@ com\instagram\be\post\service\GetTaggedPostsService.class
 com\instagram\be\highlight\request\GetUserHighlightsRequest.class
 com\instagram\be\favorite\FavoritePost.class
 com\instagram\be\message\request\MessageActionRequest$MessageActionRequestBuilder.class
-com\instagram\be\report\ReportRepository.class
 com\instagram\be\post\PostAccessGuard.class
 com\instagram\be\highlight\request\HighlightStoryRequest.class
 com\instagram\be\base\service\BaseService.class
@@ -240,7 +227,6 @@ com\instagram\be\comment\request\AddCommentRequest$AddCommentRequestBuilderImpl.
 com\instagram\be\message\service\SendMessageService.class
 com\instagram\be\highlight\request\GetUserHighlightsRequest$GetUserHighlightsRequestBuilder.class
 com\instagram\be\notification\Notification$NotificationBuilder.class
-com\instagram\be\post\PostLikeRepository.class
 com\instagram\be\highlight\request\HighlightStoryRequest$HighlightStoryRequestBuilder.class
 com\instagram\be\story\service\GetFeedStoriesService.class
 com\instagram\be\favorite\request\FavoriteRequest$FavoriteRequestBuilder.class
@@ -268,7 +254,6 @@ com\instagram\be\follow\request\FollowListRequest$FollowListRequestBuilderImpl.c
 com\instagram\be\config\SecurityConfig.class
 com\instagram\be\highlight\request\HighlightActionRequest$HighlightActionRequestBuilder.class
 com\instagram\be\highlight\service\DeleteHighlightService.class
-com\instagram\be\message\MessageRepository.class
 com\instagram\be\hashtag\request\HashtagSearchRequest$HashtagSearchRequestBuilder.class
 com\instagram\be\post\service\GetUserPostsService.class
 com\instagram\be\userprofile\request\GetSuggestionsRequest.class
@@ -292,7 +277,6 @@ com\instagram\be\saved\SavedPost$SavedPostBuilder.class
 com\instagram\be\story\request\CreateStoryRequest$CreateStoryRequestBuilderImpl.class
 com\instagram\be\story\request\ReplyToStoryRequest$ReplyToStoryRequestBuilder.class
 com\instagram\be\comment\CommentLike$CommentLikeBuilder.class
-com\instagram\be\post\PostRepository.class
 com\instagram\be\message\Message.class
 com\instagram\be\comment\service\DeleteCommentService.class
 com\instagram\be\story\controller\StoryController.class
@@ -305,7 +289,6 @@ com\instagram\be\auth\security\UserDetailsServiceImpl.class
 com\instagram\be\base\api\PaginationInfo.class
 com\instagram\be\block\repository\BlockRepository.class
 com\instagram\be\post\service\SavePostService.class
-com\instagram\be\message\ConversationParticipantRepository.class
 com\instagram\be\favorite\service\ToggleFavoriteUserService.class
 com\instagram\be\post\request\PostActionRequest$PostActionRequestBuilderImpl.class
 com\instagram\be\story\Story$StoryBuilderImpl.class
@@ -327,7 +310,6 @@ com\instagram\be\auth\request\RegisterRequest.class
 com\instagram\be\report\controller\ReportController.class
 com\instagram\be\comment\request\AddCommentRequest.class
 com\instagram\be\highlight\request\HighlightStoryRequest$HighlightStoryRequestBuilderImpl.class
-com\instagram\be\highlight\HighlightRepository.class
 com\instagram\be\post\response\LikeResponse.class
 com\instagram\be\search\service\AddSearchHistoryService.class
 com\instagram\be\search\SearchHistory.class
@@ -337,7 +319,6 @@ com\instagram\be\auth\request\GetMeRequest.class
 com\instagram\be\message\response\ConversationResponse$LastMessageInfo.class
 com\instagram\be\post\request\UpdatePostRequest.class
 com\instagram\be\hashtag\service\HashtagSearchService.class
-com\instagram\be\hashtag\HashtagRepository.class
 com\instagram\be\message\request\MessageActionRequest$MessageActionRequestBuilderImpl.class
 com\instagram\be\userprofile\repository\UserProfileRepository.class
 com\instagram\be\follow\enums\FollowStatus.class
@@ -383,7 +364,6 @@ com\instagram\be\notification\service\GetNotificationsService.class
 com\instagram\be\post\Post$PostBuilderImpl.class
 com\instagram\be\post\PostLike$PostLikeBuilderImpl.class
 com\instagram\be\hashtag\Hashtag$HashtagBuilder.class
-com\instagram\be\saved\SavedPostRepository.class
 com\instagram\be\story\StoryView.class
 com\instagram\be\base\request\DateRange.class
 com\instagram\be\message\request\GetMessagesRequest.class

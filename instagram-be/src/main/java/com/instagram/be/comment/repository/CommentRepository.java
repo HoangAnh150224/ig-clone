@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,4 +33,10 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
   @Query("SELECT cl.comment.id FROM CommentLike cl WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds")
   Set<UUID> findLikedCommentIds(@Param("userId") UUID userId, @Param("commentIds") Set<UUID> commentIds);
+
+  @Query("SELECT c.parentComment.id, COUNT(c) FROM Comment c WHERE c.parentComment.id IN :parentIds GROUP BY c.parentComment.id")
+  List<Object[]> countRepliesByParentIds(@Param("parentIds") Set<UUID> parentIds);
+
+  @Query("SELECT c.post.id, COUNT(c) FROM Comment c WHERE c.post.id IN :postIds GROUP BY c.post.id")
+  List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
 }

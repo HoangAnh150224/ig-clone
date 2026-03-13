@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,10 +46,13 @@ public class GetCommentsService extends BaseService<GetCommentsRequest, Paginate
     Set<UUID> likedCommentIds = viewerId != null && !commentIds.isEmpty()
       ? commentRepository.findLikedCommentIds(viewerId, commentIds) : Set.of();
 
+    // Batch-load reply counts and like counts to prevent N+1
+    Map<UUID, Long> replyCountMap = toCountMap(commentRepository.countRepliesByParentIds(commentIds));
+    Map<UUID, Long> likeCountMap = toCountMap(commentLikeRepository.countByCommentIds(commentIds));
+
     List<CommentResponse> responses = comments.stream().map(c -> {
-      long replyCount = c.getParentComment() == null
-        ? commentRepository.countByParentCommentId(c.getId()) : 0;
-      long likeCount = commentLikeRepository.countByCommentId(c.getId());
+      long replyCount = c.getParentComment() == null ? replyCountMap.getOrDefault(c.getId(), 0L) : 0L;
+      long likeCount = likeCountMap.getOrDefault(c.getId(), 0L);
       boolean isLiked = likedCommentIds.contains(c.getId());
       boolean isOwner = viewerId != null && viewerId.equals(c.getUser().getId());
       return CommentResponse.of(c, replyCount, likeCount, isLiked, isOwner);
@@ -56,5 +60,12 @@ public class GetCommentsService extends BaseService<GetCommentsRequest, Paginate
 
     return new PaginatedResponse<>(responses, page.getNumber(), page.getSize(),
       page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast(), page.isEmpty());
+  }
+
+  private Map<UUID, Long> toCountMap(List<Object[]> rows) {
+    return rows.stream().collect(Collectors.toMap(
+      row -> (UUID) row[0],
+      row -> (Long) row[1]
+    ));
   }
 }

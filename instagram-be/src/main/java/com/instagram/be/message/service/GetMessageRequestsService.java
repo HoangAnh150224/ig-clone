@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +28,7 @@ public class GetMessageRequestsService extends BaseService<UserOnlyRequest, List
   @Override
   protected List<ConversationResponse> doProcess(UserOnlyRequest request) {
     UUID userId = request.getUserContext().getUserId();
-    return participantRepository.findRequestsByUserId(userId).stream()
-      .map(cp -> assembler.assemble(cp, userId))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    var participants = participantRepository.findRequestsByUserId(userId);
+    return assembler.assembleAll(participants, userId);
   }
 }

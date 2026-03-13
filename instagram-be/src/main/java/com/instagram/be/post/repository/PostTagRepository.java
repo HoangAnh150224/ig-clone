@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -16,6 +17,9 @@ public interface PostTagRepository extends JpaRepository<PostTag, UUID> {
 
   @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id = :postId")
   List<PostTag> findWithUserByPostId(@Param("postId") UUID postId);
+
+  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id IN :postIds")
+  List<PostTag> findWithUserByPostIds(@Param("postIds") Set<UUID> postIds);
 
   void deleteByPostId(UUID postId);
 
