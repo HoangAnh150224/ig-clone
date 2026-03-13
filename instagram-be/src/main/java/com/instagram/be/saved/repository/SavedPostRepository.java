@@ -15,13 +15,13 @@ import java.util.UUID;
 @Repository
 public interface SavedPostRepository extends JpaRepository<SavedPost, UUID> {
 
-  Optional<SavedPost> findByUserIdAndPostId(UUID userId, UUID postId);
+    Optional<SavedPost> findByUserIdAndPostId(UUID userId, UUID postId);
 
-  boolean existsByUserIdAndPostId(UUID userId, UUID postId);
+    boolean existsByUserIdAndPostId(UUID userId, UUID postId);
 
-  @Query("SELECT sp.post.id FROM SavedPost sp WHERE sp.user.id = :userId AND sp.post.id IN :postIds")
-  Set<UUID> findSavedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+    @Query("SELECT sp.post.id FROM SavedPost sp WHERE sp.user.id = :userId AND sp.post.id IN :postIds")
+    Set<UUID> findSavedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
 
-  @Query("SELECT sp FROM SavedPost sp JOIN FETCH sp.post p JOIN FETCH p.user WHERE sp.user.id = :userId AND p.archived = false ORDER BY sp.createdAt DESC")
-  Page<SavedPost> findSavedByUserId(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT sp FROM SavedPost sp JOIN FETCH sp.post p JOIN FETCH p.user WHERE sp.user.id = :userId AND p.archived = false ORDER BY sp.createdAt DESC")
+    Page<SavedPost> findSavedByUserId(@Param("userId") UUID userId, Pageable pageable);
 }

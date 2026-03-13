@@ -134,11 +134,14 @@ const postService = {
     },
 
     /**
-     * Get posts for a specific hashtag.
+     * Get posts for a specific hashtag (cursor-based).
      * API: GET /posts/hashtags/{name}
      */
-    getHashtagPosts: async (name, page = 0, size = 20) => {
-        return axiosClient.get(`/posts/hashtags/${name}?page=${page}&size=${size}`);
+    getHashtagPosts: async (name, cursor = null, size = 20) => {
+        const params = new URLSearchParams();
+        if (cursor) params.append("cursor", cursor);
+        if (size) params.append("size", size);
+        return axiosClient.get(`/posts/hashtags/${name}?${params.toString()}`);
     },
 
     /**

@@ -14,6 +14,6 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class MessageActionRequest extends BaseRequest {
 
-  private UUID conversationId;
-  private UUID messageId;
+    private UUID conversationId;
+    private UUID messageId;
 }

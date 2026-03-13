@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class ForgotPasswordRequest extends BaseRequest {
 
-  @NotBlank(message = "Email is required")
-  @Email(message = "Invalid email format")
-  private String email;
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
 }

@@ -15,25 +15,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeclineFollowRequestService extends BaseService<FollowRequest, Void> {
 
-  private final FollowRepository followRepository;
+    private final FollowRepository followRepository;
 
-  @Override
-  @Transactional
-  public Void execute(FollowRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional
+    public Void execute(FollowRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected Void doProcess(FollowRequest request) {
-    UUID currentUserId = request.getUserContext().getUserId();
-    UUID requesterId = request.getTargetUserId();
+    @Override
+    protected Void doProcess(FollowRequest request) {
+        UUID currentUserId = request.getUserContext().getUserId();
+        UUID requesterId = request.getTargetUserId();
 
-    var follow = followRepository.findByFollowerIdAndFollowingId(requesterId, currentUserId)
-      .filter(f -> f.getStatus() == FollowStatus.PENDING)
-      .orElseThrow(() -> new NotFoundException("Follow request", requesterId));
+        var follow = followRepository.findByFollowerIdAndFollowingId(requesterId, currentUserId)
+                .filter(f -> f.getStatus() == FollowStatus.PENDING)
+                .orElseThrow(() -> new NotFoundException("Follow request", requesterId));
 
-    followRepository.delete(follow);
+        followRepository.delete(follow);
 
-    return null;
-  }
+        return null;
+    }
 }

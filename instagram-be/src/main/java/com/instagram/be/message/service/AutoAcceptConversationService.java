@@ -14,26 +14,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AutoAcceptConversationService {
 
-  private final ConversationRepository conversationRepository;
-  private final ConversationParticipantRepository participantRepository;
+    private final ConversationRepository conversationRepository;
+    private final ConversationParticipantRepository participantRepository;
 
-  /**
-   * Flips recipientId's ConversationParticipant.accepted to true
-   * in the direct conversation between senderId and recipientId.
-   * No-op if no conversation exists or participant is already accepted.
-   */
-  @Transactional
-  public void accept(UUID senderId, UUID recipientId) {
-    conversationRepository.findDirectConversation(senderId, recipientId)
-      .ifPresent(conv ->
-        participantRepository
-          .findByConversationIdAndUserId(conv.getId(), recipientId)
-          .filter(cp -> !cp.isAccepted())
-          .ifPresent(cp -> {
-            cp.setAccepted(true);
-            participantRepository.save(cp);
-            log.debug("Auto-accepted message request: sender={} recipient={}", senderId, recipientId);
-          })
-      );
-  }
+    /**
+     * Flips recipientId's ConversationParticipant.accepted to true
+     * in the direct conversation between senderId and recipientId.
+     * No-op if no conversation exists or participant is already accepted.
+     */
+    @Transactional
+    public void accept(UUID senderId, UUID recipientId) {
+        conversationRepository.findDirectConversation(senderId, recipientId)
+                .ifPresent(conv ->
+                        participantRepository
+                                .findByConversationIdAndUserId(conv.getId(), recipientId)
+                                .filter(cp -> !cp.isAccepted())
+                                .ifPresent(cp -> {
+                                    cp.setAccepted(true);
+                                    participantRepository.save(cp);
+                                    log.debug("Auto-accepted message request: sender={} recipient={}", senderId, recipientId);
+                                })
+                );
+    }
 }

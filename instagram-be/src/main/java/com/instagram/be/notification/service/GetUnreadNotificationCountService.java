@@ -13,17 +13,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetUnreadNotificationCountService extends BaseService<UserOnlyRequest, Long> {
 
-  private final NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public Long execute(UserOnlyRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public Long execute(UserOnlyRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected Long doProcess(UserOnlyRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    return notificationRepository.countByRecipientIdAndReadFalse(userId);
-  }
+    @Override
+    protected Long doProcess(UserOnlyRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        return notificationRepository.countByRecipientIdAndReadFalse(userId);
+    }
 }

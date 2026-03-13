@@ -20,57 +20,57 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginService extends BaseService<LoginRequest, AuthResponse> {
 
-  private static final String RATE_LIMIT_PREFIX = "rate:login:";
-  private static final int MAX_ATTEMPTS = 5;
-  private static final long LOCKOUT_MINUTES = 15;
+    private static final String RATE_LIMIT_PREFIX = "rate:login:";
+    private static final int MAX_ATTEMPTS = 5;
+    private static final long LOCKOUT_MINUTES = 15;
 
-  private final AuthRepository authRepository;
-  private final PasswordEncoder passwordEncoder;
-  private final JwtUtil jwtUtil;
-  private final StringRedisTemplate redisTemplate;
+    private final AuthRepository authRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
 
-  @Override
-  @Transactional
-  protected AuthResponse doProcess(LoginRequest request) {
-    String ip = request.getUserContext() != null ? request.getUserContext().getIpAddress() : "unknown";
-    String rateLimitKey = RATE_LIMIT_PREFIX + ip;
+    @Override
+    @Transactional
+    protected AuthResponse doProcess(LoginRequest request) {
+        String ip = request.getUserContext() != null ? request.getUserContext().getIpAddress() : "unknown";
+        String rateLimitKey = RATE_LIMIT_PREFIX + ip;
 
-    String attempts = redisTemplate.opsForValue().get(rateLimitKey);
-    if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
-      throw new BusinessException("Too many login attempts. Please try again later.",
-        HttpStatus.TOO_MANY_REQUESTS);
+        String attempts = redisTemplate.opsForValue().get(rateLimitKey);
+        if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
+            throw new BusinessException("Too many login attempts. Please try again later.",
+                    HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        UserProfile user = authRepository.findByUsername(request.getIdentifier())
+                .or(() -> authRepository.findByEmail(request.getIdentifier()))
+                .orElse(null);
+
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            Long newCount = redisTemplate.opsForValue().increment(rateLimitKey);
+            if (Long.valueOf(1).equals(newCount)) {
+                redisTemplate.expire(rateLimitKey, LOCKOUT_MINUTES, TimeUnit.MINUTES);
+            }
+            throw new BusinessException("Invalid credentials");
+        }
+
+        if (!user.isActive()) {
+            user.setActive(true);
+            authRepository.save(user);
+        }
+
+        redisTemplate.delete(rateLimitKey);
+
+        String token = jwtUtil.generateToken(
+                user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
+        );
+
+        return AuthResponse.of(
+                token,
+                jwtUtil.getRemainingTtlSeconds(token),
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name()
+        );
     }
-
-    UserProfile user = authRepository.findByUsername(request.getIdentifier())
-      .or(() -> authRepository.findByEmail(request.getIdentifier()))
-      .orElse(null);
-
-    if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-      Long newCount = redisTemplate.opsForValue().increment(rateLimitKey);
-      if (Long.valueOf(1).equals(newCount)) {
-        redisTemplate.expire(rateLimitKey, LOCKOUT_MINUTES, TimeUnit.MINUTES);
-      }
-      throw new BusinessException("Invalid credentials");
-    }
-
-    if (!user.isActive()) {
-      user.setActive(true);
-      authRepository.save(user);
-    }
-
-    redisTemplate.delete(rateLimitKey);
-
-    String token = jwtUtil.generateToken(
-      user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
-    );
-
-    return AuthResponse.of(
-      token,
-      jwtUtil.getRemainingTtlSeconds(token),
-      user.getId(),
-      user.getUsername(),
-      user.getEmail(),
-      user.getRole().name()
-    );
-  }
 }

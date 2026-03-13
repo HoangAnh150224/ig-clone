@@ -12,31 +12,38 @@ const Explore = () => {
     const searchParams = new URLSearchParams(location.search);
     const query = searchParams.get("q");
 
-    const { posts, loading, page, hasMore, error } = useSelector((state) => state.explore);
-    const isFetchingMore = loading && page > 0;
+    const { posts, loading, page, nextCursor, hasMore, error } = useSelector((state) => state.explore);
+    const isFetchingMore = loading && (page > 0 || nextCursor);
     
     const loadMoreRef = useRef(null);
 
-    const loadPosts = useCallback((pageNum = 0) => {
+    const loadPosts = useCallback(() => {
         if (query) {
-            dispatch(fetchHashtagPosts({ name: query, page: pageNum, size: 18 }));
+            dispatch(fetchHashtagPosts({ name: query, cursor: nextCursor, size: 18 }));
         } else {
-            dispatch(fetchExplorePosts({ page: pageNum, size: 18 }));
+            dispatch(fetchExplorePosts({ page: page, size: 18 }));
         }
-    }, [dispatch, query]);
+    }, [dispatch, query, page, nextCursor]);
 
     // Reset and load when query changes
     useEffect(() => {
         dispatch(resetExplore());
-        loadPosts(0);
-    }, [dispatch, query, loadPosts]);
+        // Small delay to ensure state reset before load
+        setTimeout(() => {
+            if (query) {
+                dispatch(fetchHashtagPosts({ name: query, cursor: null, size: 18 }));
+            } else {
+                dispatch(fetchExplorePosts({ page: 0, size: 18 }));
+            }
+        }, 0);
+    }, [dispatch, query]);
 
     // Infinite Scroll Implementation
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && hasMore && !loading && posts.length > 0) {
-                    loadPosts(page);
+                    loadPosts();
                 }
             },
             { threshold: 0.1 }
@@ -44,7 +51,7 @@ const Explore = () => {
 
         if (loadMoreRef.current) observer.observe(loadMoreRef.current);
         return () => observer.disconnect();
-    }, [hasMore, loading, page, loadPosts, posts.length]);
+    }, [hasMore, loading, loadPosts, posts.length]);
 
     // Error handling UI
     if (error && posts.length === 0) {

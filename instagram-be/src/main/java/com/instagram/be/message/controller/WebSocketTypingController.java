@@ -17,22 +17,22 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WebSocketTypingController {
 
-  private final SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
-  @MessageMapping("/chat.typing")
-  public void handleTyping(@Payload TypingStatus status, Authentication authentication) {
-    if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
-      status.setUsername(principal.getUsername());
-      UUID recipientId = status.getRecipientId();
+    @MessageMapping("/chat.typing")
+    public void handleTyping(@Payload TypingStatus status, Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+            status.setUsername(principal.getUsername());
+            UUID recipientId = status.getRecipientId();
 
-      log.debug("WebSocket chat.typing from: {} to: {} is: {}",
-        principal.getUsername(), recipientId, status.isTyping());
+            log.debug("WebSocket chat.typing from: {} to: {} is: {}",
+                    principal.getUsername(), recipientId, status.isTyping());
 
-      messagingTemplate.convertAndSendToUser(
-        recipientId.toString(),
-        "/queue/typing",
-        status
-      );
+            messagingTemplate.convertAndSendToUser(
+                    recipientId.toString(),
+                    "/queue/typing",
+                    status
+            );
+        }
     }
-  }
 }

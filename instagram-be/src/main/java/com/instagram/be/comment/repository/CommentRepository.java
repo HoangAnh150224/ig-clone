@@ -9,34 +9,33 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
-  long countByPostId(UUID postId);
+    long countByPostId(UUID postId);
 
-  long countByParentCommentId(UUID parentCommentId);
+    long countByParentCommentId(UUID parentCommentId);
 
-  @Query("SELECT c.id FROM Comment c WHERE c.post.id = :postId AND c.pinned = true")
-  java.util.Optional<UUID> findPinnedCommentId(@Param("postId") UUID postId);
+    @Query("SELECT c.id FROM Comment c WHERE c.post.id = :postId AND c.pinned = true")
+    java.util.Optional<UUID> findPinnedCommentId(@Param("postId") UUID postId);
 
-  // Top-level: parentComment is null, pinned first
-  @Query("SELECT c FROM Comment c JOIN FETCH c.user WHERE c.post.id = :postId AND c.parentComment IS NULL ORDER BY c.pinned DESC, c.createdAt DESC")
-  Page<Comment> findTopLevelByPostId(@Param("postId") UUID postId, Pageable pageable);
+    // Top-level: parentComment is null, pinned first
+    @Query("SELECT c FROM Comment c JOIN FETCH c.user WHERE c.post.id = :postId AND c.parentComment IS NULL ORDER BY c.pinned DESC, c.createdAt DESC")
+    Page<Comment> findTopLevelByPostId(@Param("postId") UUID postId, Pageable pageable);
 
-  // Replies: parentComment matches
-  @Query("SELECT c FROM Comment c JOIN FETCH c.user WHERE c.parentComment.id = :parentId ORDER BY c.createdAt ASC")
-  Page<Comment> findRepliesByParentId(@Param("parentId") UUID parentId, Pageable pageable);
+    // Replies: parentComment matches
+    @Query("SELECT c FROM Comment c JOIN FETCH c.user WHERE c.parentComment.id = :parentId ORDER BY c.createdAt ASC")
+    Page<Comment> findRepliesByParentId(@Param("parentId") UUID parentId, Pageable pageable);
 
-  @Query("SELECT cl.comment.id FROM CommentLike cl WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds")
-  Set<UUID> findLikedCommentIds(@Param("userId") UUID userId, @Param("commentIds") Set<UUID> commentIds);
+    @Query("SELECT cl.comment.id FROM CommentLike cl WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds")
+    Set<UUID> findLikedCommentIds(@Param("userId") UUID userId, @Param("commentIds") Set<UUID> commentIds);
 
-  @Query("SELECT c.parentComment.id, COUNT(c) FROM Comment c WHERE c.parentComment.id IN :parentIds GROUP BY c.parentComment.id")
-  List<Object[]> countRepliesByParentIds(@Param("parentIds") Set<UUID> parentIds);
+    @Query("SELECT c.parentComment.id, COUNT(c) FROM Comment c WHERE c.parentComment.id IN :parentIds GROUP BY c.parentComment.id")
+    List<Object[]> countRepliesByParentIds(@Param("parentIds") Set<UUID> parentIds);
 
-  @Query("SELECT c.post.id, COUNT(c) FROM Comment c WHERE c.post.id IN :postIds GROUP BY c.post.id")
-  List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
+    @Query("SELECT c.post.id, COUNT(c) FROM Comment c WHERE c.post.id IN :postIds GROUP BY c.post.id")
+    List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
 }

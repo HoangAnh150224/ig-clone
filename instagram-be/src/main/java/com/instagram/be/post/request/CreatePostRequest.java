@@ -16,15 +16,15 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class CreatePostRequest extends BaseRequest {
 
-  private PostType type;
-  private String caption;
-  private String locationName;
-  private String music;
-  private boolean hideLikeCount;
-  private boolean commentsDisabled;
-  private List<MediaItem> media;
-  private List<UUID> taggedUserIds;
+    private PostType type;
+    private String caption;
+    private String locationName;
+    private String music;
+    private boolean hideLikeCount;
+    private boolean commentsDisabled;
+    private List<MediaItem> media;
+    private List<UUID> taggedUserIds;
 
-  public record MediaItem(String url, String mediaType) {
-  }
+    public record MediaItem(String url, String mediaType) {
+    }
 }

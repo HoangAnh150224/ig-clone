@@ -19,26 +19,26 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Notification extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "recipient_id", nullable = false)
-  private UserProfile recipient;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_id", nullable = false)
+    private UserProfile recipient;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "actor_id", nullable = false)
-  private UserProfile actor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id", nullable = false)
+    private UserProfile actor;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "type", nullable = false)
-  private NotificationType type;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private NotificationType type;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "post_id")
-  private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "comment_id")
-  private Comment comment;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
 
-  @Column(name = "is_read", nullable = false)
-  private boolean read = false;
+    @Column(name = "is_read", nullable = false)
+    private boolean read = false;
 }

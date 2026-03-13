@@ -22,74 +22,74 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, List<StoryFeedResponse>> {
 
-  private final StoryRepository storyRepository;
-  private final StoryViewRepository storyViewRepository;
-  private final FollowRepository followRepository;
+    private final StoryRepository storyRepository;
+    private final StoryViewRepository storyViewRepository;
+    private final FollowRepository followRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<StoryFeedResponse> execute(GetFeedStoriesRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<StoryFeedResponse> execute(GetFeedStoriesRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<StoryFeedResponse> doProcess(GetFeedStoriesRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
+    @Override
+    protected List<StoryFeedResponse> doProcess(GetFeedStoriesRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
 
-    // Get ACCEPTED follow targets + self
-    var followingPage = followRepository.findFollowingByUserId(viewerId, FollowStatus.ACCEPTED,
-      PageRequest.of(0, 1000));
-    List<UUID> userIds = followingPage.getContent().stream()
-      .map(f -> f.getFollowing().getId())
-      .collect(Collectors.toList());
-    userIds.add(viewerId);
-
-    List<Story> stories = storyRepository.findActiveStoriesByUserIds(userIds, LocalDateTime.now());
-
-    if (stories.isEmpty()) return List.of();
-
-    // Batch-load viewed story IDs
-    Set<UUID> allStoryIds = stories.stream().map(Story::getId).collect(Collectors.toSet());
-    Set<UUID> viewedIds = storyViewRepository.findViewedStoryIds(viewerId, allStoryIds);
-
-    // Batch-load own story viewers (avoid N+1)
-    Set<UUID> ownStoryIds = stories.stream()
-      .filter(s -> s.getUser().getId().equals(viewerId))
-      .map(Story::getId)
-      .collect(Collectors.toSet());
-    Map<UUID, List<com.instagram.be.story.StoryView>> ownViewsByStory = ownStoryIds.isEmpty()
-      ? Collections.emptyMap()
-      : storyViewRepository.findViewersByStoryIds(ownStoryIds)
-          .stream().collect(Collectors.groupingBy(sv -> sv.getStory().getId()));
-
-    // Group by user (preserving order: self first, then followed)
-    Map<UUID, List<Story>> byUser = new LinkedHashMap<>();
-    userIds.forEach(uid -> byUser.put(uid, new ArrayList<>()));
-    stories.forEach(s -> byUser.computeIfAbsent(s.getUser().getId(), k -> new ArrayList<>()).add(s));
-
-    return byUser.entrySet().stream()
-      .filter(e -> !e.getValue().isEmpty())
-      .map(e -> {
-        UUID ownerId = e.getKey();
-        List<Story> userStories = e.getValue();
-        var user = userStories.get(0).getUser();
-        boolean hasUnseen = userStories.stream().anyMatch(s -> !viewedIds.contains(s.getId()));
-
-        List<StoryItemResponse> items = userStories.stream()
-          .map(s -> {
-            boolean seen = viewedIds.contains(s.getId());
-            if (ownerId.equals(viewerId)) {
-              var views = ownViewsByStory.getOrDefault(s.getId(), Collections.emptyList());
-              var previewViews = views.stream().limit(2)
-                .map(com.instagram.be.story.response.StoryViewResponse::from)
+        // Get ACCEPTED follow targets + self
+        var followingPage = followRepository.findFollowingByUserId(viewerId, FollowStatus.ACCEPTED,
+                PageRequest.of(0, 1000));
+        List<UUID> userIds = followingPage.getContent().stream()
+                .map(f -> f.getFollowing().getId())
                 .collect(Collectors.toList());
-              return StoryItemResponse.fromWithOwnerData(s, seen, views.size(), previewViews);
-            }
-            return StoryItemResponse.from(s, seen);
-          })
-          .collect(Collectors.toList());
-        return new StoryFeedResponse(user.getId(), user.getUsername(), user.getAvatarUrl(), hasUnseen, items);
-      })
-      .collect(Collectors.toList());
-  }
+        userIds.add(viewerId);
+
+        List<Story> stories = storyRepository.findActiveStoriesByUserIds(userIds, LocalDateTime.now());
+
+        if (stories.isEmpty()) return List.of();
+
+        // Batch-load viewed story IDs
+        Set<UUID> allStoryIds = stories.stream().map(Story::getId).collect(Collectors.toSet());
+        Set<UUID> viewedIds = storyViewRepository.findViewedStoryIds(viewerId, allStoryIds);
+
+        // Batch-load own story viewers (avoid N+1)
+        Set<UUID> ownStoryIds = stories.stream()
+                .filter(s -> s.getUser().getId().equals(viewerId))
+                .map(Story::getId)
+                .collect(Collectors.toSet());
+        Map<UUID, List<com.instagram.be.story.StoryView>> ownViewsByStory = ownStoryIds.isEmpty()
+                ? Collections.emptyMap()
+                : storyViewRepository.findViewersByStoryIds(ownStoryIds)
+                .stream().collect(Collectors.groupingBy(sv -> sv.getStory().getId()));
+
+        // Group by user (preserving order: self first, then followed)
+        Map<UUID, List<Story>> byUser = new LinkedHashMap<>();
+        userIds.forEach(uid -> byUser.put(uid, new ArrayList<>()));
+        stories.forEach(s -> byUser.computeIfAbsent(s.getUser().getId(), k -> new ArrayList<>()).add(s));
+
+        return byUser.entrySet().stream()
+                .filter(e -> !e.getValue().isEmpty())
+                .map(e -> {
+                    UUID ownerId = e.getKey();
+                    List<Story> userStories = e.getValue();
+                    var user = userStories.get(0).getUser();
+                    boolean hasUnseen = userStories.stream().anyMatch(s -> !viewedIds.contains(s.getId()));
+
+                    List<StoryItemResponse> items = userStories.stream()
+                            .map(s -> {
+                                boolean seen = viewedIds.contains(s.getId());
+                                if (ownerId.equals(viewerId)) {
+                                    var views = ownViewsByStory.getOrDefault(s.getId(), Collections.emptyList());
+                                    var previewViews = views.stream().limit(2)
+                                            .map(com.instagram.be.story.response.StoryViewResponse::from)
+                                            .collect(Collectors.toList());
+                                    return StoryItemResponse.fromWithOwnerData(s, seen, views.size(), previewViews);
+                                }
+                                return StoryItemResponse.from(s, seen);
+                            })
+                            .collect(Collectors.toList());
+                    return new StoryFeedResponse(user.getId(), user.getUsername(), user.getAvatarUrl(), hasUnseen, items);
+                })
+                .collect(Collectors.toList());
+    }
 }

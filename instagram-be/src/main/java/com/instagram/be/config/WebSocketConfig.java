@@ -14,29 +14,29 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-  private final WebSocketAuthInterceptor webSocketAuthInterceptor;
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
-  @Override
-  public void configureMessageBroker(MessageBrokerRegistry config) {
-    config.enableSimpleBroker("/topic", "/queue");
-    config.setApplicationDestinationPrefixes("/app");
-    config.setUserDestinationPrefix("/user");
-  }
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/queue");
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
+    }
 
-  @Override
-  public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry.addEndpoint("/ws")
-      .setAllowedOrigins("http://localhost:5173")
-      .setAllowedOriginPatterns("http://localhost:5173");
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("http://localhost:5173")
+                .setAllowedOriginPatterns("http://localhost:5173");
 
-    registry.addEndpoint("/ws")
-      .setAllowedOrigins("http://localhost:5173")
-      .setAllowedOriginPatterns("http://localhost:5173")
-      .withSockJS();
-  }
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("http://localhost:5173")
+                .setAllowedOriginPatterns("http://localhost:5173")
+                .withSockJS();
+    }
 
-  @Override
-  public void configureClientInboundChannel(ChannelRegistration registration) {
-    registration.interceptors(webSocketAuthInterceptor);
-  }
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthInterceptor);
+    }
 }

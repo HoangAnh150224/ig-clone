@@ -14,9 +14,9 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class UpdatePostRequest extends BaseRequest {
 
-  private UUID postId;
-  private String caption;
-  private String locationName;
-  private Boolean commentsDisabled;
-  private Boolean hideLikeCount;
+    private UUID postId;
+    private String caption;
+    private String locationName;
+    private Boolean commentsDisabled;
+    private Boolean hideLikeCount;
 }

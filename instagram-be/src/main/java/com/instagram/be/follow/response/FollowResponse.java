@@ -6,15 +6,15 @@ import com.instagram.be.follow.enums.FollowStatus;
 import java.util.UUID;
 
 public record FollowResponse(
-  UUID followerId,
-  UUID followingId,
-  FollowStatus status) {
+        UUID followerId,
+        UUID followingId,
+        FollowStatus status) {
 
-  public static FollowResponse from(Follow follow) {
-    return new FollowResponse(
-      follow.getFollower().getId(),
-      follow.getFollowing().getId(),
-      follow.getStatus()
-    );
-  }
+    public static FollowResponse from(Follow follow) {
+        return new FollowResponse(
+                follow.getFollower().getId(),
+                follow.getFollowing().getId(),
+                follow.getStatus()
+        );
+    }
 }

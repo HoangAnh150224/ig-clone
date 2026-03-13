@@ -22,35 +22,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BlockController {
 
-  private final BlockService blockService;
-  private final GetBlockedUsersService getBlockedUsersService;
+    private final BlockService blockService;
+    private final GetBlockedUsersService getBlockedUsersService;
 
-  @GetMapping("/me/blocked")
-  @PreAuthorize("isAuthenticated()")
-  public ResponseEntity<ApiResponse<PaginatedResponse<FollowUserResponse>>> getBlockedUsers(
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "20") int size) {
-    UserContext ctx = SecurityUtils.getCurrentUserContext()
-      .orElseThrow(() -> new IllegalStateException("No authenticated user"));
-    PaginatedRequest request = PaginatedRequest.builder()
-      .page(page)
-      .size(size)
-      .userContext(ctx)
-      .build();
-    return ResponseEntity.ok(ApiResponse.success(getBlockedUsersService.execute(request), "Blocked users retrieved", 200));
-  }
+    @GetMapping("/me/blocked")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PaginatedResponse<FollowUserResponse>>> getBlockedUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        PaginatedRequest request = PaginatedRequest.builder()
+                .page(page)
+                .size(size)
+                .userContext(ctx)
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(getBlockedUsersService.execute(request), "Blocked users retrieved", 200));
+    }
 
-  @PostMapping("/{userId}/block")
-  @PreAuthorize("isAuthenticated()")
-  public ResponseEntity<ApiResponse<BlockResponse>> block(@PathVariable UUID userId) {
-    UserContext ctx = SecurityUtils.getCurrentUserContext()
-      .orElseThrow(() -> new IllegalStateException("No authenticated user"));
-    BlockRequest request = BlockRequest.builder()
-      .targetUserId(userId)
-      .userContext(ctx)
-      .build();
-    BlockResponse response = blockService.execute(request);
-    String message = response.blocked() ? "User blocked" : "User unblocked";
-    return ResponseEntity.ok(ApiResponse.success(response, message, 200));
-  }
+    @PostMapping("/{userId}/block")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<BlockResponse>> block(@PathVariable UUID userId) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        BlockRequest request = BlockRequest.builder()
+                .targetUserId(userId)
+                .userContext(ctx)
+                .build();
+        BlockResponse response = blockService.execute(request);
+        String message = response.blocked() ? "User blocked" : "User unblocked";
+        return ResponseEntity.ok(ApiResponse.success(response, message, 200));
+    }
 }

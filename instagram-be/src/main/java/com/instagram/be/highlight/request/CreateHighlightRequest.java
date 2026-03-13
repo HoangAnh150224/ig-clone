@@ -15,7 +15,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class CreateHighlightRequest extends BaseRequest {
 
-  private String title;
-  private String coverUrl;
-  private List<UUID> storyIds;
+    private String title;
+    private String coverUrl;
+    private List<UUID> storyIds;
 }

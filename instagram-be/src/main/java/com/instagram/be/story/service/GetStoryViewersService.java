@@ -23,35 +23,35 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetStoryViewersService extends BaseService<StoryActionRequest, List<StoryViewResponse>> {
 
-  private final StoryRepository storyRepository;
-  private final StoryViewRepository storyViewRepository;
-  private final FollowRepository followRepository;
+    private final StoryRepository storyRepository;
+    private final StoryViewRepository storyViewRepository;
+    private final FollowRepository followRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<StoryViewResponse> execute(StoryActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected List<StoryViewResponse> doProcess(StoryActionRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    Story story = storyRepository.findById(request.getStoryId())
-      .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
-
-    if (!story.getUser().getId().equals(userId)) {
-      throw new BusinessException("Only the owner can see the viewer list");
+    @Override
+    @Transactional(readOnly = true)
+    public List<StoryViewResponse> execute(StoryActionRequest request) {
+        return super.execute(request);
     }
 
-    List<StoryView> views = storyViewRepository.findViewersByStoryId(request.getStoryId());
+    @Override
+    protected List<StoryViewResponse> doProcess(StoryActionRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        Story story = storyRepository.findById(request.getStoryId())
+                .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
 
-    Set<UUID> viewerIds = views.stream().map(v -> v.getViewer().getId()).collect(Collectors.toSet());
-    Set<UUID> followedViewerIds = viewerIds.isEmpty()
-      ? Set.of()
-      : followRepository.findFollowedIds(userId, viewerIds);
+        if (!story.getUser().getId().equals(userId)) {
+            throw new BusinessException("Only the owner can see the viewer list");
+        }
 
-    return views.stream()
-      .map(view -> StoryViewResponse.of(view, followedViewerIds.contains(view.getViewer().getId())))
-      .collect(Collectors.toList());
-  }
+        List<StoryView> views = storyViewRepository.findViewersByStoryId(request.getStoryId());
+
+        Set<UUID> viewerIds = views.stream().map(v -> v.getViewer().getId()).collect(Collectors.toSet());
+        Set<UUID> followedViewerIds = viewerIds.isEmpty()
+                ? Set.of()
+                : followRepository.findFollowedIds(userId, viewerIds);
+
+        return views.stream()
+                .map(view -> StoryViewResponse.of(view, followedViewerIds.contains(view.getViewer().getId())))
+                .collect(Collectors.toList());
+    }
 }

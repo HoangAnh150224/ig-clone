@@ -1,5 +1,6 @@
 package com.instagram.be.post.service;
 
+import com.instagram.be.base.ratelimit.RateLimiter;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.AppValidationException;
 import com.instagram.be.hashtag.Hashtag;
@@ -17,6 +18,7 @@ import com.instagram.be.post.response.CreatePostResponse;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.enums.TagPermission;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
+import com.instagram.be.userprofile.service.ProfileCountCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,85 +34,89 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class CreatePostService extends BaseService<CreatePostRequest, CreatePostResponse> {
 
-  private static final Pattern HASHTAG_PATTERN = Pattern.compile("#([\\w\u00C0-\u024F]+)");
+    private static final Pattern HASHTAG_PATTERN = Pattern.compile("#([\\w\u00C0-\u024F]+)");
 
-  private final PostRepository postRepository;
-  private final PostMediaRepository postMediaRepository;
-  private final PostTagRepository postTagRepository;
-  private final HashtagUpsertService hashtagUpsertService;
-  private final UserProfileRepository userProfileRepository;
+    private final PostRepository postRepository;
+    private final PostMediaRepository postMediaRepository;
+    private final PostTagRepository postTagRepository;
+    private final HashtagUpsertService hashtagUpsertService;
+    private final UserProfileRepository userProfileRepository;
+    private final RateLimiter rateLimiter;
+    private final ProfileCountCacheService profileCountCacheService;
 
-  @Override
-  @Transactional
-  public CreatePostResponse execute(CreatePostRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected CreatePostResponse doProcess(CreatePostRequest request) {
-    if (request.getMedia() == null || request.getMedia().isEmpty()) {
-      throw new AppValidationException("At least one media item is required");
+    @Override
+    @Transactional
+    public CreatePostResponse execute(CreatePostRequest request) {
+        return super.execute(request);
     }
 
-    UUID userId = request.getUserContext().getUserId();
-    UserProfile author = userProfileRepository.getReferenceById(userId);
+    @Override
+    protected CreatePostResponse doProcess(CreatePostRequest request) {
+        if (request.getMedia() == null || request.getMedia().isEmpty()) {
+            throw new AppValidationException("At least one media item is required");
+        }
 
-    PostType type = request.getType() != null ? request.getType() : PostType.POST;
+        UUID userId = request.getUserContext().getUserId();
+        rateLimiter.check("rate:create_post:" + userId, 20, 60);
+        UserProfile author = userProfileRepository.getReferenceById(userId);
 
-    // Parse hashtags from caption
-    Set<String> hashtagNames = parseHashtags(request.getCaption());
-    Set<Hashtag> hashtags = hashtagUpsertService.upsertAll(hashtagNames);
+        PostType type = request.getType() != null ? request.getType() : PostType.POST;
 
-    Post post = Post.builder()
-      .user(author)
-      .type(type)
-      .caption(request.getCaption())
-      .locationName(request.getLocationName())
-      .music(request.getMusic())
-      .hideLikeCount(request.isHideLikeCount())
-      .commentsDisabled(request.isCommentsDisabled())
-      .hashtags(hashtags)
-      .build();
+        // Parse hashtags from caption
+        Set<String> hashtagNames = parseHashtags(request.getCaption());
+        Set<Hashtag> hashtags = hashtagUpsertService.upsertAll(hashtagNames);
 
-    Post saved = postRepository.save(post);
+        Post post = Post.builder()
+                .user(author)
+                .type(type)
+                .caption(request.getCaption())
+                .locationName(request.getLocationName())
+                .music(request.getMusic())
+                .hideLikeCount(request.isHideLikeCount())
+                .commentsDisabled(request.isCommentsDisabled())
+                .hashtags(hashtags)
+                .build();
 
-    // Save media
-    for (int i = 0; i < request.getMedia().size(); i++) {
-      var item = request.getMedia().get(i);
-      postMediaRepository.save(PostMedia.builder()
-        .post(saved)
-        .url(item.url())
-        .mediaType(MediaType.valueOf(item.mediaType()))
-        .displayOrder(i)
-        .build());
+        Post saved = postRepository.save(post);
+        profileCountCacheService.evict(userId);
+
+        // Save media
+        for (int i = 0; i < request.getMedia().size(); i++) {
+            var item = request.getMedia().get(i);
+            postMediaRepository.save(PostMedia.builder()
+                    .post(saved)
+                    .url(item.url())
+                    .mediaType(MediaType.valueOf(item.mediaType()))
+                    .displayOrder(i)
+                    .build());
+        }
+
+        // Tag users — skip those who don't allow tagging
+        List<UUID> tagIds = request.getTaggedUserIds();
+        if (tagIds != null && !tagIds.isEmpty()) {
+            for (UUID tagUserId : tagIds) {
+                userProfileRepository.findById(tagUserId).ifPresent(target -> {
+                    boolean canTag = target.getTagPermission() == TagPermission.EVERYONE ||
+                            (target.getTagPermission() == TagPermission.FOLLOWERS);
+                    // Simplified: only skip NONE; FOLLOWERS would require follow check (future)
+                    postTagRepository.save(PostTag.builder()
+                            .post(saved)
+                            .taggedUser(target)
+                            .build());
+                });
+            }
+        }
+
+        return new CreatePostResponse(saved.getId(), saved.getCreatedAt());
     }
 
-    // Tag users — skip those who don't allow tagging
-    List<UUID> tagIds = request.getTaggedUserIds();
-    if (tagIds != null && !tagIds.isEmpty()) {
-      for (UUID tagUserId : tagIds) {
-        userProfileRepository.findById(tagUserId).ifPresent(target -> {
-          boolean canTag = target.getTagPermission() == TagPermission.EVERYONE ||
-            (target.getTagPermission() == TagPermission.FOLLOWERS);
-          // Simplified: only skip NONE; FOLLOWERS would require follow check (future)
-          postTagRepository.save(PostTag.builder()
-            .post(saved)
-            .taggedUser(target)
-            .build());
-        });
-      }
+    private Set<String> parseHashtags(String caption) {
+        if (caption == null || caption.isBlank()) return Set.of();
+        Set<String> names = new HashSet<>();
+        Matcher matcher = HASHTAG_PATTERN.matcher(caption);
+        while (matcher.find()) {
+            names.add(matcher.group(1).toLowerCase());
+        }
+        return names;
     }
-
-    return new CreatePostResponse(saved.getId(), saved.getCreatedAt());
-  }
-
-  private Set<String> parseHashtags(String caption) {
-    if (caption == null || caption.isBlank()) return Set.of();
-    Set<String> names = new HashSet<>();
-    Matcher matcher = HASHTAG_PATTERN.matcher(caption);
-    while (matcher.find()) {
-      names.add(matcher.group(1).toLowerCase());
-    }
-    return names;
-  }
 }

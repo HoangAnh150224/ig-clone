@@ -1,15 +1,12 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchCurrentUser, setUser } from "./store/slices/authSlice";
-import { setUnreadNotificationCount, incrementUnreadNotificationCount } from "./store/slices/uiSlice";
-import { updateUserProfile } from "./store/slices/userSlice";
+import { useSelector } from "react-redux";
 import CreatePostModal from "./components/modals/CreatePostModal";
-import useStomp from "./hooks/useStomp";
 import InstagramAlert from "./components/common/InstagramAlert";
-import notificationService from "./services/notificationService";
-import userService from "./services/userService";
+import useAuthSync from "./hooks/useAuthSync";
+import useFavoriteSync from "./hooks/useFavoriteSync";
+import useNotificationSync from "./hooks/useNotificationSync";
 
 // Lazy pages
 const Home = lazy(() => import("./pages/Home"));
@@ -30,63 +27,12 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
-    const dispatch = useDispatch();
-    const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+    const { isAuthenticated } = useSelector((state) => state.auth);
     const globalError = useSelector((state) => state.ui.error);
 
-    useEffect(() => {
-        if (token) {
-            dispatch(fetchCurrentUser());
-            notificationService.getUnreadCount().then(count => {
-                dispatch(setUnreadNotificationCount(count));
-            }).catch(console.error);
-        }
-    }, [dispatch, token]);
-
-    // Fetch favorites to sync across the app
-    useEffect(() => {
-        if (isAuthenticated && user?.id && !user.favoriteUserIds) {
-            userService.getFavoriteUsers().then(res => {
-                // Handle ApiResponse structure (res.data)
-                const data = res?.data || res;
-                const list = Array.isArray(data) ? data : (data?.content || []);
-                const favoriteUserIds = list.map(u => u.id);
-                
-                dispatch(setUser({
-                    ...user,
-                    favoriteUserIds: favoriteUserIds
-                }));
-            }).catch(console.error);
-        }
-    }, [dispatch, isAuthenticated, user?.id, user?.favoriteUserIds]);
-
-    // GLOBAL WEBSOCKET FOR NOTIFICATIONS
-    const { connected, subscribe } = useStomp("/ws");
-    const { userProfile } = useSelector((state) => state.user);
-
-    useEffect(() => {
-        if (connected && user?.id) {
-            const sub = subscribe(`/user/${user.id}/queue/notifications`, (notification) => {
-                dispatch(incrementUnreadNotificationCount());
-                
-                // Real-time sync follow status if looking at the actor's profile
-                if (userProfile && userProfile.id === notification.actor?.id) {
-                    if (notification.type === "FOLLOW_ACCEPTED") {
-                        dispatch(updateUserProfile({
-                            isFollowing: true,
-                            isPending: false,
-                            followersCount: (userProfile.followersCount || 0) + 1,
-                            canViewContent: true
-                        }));
-                    } else if (notification.type === "FOLLOW_REQUEST") {
-                        // This handles the case where you are looking at someone 
-                        // and they happen to request to follow you (not very common to sync here but okay)
-                    }
-                }
-            });
-            return () => sub?.unsubscribe();
-        }
-    }, [connected, subscribe, user?.id, dispatch, userProfile]);
+    useAuthSync();
+    useFavoriteSync();
+    useNotificationSync();
 
     return (
         <div className="app-container">

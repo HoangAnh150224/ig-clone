@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class DeleteSearchHistoryRequest extends BaseRequest {
 
-  private UUID historyId;
+    private UUID historyId;
 }

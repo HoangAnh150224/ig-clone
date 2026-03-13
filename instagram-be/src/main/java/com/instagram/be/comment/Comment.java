@@ -17,21 +17,21 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Comment extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "post_id", nullable = false)
-  private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private UserProfile user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserProfile user;
 
-  @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-  private String content;
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    private String content;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "parent_comment_id")
-  private Comment parentComment;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private Comment parentComment;
 
-  @Column(name = "is_pinned", nullable = false)
-  private boolean pinned = false;
+    @Column(name = "is_pinned", nullable = false)
+    private boolean pinned = false;
 }

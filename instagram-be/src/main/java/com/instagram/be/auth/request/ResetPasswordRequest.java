@@ -15,14 +15,14 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class ResetPasswordRequest extends BaseRequest {
 
-  @NotBlank(message = "Email is required")
-  @Email(message = "Invalid email format")
-  private String email;
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
 
-  @NotBlank(message = "OTP is required")
-  private String otp;
+    @NotBlank(message = "OTP is required")
+    private String otp;
 
-  @NotBlank(message = "New password is required")
-  @Size(min = 8, message = "New password must be at least 8 characters")
-  private String newPassword;
+    @NotBlank(message = "New password is required")
+    @Size(min = 8, message = "New password must be at least 8 characters")
+    private String newPassword;
 }

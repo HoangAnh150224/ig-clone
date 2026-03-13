@@ -4,6 +4,7 @@ import com.instagram.be.auth.jwt.JwtUtil;
 import com.instagram.be.auth.repository.AuthRepository;
 import com.instagram.be.auth.request.RegisterRequest;
 import com.instagram.be.auth.response.AuthResponse;
+import com.instagram.be.base.ratelimit.RateLimiter;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.DuplicateResourceException;
 import com.instagram.be.userprofile.UserProfile;
@@ -17,46 +18,50 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RegisterService extends BaseService<RegisterRequest, AuthResponse> {
 
-  private final AuthRepository authRepository;
-  private final PasswordEncoder passwordEncoder;
-  private final JwtUtil jwtUtil;
+    private final AuthRepository authRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final RateLimiter rateLimiter;
 
-  @Override
-  @Transactional
-  public AuthResponse execute(RegisterRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected AuthResponse doProcess(RegisterRequest request) {
-    if (authRepository.existsByUsername(request.getUsername())) {
-      throw new DuplicateResourceException("Username already exists");
-    }
-    if (authRepository.existsByEmail(request.getEmail())) {
-      throw new DuplicateResourceException("Email already exists");
+    @Override
+    @Transactional
+    public AuthResponse execute(RegisterRequest request) {
+        return super.execute(request);
     }
 
-    UserProfile user = UserProfile.builder()
-      .username(request.getUsername())
-      .email(request.getEmail())
-      .passwordHash(passwordEncoder.encode(request.getPassword()))
-      .fullName(request.getFullName())
-      .role(UserRole.USER)
-      .build();
+    @Override
+    protected AuthResponse doProcess(RegisterRequest request) {
+        String ip = request.getUserContext() != null ? request.getUserContext().getIpAddress() : "unknown";
+        rateLimiter.check("rate:register:" + ip, 5, 60);
 
-    user = authRepository.save(user);
+        if (authRepository.existsByUsername(request.getUsername())) {
+            throw new DuplicateResourceException("Username already exists");
+        }
+        if (authRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email already exists");
+        }
 
-    String token = jwtUtil.generateToken(
-      user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
-    );
+        UserProfile user = UserProfile.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .role(UserRole.USER)
+                .build();
 
-    return AuthResponse.of(
-      token,
-      jwtUtil.getRemainingTtlSeconds(token),
-      user.getId(),
-      user.getUsername(),
-      user.getEmail(),
-      user.getRole().name()
-    );
-  }
+        user = authRepository.save(user);
+
+        String token = jwtUtil.generateToken(
+                user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
+        );
+
+        return AuthResponse.of(
+                token,
+                jwtUtil.getRemainingTtlSeconds(token),
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+    }
 }

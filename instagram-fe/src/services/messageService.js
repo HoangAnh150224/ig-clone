@@ -13,11 +13,14 @@ const messageService = {
     },
 
     /**
-     * Get chat messages for a conversation (paginated).
+     * Get chat messages for a conversation (cursor-based).
      * API: GET /messages/{chatId}
      */
-    getChatMessages: async (chatId, page = 0, size = 20) => {
-        return axiosClient.get(`/messages/${chatId}?page=${page}&size=${size}`);
+    getChatMessages: async (chatId, cursor = null, size = 20) => {
+        const params = new URLSearchParams();
+        if (cursor) params.append("cursor", cursor);
+        if (size) params.append("size", size);
+        return axiosClient.get(`/messages/${chatId}?${params.toString()}`);
     },
 
     /**

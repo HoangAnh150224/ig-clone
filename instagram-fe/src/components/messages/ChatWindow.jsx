@@ -216,6 +216,9 @@ const ChatWindow = ({
     onOpenNewMessage, 
     onAcceptRequest,
     onDeleteChat,
+    onLoadMoreMessages,
+    hasMoreMessages,
+    isLoadingMoreMessages,
     currentView,
     isTyping = false 
 }) => {
@@ -224,15 +227,67 @@ const ChatWindow = ({
     const navigate = useNavigate();
     const authUser = useSelector((state) => state.auth.user);
     const messagesEndRef = useRef(null);
+    const topObserverRef = useRef(null);
     const fileInputRef = useRef(null);
+    const prevScrollHeightRef = useRef(0);
+    const messagesContainerRef = useRef(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (behavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior });
     };
 
+    // Keep scroll position when loading older messages
     useEffect(() => {
-        scrollToBottom();
-    }, [activeChat?.messages, isTyping]);
+        if (messagesContainerRef.current && !isLoadingMoreMessages) {
+            const currentHeight = messagesContainerRef.current.scrollHeight;
+            if (prevScrollHeightRef.current > 0) {
+                messagesContainerRef.current.scrollTop = currentHeight - prevScrollHeightRef.current;
+            }
+            prevScrollHeightRef.current = currentHeight;
+        }
+    }, [activeChat?.messages?.length, isLoadingMoreMessages]);
+
+    useEffect(() => {
+        if (activeChat?.messages?.length > 0 && !isLoadingMoreMessages) {
+             // Only auto-scroll to bottom on first load or when sending/receiving new message
+             // (Simple heuristic: if scroll is near bottom)
+             const container = messagesContainerRef.current;
+             if (container) {
+                 const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+                 if (isNearBottom) scrollToBottom();
+             }
+        }
+    }, [activeChat?.messages?.length, isTyping, isLoadingMoreMessages]);
+
+    // Initial scroll to bottom
+    useEffect(() => {
+        if (activeChat?.id) {
+            scrollToBottom("auto");
+            prevScrollHeightRef.current = 0;
+        }
+    }, [activeChat?.id]);
+
+    // Infinite scroll (top) observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMoreMessages && !isLoadingMoreMessages && activeChat?.id) {
+                    if (messagesContainerRef.current) {
+                        prevScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
+                    }
+                    onLoadMoreMessages();
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        const currentTarget = topObserverRef.current;
+        if (currentTarget) observer.observe(currentTarget);
+        
+        return () => {
+            if (currentTarget) observer.unobserve(currentTarget);
+        };
+    }, [hasMoreMessages, isLoadingMoreMessages, onLoadMoreMessages, activeChat?.id]);
 
     const handleMessageChange = (e) => {
         const val = e.target.value;
@@ -366,7 +421,25 @@ const ChatWindow = ({
             </Flex>
 
             {/* Messages */}
-            <VStack flex={1} p={4} overflowY="auto" align="stretch" gap={4} bg="white" className="no-scrollbar">
+            <VStack 
+                ref={messagesContainerRef}
+                flex={1} 
+                p={4} 
+                overflowY="auto" 
+                align="stretch" 
+                gap={4} 
+                bg="white" 
+                className="no-scrollbar"
+            >
+                {/* Top observer for infinite scroll */}
+                <Box ref={topObserverRef} h="20px" w="full">
+                    {isLoadingMoreMessages && (
+                        <Center w="full">
+                            <Spinner size="sm" color="gray.300" />
+                        </Center>
+                    )}
+                </Box>
+
                 {(() => {
                     // Find the index of the last message sent by the current user
                     let lastMeIdx = -1;

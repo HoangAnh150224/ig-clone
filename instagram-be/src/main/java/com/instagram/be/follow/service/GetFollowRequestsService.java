@@ -18,34 +18,34 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetFollowRequestsService extends BaseService<FollowListRequest, PaginatedResponse<FollowUserResponse>> {
 
-  private final FollowRepository followRepository;
+    private final FollowRepository followRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
+    @Override
+    protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        PageRequest pageRequest = PageRequest.of(request.getPage(), request.getSize());
 
-    var page = followRepository.findFollowersByUserId(userId, FollowStatus.PENDING, pageRequest);
+        var page = followRepository.findFollowersByUserId(userId, FollowStatus.PENDING, pageRequest);
 
-    List<FollowUserResponse> content = page.getContent().stream()
-      .map(f -> FollowUserResponse.from(f.getFollower()))
-      .toList();
+        List<FollowUserResponse> content = page.getContent().stream()
+                .map(f -> FollowUserResponse.from(f.getFollower()))
+                .toList();
 
-    return new PaginatedResponse<>(
-      content,
-      page.getNumber(),
-      page.getSize(),
-      page.getTotalElements(),
-      page.getTotalPages(),
-      page.isFirst(),
-      page.isLast(),
-      page.isEmpty()
-    );
-  }
+        return new PaginatedResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isFirst(),
+                page.isLast(),
+                page.isEmpty()
+        );
+    }
 }

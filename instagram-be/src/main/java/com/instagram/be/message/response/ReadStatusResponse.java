@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ReadStatusResponse(
-  UUID conversationId,
-  UUID userId,
-  LocalDateTime readAt
+        UUID conversationId,
+        UUID userId,
+        LocalDateTime readAt
 ) {
 }

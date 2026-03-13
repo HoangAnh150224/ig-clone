@@ -15,19 +15,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetArchivedStoriesService extends BaseService<UserOnlyRequest, List<StoryResponse>> {
 
-  private final StoryRepository storyRepository;
+    private final StoryRepository storyRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<StoryResponse> execute(UserOnlyRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<StoryResponse> execute(UserOnlyRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<StoryResponse> doProcess(UserOnlyRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    return storyRepository.findArchivedByUserId(viewerId).stream()
-      .map(StoryResponse::from)
-      .toList();
-  }
+    @Override
+    protected List<StoryResponse> doProcess(UserOnlyRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        return storyRepository.findArchivedByUserId(viewerId).stream()
+                .map(StoryResponse::from)
+                .toList();
+    }
 }

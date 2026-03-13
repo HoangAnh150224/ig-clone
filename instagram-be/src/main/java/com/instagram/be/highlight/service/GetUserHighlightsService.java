@@ -17,22 +17,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetUserHighlightsService extends BaseService<GetUserHighlightsRequest, List<HighlightResponse>> {
 
-  private final UserProfileRepository userProfileRepository;
-  private final HighlightRepository highlightRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final HighlightRepository highlightRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<HighlightResponse> execute(GetUserHighlightsRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<HighlightResponse> execute(GetUserHighlightsRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<HighlightResponse> doProcess(GetUserHighlightsRequest request) {
-    UserProfile user = userProfileRepository.findByUsername(request.getTargetUsername())
-      .orElseThrow(() -> new NotFoundException("User not found: " + request.getTargetUsername()));
+    @Override
+    protected List<HighlightResponse> doProcess(GetUserHighlightsRequest request) {
+        UserProfile user = userProfileRepository.findByUsername(request.getTargetUsername())
+                .orElseThrow(() -> new NotFoundException("User not found: " + request.getTargetUsername()));
 
-    return highlightRepository.findByUserId(user.getId()).stream()
-      .map(HighlightResponse::from)
-      .toList();
-  }
+        return highlightRepository.findByUserId(user.getId()).stream()
+                .map(HighlightResponse::from)
+                .toList();
+    }
 }

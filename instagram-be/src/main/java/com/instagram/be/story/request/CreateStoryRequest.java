@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class CreateStoryRequest extends BaseRequest {
-  private String mediaUrl;
-  private MediaType mediaType;
-  private boolean closeFriends;
+    private String mediaUrl;
+    private MediaType mediaType;
+    private boolean closeFriends;
 }

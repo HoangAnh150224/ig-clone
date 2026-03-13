@@ -51,37 +51,69 @@ const NotificationPanel = ({ isOpen }) => {
     const dispatch = useDispatch();
     const { userProfile } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [nextCursor, setNextCursor] = useState(null);
+    const [hasMore, setHasMore] = useState(true);
     const [followingMap, setFollowingMap] = useState({});
+    const loadMoreRef = React.useRef(null);
+
+    const fetchNotifications = React.useCallback(async (cursor = null) => {
+        if (cursor) setIsFetchingMore(true);
+        else setLoading(true);
+
+        try {
+            const res = await notificationService.getNotifications(cursor);
+            const data = res.content || [];
+            const newCursor = res.nextCursor;
+            const moreAvailable = res.hasMore;
+
+            setNotifications(prev => cursor ? [...prev, ...data] : data);
+            setNextCursor(newCursor);
+            setHasMore(moreAvailable);
+
+            // Initialize following status map
+            const initialMap = { ...followingMap };
+            data.forEach(n => {
+                if (n.actor) {
+                    initialMap[n.actor.id] = n.actor.isFollowing || false;
+                }
+            });
+            setFollowingMap(initialMap);
+
+            if (!cursor) {
+                // Mark all as read and clear badge on initial open
+                notificationService.markAllRead().catch(console.error);
+                dispatch(clearUnreadNotificationCount());
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+            setIsFetchingMore(false);
+        }
+    }, [dispatch, followingMap]);
 
     useEffect(() => {
         if (isOpen) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(true);
-            notificationService.getNotifications()
-                .then((res) => {
-                    const data = Array.isArray(res) ? res : (res.content || []);
-                    setNotifications(data);
-                    
-                    // Initialize following status map for follow buttons
-                    const initialMap = {};
-                    data.forEach(n => {
-                        if (n.actor) {
-                            initialMap[n.actor.id] = n.actor.isFollowing || false;
-                        }
-                    });
-                    setFollowingMap(initialMap);
-                    
-                    // Mark all as read and clear badge - per Instagram standard, we often clear badge
-                    // but we might want to keep individual status until clicked.
-                    // For now, let's keep it simple: open = clear badge, but keep blue dots until clicked or re-fetched.
-                    notificationService.markAllRead().catch(console.error);
-                    dispatch(clearUnreadNotificationCount());
-                })
-                .catch(console.error)
-                .finally(() => setLoading(false));
+            fetchNotifications();
         }
-    }, [isOpen, dispatch]);
+    }, [isOpen, fetchNotifications]);
+
+    // Infinite Scroll Observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore && notifications.length > 0) {
+                    fetchNotifications(nextCursor);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+        return () => observer.disconnect();
+    }, [hasMore, loading, isFetchingMore, nextCursor, fetchNotifications, notifications.length]);
 
     const handleNotificationClick = async (notif) => {
         // 1. Mark as read in Backend
@@ -345,6 +377,13 @@ const NotificationPanel = ({ isOpen }) => {
                                 </Box>
                             ),
                     )
+                )}
+
+                {/* Infinite scroll trigger */}
+                {hasMore && notifications.length > 0 && (
+                    <Box ref={loadMoreRef} h="60px" display="flex" alignItems="center" justifyContent="center" py={4}>
+                        {isFetchingMore && <Spinner size="sm" color="gray.400" />}
+                    </Box>
                 )}
             </Box>
         </Box>

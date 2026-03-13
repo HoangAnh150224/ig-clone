@@ -19,29 +19,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ArchivePostService extends BaseService<PostActionRequest, PostResponse> {
 
-  private final PostRepository postRepository;
-  private final PostResponseAssembler assembler;
-  private final SavedPostRepository savedPostRepository;
+    private final PostRepository postRepository;
+    private final PostResponseAssembler assembler;
+    private final SavedPostRepository savedPostRepository;
 
-  @Override
-  @Transactional
-  public PostResponse execute(PostActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected PostResponse doProcess(PostActionRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    Post post = postRepository.findById(request.getPostId())
-      .orElseThrow(() -> new NotFoundException("Post", request.getPostId()));
-
-    if (!post.getUser().getId().equals(viewerId)) {
-      throw new BusinessException("You do not have permission to archive this post");
+    @Override
+    @Transactional
+    public PostResponse execute(PostActionRequest request) {
+        return super.execute(request);
     }
 
-    post.setArchived(!post.isArchived());
-    Post saved = postRepository.save(post);
-    boolean isSaved = savedPostRepository.existsByUserIdAndPostId(viewerId, saved.getId());
-    return assembler.toResponse(saved, viewerId, isSaved);
-  }
+    @Override
+    protected PostResponse doProcess(PostActionRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        Post post = postRepository.findById(request.getPostId())
+                .orElseThrow(() -> new NotFoundException("Post", request.getPostId()));
+
+        if (!post.getUser().getId().equals(viewerId)) {
+            throw new BusinessException("You do not have permission to archive this post");
+        }
+
+        post.setArchived(!post.isArchived());
+        Post saved = postRepository.save(post);
+        boolean isSaved = savedPostRepository.existsByUserIdAndPostId(viewerId, saved.getId());
+        return assembler.toResponse(saved, viewerId, isSaved);
+    }
 }

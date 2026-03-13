@@ -54,8 +54,8 @@ const getStoredUser = () => {
 
 const initialState = {
     user: getStoredUser() || null,
-    token: localStorage.getItem("token") || null,
-    isAuthenticated: !!localStorage.getItem("token"),
+    token: null,
+    isAuthenticated: !!getStoredUser(),
     loading: false,
     error: null,
 };
@@ -68,7 +68,6 @@ const authSlice = createSlice({
             state.user = null;
             state.token = null;
             state.isAuthenticated = false;
-            localStorage.removeItem("token");
             localStorage.removeItem("user");
         },
         setUser: (state, action) => {
@@ -91,7 +90,6 @@ const authSlice = createSlice({
                 const { accessToken, ...userData } = action.payload;
                 state.user = userData;
                 state.token = accessToken;
-                localStorage.setItem("token", accessToken);
                 localStorage.setItem(
                     "user",
                     JSON.stringify(userData),
@@ -111,7 +109,6 @@ const authSlice = createSlice({
                 const { accessToken, ...userData } = action.payload;
                 state.user = userData;
                 state.token = accessToken;
-                localStorage.setItem("token", accessToken);
                 localStorage.setItem(
                     "user",
                     JSON.stringify(userData),
@@ -135,7 +132,6 @@ const authSlice = createSlice({
                 state.isAuthenticated = false;
                 state.user = null;
                 state.token = null;
-                localStorage.removeItem("token");
                 localStorage.removeItem("user");
             });
     },

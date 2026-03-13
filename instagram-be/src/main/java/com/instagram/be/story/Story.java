@@ -20,30 +20,30 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Story extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private UserProfile user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserProfile user;
 
-  @Column(name = "media_url", nullable = false, length = 500)
-  private String mediaUrl;
+    @Column(name = "media_url", nullable = false, length = 500)
+    private String mediaUrl;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "media_type", nullable = false)
-  private MediaType mediaType = MediaType.IMAGE;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_type", nullable = false)
+    private MediaType mediaType = MediaType.IMAGE;
 
-  @Column(name = "expires_at", nullable = false)
-  private LocalDateTime expiresAt;
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
 
-  @Column(name = "link_url", length = 500)
-  private String linkUrl;
+    @Column(name = "link_url", length = 500)
+    private String linkUrl;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "source_post_id")
-  private Post sourcePost;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_post_id")
+    private Post sourcePost;
 
-  @Column(name = "is_close_friends", nullable = false)
-  private boolean closeFriends = false;
+    @Column(name = "is_close_friends", nullable = false)
+    private boolean closeFriends = false;
 
-  @Column(name = "is_archived", nullable = false)
-  private boolean archived = false;
+    @Column(name = "is_archived", nullable = false)
+    private boolean archived = false;
 }

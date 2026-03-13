@@ -19,29 +19,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetPostService extends BaseService<PostActionRequest, PostResponse> {
 
-  private final PostRepository postRepository;
-  private final PostAccessGuard postAccessGuard;
-  private final PostResponseAssembler assembler;
-  private final SavedPostRepository savedPostRepository;
+    private final PostRepository postRepository;
+    private final PostAccessGuard postAccessGuard;
+    private final PostResponseAssembler assembler;
+    private final SavedPostRepository savedPostRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public PostResponse execute(PostActionRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public PostResponse execute(PostActionRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected PostResponse doProcess(PostActionRequest request) {
-    UUID postId = request.getPostId();
-    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+    @Override
+    protected PostResponse doProcess(PostActionRequest request) {
+        UUID postId = request.getPostId();
+        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
 
-    Post post = postRepository.findById(postId)
-      .orElseThrow(() -> new NotFoundException("Post", postId));
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post", postId));
 
-    postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
+        postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
 
-    boolean isSaved = viewerId != null && savedPostRepository.existsByUserIdAndPostId(viewerId, postId);
+        boolean isSaved = viewerId != null && savedPostRepository.existsByUserIdAndPostId(viewerId, postId);
 
-    return assembler.toResponse(post, viewerId, isSaved);
-  }
+        return assembler.toResponse(post, viewerId, isSaved);
+    }
 }

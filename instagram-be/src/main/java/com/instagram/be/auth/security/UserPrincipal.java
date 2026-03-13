@@ -16,49 +16,49 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails, Principal {
 
-  private final UUID userId;
-  private final String username;
-  private final String email;
-  private final String password;
-  private final boolean active;
-  private final Collection<? extends GrantedAuthority> authorities;
+    private final UUID userId;
+    private final String username;
+    private final String email;
+    private final String password;
+    private final boolean active;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-  public static UserPrincipal from(UserProfile user) {
-    List<GrantedAuthority> authorities = List.of(
-      new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-    );
-    return new UserPrincipal(
-      user.getId(),
-      user.getUsername(),
-      user.getEmail(),
-      user.getPasswordHash(),
-      user.isActive(),
-      authorities
-    );
-  }
+    public static UserPrincipal from(UserProfile user) {
+        List<GrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
+        return new UserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPasswordHash(),
+                user.isActive(),
+                authorities
+        );
+    }
 
-  @Override
-  public String getName() {
-    return userId.toString();
-  }
+    @Override
+    public String getName() {
+        return userId.toString();
+    }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isEnabled() {
-    return active;
-  }
+    @Override
+    public boolean isEnabled() {
+        return active;
+    }
 }

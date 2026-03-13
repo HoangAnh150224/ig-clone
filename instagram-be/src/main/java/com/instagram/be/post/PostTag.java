@@ -16,11 +16,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class PostTag extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "post_id", nullable = false)
-  private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "tagged_user_id", nullable = false)
-  private UserProfile taggedUser;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tagged_user_id", nullable = false)
+    private UserProfile taggedUser;
 }

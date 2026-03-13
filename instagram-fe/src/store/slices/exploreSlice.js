@@ -15,9 +15,9 @@ export const fetchExplorePosts = createAsyncThunk(
 
 export const fetchHashtagPosts = createAsyncThunk(
     "explore/fetchHashtagPosts",
-    async ({ name, page, size }, { rejectWithValue }) => {
+    async ({ name, cursor, size }, { rejectWithValue }) => {
         try {
-            const response = await postService.getHashtagPosts(name, page, size);
+            const response = await postService.getHashtagPosts(name, cursor, size);
             return response;
         } catch (error) {
             return rejectWithValue(error.apiResponse || error.message);
@@ -29,6 +29,7 @@ const initialState = {
     posts: [],
     loading: false,
     page: 0,
+    nextCursor: null,
     hasMore: true,
     error: null,
 };
@@ -47,6 +48,7 @@ const exploreSlice = createSlice({
         resetExplore: (state) => {
             state.posts = [];
             state.page = 0;
+            state.nextCursor = null;
             state.hasMore = true;
             state.loading = false;
         }
@@ -77,20 +79,21 @@ const exploreSlice = createSlice({
             })
             // Hashtag cases
             .addCase(fetchHashtagPosts.pending, (state) => {
-                state.loading = state.page === 0;
+                state.loading = !state.nextCursor;
             })
             .addCase(fetchHashtagPosts.fulfilled, (state, action) => {
-                const newPosts = action.payload.content || action.payload.posts || (Array.isArray(action.payload) ? action.payload : []);
-                const isLast = action.payload.last === true;
+                const newPosts = action.payload.content || [];
+                const nextCursor = action.payload.nextCursor;
+                const hasMore = action.payload.hasMore;
                 
-                if (state.page === 0) {
+                if (!state.nextCursor) {
                     state.posts = newPosts;
                 } else {
                     state.posts = [...state.posts, ...newPosts];
                 }
                 
-                state.hasMore = !isLast && newPosts.length > 0;
-                state.page += 1;
+                state.hasMore = hasMore;
+                state.nextCursor = nextCursor;
                 state.loading = false;
             })
             .addCase(fetchHashtagPosts.rejected, (state, action) => {

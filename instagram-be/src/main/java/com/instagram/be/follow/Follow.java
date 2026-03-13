@@ -17,15 +17,15 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Follow extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "follower_id", nullable = false)
-  private UserProfile follower;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follower_id", nullable = false)
+    private UserProfile follower;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "following_id", nullable = false)
-  private UserProfile following;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "following_id", nullable = false)
+    private UserProfile following;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "status", nullable = false)
-  private FollowStatus status = FollowStatus.ACCEPTED;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private FollowStatus status = FollowStatus.ACCEPTED;
 }

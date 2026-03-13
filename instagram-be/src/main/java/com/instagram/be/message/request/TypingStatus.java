@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TypingStatus {
-  private UUID recipientId;
-  private boolean typing;
-  private String username; // Sender's username
+    private UUID recipientId;
+    private boolean typing;
+    private String username; // Sender's username
 }

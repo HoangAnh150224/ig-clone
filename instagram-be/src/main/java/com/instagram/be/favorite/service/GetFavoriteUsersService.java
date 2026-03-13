@@ -18,29 +18,29 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetFavoriteUsersService extends BaseService<UserOnlyRequest, List<FollowUserResponse>> {
 
-  private final FavoriteUserRepository favoriteUserRepository;
-  private final FollowRepository followRepository;
+    private final FavoriteUserRepository favoriteUserRepository;
+    private final FollowRepository followRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<FollowUserResponse> execute(UserOnlyRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<FollowUserResponse> execute(UserOnlyRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<FollowUserResponse> doProcess(UserOnlyRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    var favorites = favoriteUserRepository.findByUserId(userId);
+    @Override
+    protected List<FollowUserResponse> doProcess(UserOnlyRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        var favorites = favoriteUserRepository.findByUserId(userId);
 
-    Set<UUID> favoriteIds = favorites.stream()
-      .map(fu -> fu.getFavorite().getId()).collect(Collectors.toSet());
+        Set<UUID> favoriteIds = favorites.stream()
+                .map(fu -> fu.getFavorite().getId()).collect(Collectors.toSet());
 
-    Set<UUID> followedIds = favoriteIds.isEmpty()
-      ? Set.of()
-      : followRepository.findFollowedIds(userId, favoriteIds);
+        Set<UUID> followedIds = favoriteIds.isEmpty()
+                ? Set.of()
+                : followRepository.findFollowedIds(userId, favoriteIds);
 
-    return favorites.stream()
-      .map(fu -> FollowUserResponse.of(fu.getFavorite(), followedIds.contains(fu.getFavorite().getId())))
-      .toList();
-  }
+        return favorites.stream()
+                .map(fu -> FollowUserResponse.of(fu.getFavorite(), followedIds.contains(fu.getFavorite().getId())))
+                .toList();
+    }
 }

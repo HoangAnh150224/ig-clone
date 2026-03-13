@@ -17,26 +17,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ArchiveStoryService extends BaseService<StoryActionRequest, StoryResponse> {
 
-  private final StoryRepository storyRepository;
+    private final StoryRepository storyRepository;
 
-  @Override
-  @Transactional
-  public StoryResponse execute(StoryActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected StoryResponse doProcess(StoryActionRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    Story story = storyRepository.findById(request.getStoryId())
-      .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
-
-    if (!story.getUser().getId().equals(userId)) {
-      throw new BusinessException("You do not have permission to archive this story");
+    @Override
+    @Transactional
+    public StoryResponse execute(StoryActionRequest request) {
+        return super.execute(request);
     }
 
-    story.setArchived(!story.isArchived());
-    Story saved = storyRepository.save(story);
-    return StoryResponse.from(saved);
-  }
+    @Override
+    protected StoryResponse doProcess(StoryActionRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        Story story = storyRepository.findById(request.getStoryId())
+                .orElseThrow(() -> new NotFoundException("Story", request.getStoryId()));
+
+        if (!story.getUser().getId().equals(userId)) {
+            throw new BusinessException("You do not have permission to archive this story");
+        }
+
+        story.setArchived(!story.isArchived());
+        Story saved = storyRepository.save(story);
+        return StoryResponse.from(saved);
+    }
 }

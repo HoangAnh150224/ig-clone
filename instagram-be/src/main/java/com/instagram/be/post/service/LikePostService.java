@@ -23,43 +23,43 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LikePostService extends BaseService<PostActionRequest, LikeResponse> {
 
-  private final PostRepository postRepository;
-  private final PostLikeRepository postLikeRepository;
-  private final PostAccessGuard postAccessGuard;
-  private final UserProfileRepository userProfileRepository;
-  private final CreateNotificationService notificationService;
+    private final PostRepository postRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final PostAccessGuard postAccessGuard;
+    private final UserProfileRepository userProfileRepository;
+    private final CreateNotificationService notificationService;
 
-  @Override
-  @Transactional
-  public LikeResponse execute(PostActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected LikeResponse doProcess(PostActionRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    UUID postId = request.getPostId();
-
-    Post post = postRepository.findById(postId)
-      .orElseThrow(() -> new NotFoundException("Post", postId));
-
-    postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
-
-    boolean liked;
-    var existing = postLikeRepository.findByPostIdAndUserId(postId, viewerId);
-    if (existing.isPresent()) {
-      postLikeRepository.delete(existing.get());
-      liked = false;
-    } else {
-      UserProfile user = userProfileRepository.getReferenceById(viewerId);
-      postLikeRepository.save(PostLike.builder().post(post).user(user).build());
-      liked = true;
-
-      // Notify owner
-      notificationService.create(post.getUser(), user, NotificationType.LIKE, post, null);
+    @Override
+    @Transactional
+    public LikeResponse execute(PostActionRequest request) {
+        return super.execute(request);
     }
 
-    long likeCount = postLikeRepository.countByPostId(postId);
-    return new LikeResponse(liked, likeCount);
-  }
+    @Override
+    protected LikeResponse doProcess(PostActionRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        UUID postId = request.getPostId();
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post", postId));
+
+        postAccessGuard.checkAccess(post.getUser().getId(), viewerId);
+
+        boolean liked;
+        var existing = postLikeRepository.findByPostIdAndUserId(postId, viewerId);
+        if (existing.isPresent()) {
+            postLikeRepository.delete(existing.get());
+            liked = false;
+        } else {
+            UserProfile user = userProfileRepository.getReferenceById(viewerId);
+            postLikeRepository.save(PostLike.builder().post(post).user(user).build());
+            liked = true;
+
+            // Notify owner
+            notificationService.create(post.getUser(), user, NotificationType.LIKE, post, null);
+        }
+
+        long likeCount = postLikeRepository.countByPostId(postId);
+        return new LikeResponse(liked, likeCount);
+    }
 }

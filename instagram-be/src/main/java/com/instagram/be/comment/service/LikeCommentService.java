@@ -20,36 +20,36 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LikeCommentService extends BaseService<CommentActionRequest, LikeResponse> {
 
-  private final CommentRepository commentRepository;
-  private final CommentLikeRepository commentLikeRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public LikeResponse execute(CommentActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected LikeResponse doProcess(CommentActionRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    UUID commentId = request.getCommentId();
-
-    Comment comment = commentRepository.findById(commentId)
-      .orElseThrow(() -> new NotFoundException("Comment", commentId));
-
-    boolean liked;
-    var existing = commentLikeRepository.findByCommentIdAndUserId(commentId, viewerId);
-    if (existing.isPresent()) {
-      commentLikeRepository.delete(existing.get());
-      liked = false;
-    } else {
-      UserProfile user = userProfileRepository.getReferenceById(viewerId);
-      commentLikeRepository.save(CommentLike.builder().comment(comment).user(user).build());
-      liked = true;
+    @Override
+    @Transactional
+    public LikeResponse execute(CommentActionRequest request) {
+        return super.execute(request);
     }
 
-    long likeCount = commentLikeRepository.countByCommentId(commentId);
-    return new LikeResponse(liked, likeCount);
-  }
+    @Override
+    protected LikeResponse doProcess(CommentActionRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        UUID commentId = request.getCommentId();
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException("Comment", commentId));
+
+        boolean liked;
+        var existing = commentLikeRepository.findByCommentIdAndUserId(commentId, viewerId);
+        if (existing.isPresent()) {
+            commentLikeRepository.delete(existing.get());
+            liked = false;
+        } else {
+            UserProfile user = userProfileRepository.getReferenceById(viewerId);
+            commentLikeRepository.save(CommentLike.builder().comment(comment).user(user).build());
+            liked = true;
+        }
+
+        long likeCount = commentLikeRepository.countByCommentId(commentId);
+        return new LikeResponse(liked, likeCount);
+    }
 }

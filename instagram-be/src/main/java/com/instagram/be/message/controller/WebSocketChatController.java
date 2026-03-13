@@ -18,27 +18,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WebSocketChatController {
 
-  private final SendMessageService sendMessageService;
+    private final SendMessageService sendMessageService;
 
-  @MessageMapping("/chat.send")
-  public void sendMessage(@Payload SendMessageRequest payload, Authentication authentication) {
-    if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
-      log.error("WebSocket chat.send: Unauthorized");
-      return;
+    @MessageMapping("/chat.send")
+    public void sendMessage(@Payload SendMessageRequest payload, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            log.error("WebSocket chat.send: Unauthorized");
+            return;
+        }
+
+        UserContext ctx = UserContext.builder()
+                .userId(principal.getUserId())
+                .username(principal.getUsername())
+                .email(principal.getEmail())
+                .roles(principal.getAuthorities().stream()
+                        .map(a -> a.getAuthority().replace("ROLE_", ""))
+                        .collect(Collectors.toSet()))
+                .build();
+
+        payload.setUserContext(ctx);
+
+        log.debug("WebSocket chat.send from user: {} to: {}", principal.getUsername(), payload.getRecipientId());
+        sendMessageService.execute(payload);
     }
-
-    UserContext ctx = UserContext.builder()
-      .userId(principal.getUserId())
-      .username(principal.getUsername())
-      .email(principal.getEmail())
-      .roles(principal.getAuthorities().stream()
-        .map(a -> a.getAuthority().replace("ROLE_", ""))
-        .collect(Collectors.toSet()))
-      .build();
-
-    payload.setUserContext(ctx);
-
-    log.debug("WebSocket chat.send from user: {} to: {}", principal.getUsername(), payload.getRecipientId());
-    sendMessageService.execute(payload);
-  }
 }

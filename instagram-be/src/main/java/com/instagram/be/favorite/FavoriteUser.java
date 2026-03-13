@@ -16,11 +16,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class FavoriteUser extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private UserProfile user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserProfile user;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "favorite_id", nullable = false)
-  private UserProfile favorite;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "favorite_id", nullable = false)
+    private UserProfile favorite;
 }

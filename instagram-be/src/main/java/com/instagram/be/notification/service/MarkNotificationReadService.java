@@ -15,28 +15,28 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MarkNotificationReadService extends BaseService<NotificationActionRequest, Void> {
 
-  private final NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-  @Override
-  @Transactional
-  public Void execute(NotificationActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected Void doProcess(NotificationActionRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    UUID notificationId = request.getNotificationId();
-
-    Notification notification = notificationRepository.findById(notificationId)
-      .filter(n -> n.getRecipient().getId().equals(userId))
-      .orElseThrow(() -> new NotFoundException("Notification", notificationId));
-
-    if (!notification.isRead()) {
-      notification.setRead(true);
-      notificationRepository.save(notification);
+    @Override
+    @Transactional
+    public Void execute(NotificationActionRequest request) {
+        return super.execute(request);
     }
 
-    return null;
-  }
+    @Override
+    protected Void doProcess(NotificationActionRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        UUID notificationId = request.getNotificationId();
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .filter(n -> n.getRecipient().getId().equals(userId))
+                .orElseThrow(() -> new NotFoundException("Notification", notificationId));
+
+        if (!notification.isRead()) {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+        }
+
+        return null;
+    }
 }

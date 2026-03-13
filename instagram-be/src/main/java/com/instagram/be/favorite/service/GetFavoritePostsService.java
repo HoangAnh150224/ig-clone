@@ -20,29 +20,29 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetFavoritePostsService extends BaseService<UserOnlyRequest, List<PostResponse>> {
 
-  private final FavoritePostRepository favoritePostRepository;
-  private final PostRepository postRepository;
-  private final PostResponseAssembler assembler;
-  private final SavedPostRepository savedPostRepository;
+    private final FavoritePostRepository favoritePostRepository;
+    private final PostRepository postRepository;
+    private final PostResponseAssembler assembler;
+    private final SavedPostRepository savedPostRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<PostResponse> execute(UserOnlyRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponse> execute(UserOnlyRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<PostResponse> doProcess(UserOnlyRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    var favoritePosts = favoritePostRepository.findByUserId(userId);
-    if (favoritePosts.isEmpty()) return List.of();
+    @Override
+    protected List<PostResponse> doProcess(UserOnlyRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        var favoritePosts = favoritePostRepository.findByUserId(userId);
+        if (favoritePosts.isEmpty()) return List.of();
 
-    var posts = favoritePosts.stream().map(fp -> fp.getPost()).collect(Collectors.toList());
-    Set<UUID> postIds = posts.stream().map(p -> p.getId()).collect(Collectors.toSet());
+        var posts = favoritePosts.stream().map(fp -> fp.getPost()).collect(Collectors.toList());
+        Set<UUID> postIds = posts.stream().map(p -> p.getId()).collect(Collectors.toSet());
 
-    Set<UUID> likedIds = postRepository.findLikedPostIds(userId, postIds);
-    Set<UUID> savedIds = savedPostRepository.findSavedPostIds(userId, postIds);
+        Set<UUID> likedIds = postRepository.findLikedPostIds(userId, postIds);
+        Set<UUID> savedIds = savedPostRepository.findSavedPostIds(userId, postIds);
 
-    return assembler.toResponseList(posts, userId, likedIds, savedIds);
-  }
+        return assembler.toResponseList(posts, userId, likedIds, savedIds);
+    }
 }

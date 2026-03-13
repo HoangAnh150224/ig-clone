@@ -14,7 +14,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class GetMessagesRequest extends BaseRequest {
 
-  private UUID conversationId;
-  private int page = 0;
-  private int size = 20;
+    private UUID conversationId;
+    private String cursor;
+    private int size = 20;
 }

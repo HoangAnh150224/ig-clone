@@ -16,25 +16,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeleteConversationService extends BaseService<ConversationActionRequest, Void> {
 
-  private final ConversationParticipantRepository participantRepository;
+    private final ConversationParticipantRepository participantRepository;
 
-  @Override
-  @Transactional
-  public Void execute(ConversationActionRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional
+    public Void execute(ConversationActionRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected Void doProcess(ConversationActionRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    UUID conversationId = request.getConversationId();
+    @Override
+    protected Void doProcess(ConversationActionRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        UUID conversationId = request.getConversationId();
 
-    ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(conversationId, userId)
-      .orElseThrow(() -> new NotFoundException("Conversation not found for this user"));
+        ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(conversationId, userId)
+                .orElseThrow(() -> new NotFoundException("Conversation not found for this user"));
 
-    participant.setLastDeletedAt(LocalDateTime.now());
-    participantRepository.save(participant);
+        participant.setLastDeletedAt(LocalDateTime.now());
+        participantRepository.save(participant);
 
-    return null;
-  }
+        return null;
+    }
 }

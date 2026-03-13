@@ -18,29 +18,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WebSocketEventListener {
 
-  private final PresenceService presenceService;
+    private final PresenceService presenceService;
 
-  @EventListener
-  public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-    StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-    UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) headerAccessor.getUser();
+    @EventListener
+    public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) headerAccessor.getUser();
 
-    if (user != null && user.getPrincipal() instanceof UserPrincipal principal) {
-      UUID userId = principal.getUserId();
-      log.debug("WebSocket Connected: User {} ({})", principal.getUsername(), userId);
-      presenceService.setOnline(userId);
+        if (user != null && user.getPrincipal() instanceof UserPrincipal principal) {
+            UUID userId = principal.getUserId();
+            log.debug("WebSocket Connected: User {} ({})", principal.getUsername(), userId);
+            presenceService.setOnline(userId);
+        }
     }
-  }
 
-  @EventListener
-  public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-    StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-    UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) headerAccessor.getUser();
+    @EventListener
+    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
+        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) headerAccessor.getUser();
 
-    if (user != null && user.getPrincipal() instanceof UserPrincipal principal) {
-      UUID userId = principal.getUserId();
-      log.debug("WebSocket Disconnected: User {} ({})", principal.getUsername(), userId);
-      presenceService.setOffline(userId);
+        if (user != null && user.getPrincipal() instanceof UserPrincipal principal) {
+            UUID userId = principal.getUserId();
+            log.debug("WebSocket Disconnected: User {} ({})", principal.getUsername(), userId);
+            presenceService.setOffline(userId);
+        }
     }
-  }
 }

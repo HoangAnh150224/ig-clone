@@ -13,5 +13,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class GetUserProfileRequest extends BaseRequest {
 
-  private String targetUsername;
+    private String targetUsername;
 }

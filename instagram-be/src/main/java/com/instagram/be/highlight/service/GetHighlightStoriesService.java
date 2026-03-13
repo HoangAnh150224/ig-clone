@@ -16,21 +16,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetHighlightStoriesService extends BaseService<HighlightActionRequest, List<StoryResponse>> {
 
-  private final HighlightRepository highlightRepository;
+    private final HighlightRepository highlightRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<StoryResponse> execute(HighlightActionRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<StoryResponse> execute(HighlightActionRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<StoryResponse> doProcess(HighlightActionRequest request) {
-    Highlight highlight = highlightRepository.findByIdWithStories(request.getHighlightId())
-      .orElseThrow(() -> new NotFoundException("Highlight", request.getHighlightId()));
+    @Override
+    protected List<StoryResponse> doProcess(HighlightActionRequest request) {
+        Highlight highlight = highlightRepository.findByIdWithStories(request.getHighlightId())
+                .orElseThrow(() -> new NotFoundException("Highlight", request.getHighlightId()));
 
-    return highlight.getStories().stream()
-      .map(StoryResponse::from)
-      .toList();
-  }
+        return highlight.getStories().stream()
+                .map(StoryResponse::from)
+                .toList();
+    }
 }

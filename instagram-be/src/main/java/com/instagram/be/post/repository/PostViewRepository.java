@@ -14,10 +14,10 @@ import java.util.UUID;
 @Repository
 public interface PostViewRepository extends JpaRepository<PostView, UUID> {
 
-  Optional<PostView> findByPostIdAndViewerId(UUID postId, UUID viewerId);
+    Optional<PostView> findByPostIdAndViewerId(UUID postId, UUID viewerId);
 
-  long countByPostId(UUID postId);
+    long countByPostId(UUID postId);
 
-  @Query("SELECT pv.post.id, COUNT(pv) FROM PostView pv WHERE pv.post.id IN :postIds GROUP BY pv.post.id")
-  List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
+    @Query("SELECT pv.post.id, COUNT(pv) FROM PostView pv WHERE pv.post.id IN :postIds GROUP BY pv.post.id")
+    List<Object[]> countByPostIds(@Param("postIds") Set<UUID> postIds);
 }

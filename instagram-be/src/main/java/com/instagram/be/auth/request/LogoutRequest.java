@@ -12,5 +12,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class LogoutRequest extends BaseRequest {
 
-  private String token;
+    private String token;
 }

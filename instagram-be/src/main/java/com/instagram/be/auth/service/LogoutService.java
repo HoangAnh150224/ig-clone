@@ -14,22 +14,22 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LogoutService extends BaseService<LogoutRequest, Void> {
 
-  private final JwtUtil jwtUtil;
-  private final StringRedisTemplate redisTemplate;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
 
-  @Override
-  protected Void doProcess(LogoutRequest request) {
-    String token = request.getToken();
-    if (token == null || token.isBlank()) {
-      throw new AppValidationException("Token is required for logout");
+    @Override
+    protected Void doProcess(LogoutRequest request) {
+        String token = request.getToken();
+        if (token == null || token.isBlank()) {
+            throw new AppValidationException("Token is required for logout");
+        }
+
+        long ttlSeconds = jwtUtil.getRemainingTtlSeconds(token);
+        if (ttlSeconds > 0) {
+            String jti = jwtUtil.extractJti(token);
+            redisTemplate.opsForValue().set("blacklist:" + jti, "1", ttlSeconds, TimeUnit.SECONDS);
+        }
+
+        return null;
     }
-
-    long ttlSeconds = jwtUtil.getRemainingTtlSeconds(token);
-    if (ttlSeconds > 0) {
-      String jti = jwtUtil.extractJti(token);
-      redisTemplate.opsForValue().set("blacklist:" + jti, "1", ttlSeconds, TimeUnit.SECONDS);
-    }
-
-    return null;
-  }
 }

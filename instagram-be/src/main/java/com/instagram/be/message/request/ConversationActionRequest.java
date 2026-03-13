@@ -13,5 +13,5 @@ import java.util.UUID;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class ConversationActionRequest extends BaseRequest {
-  private UUID conversationId;
+    private UUID conversationId;
 }

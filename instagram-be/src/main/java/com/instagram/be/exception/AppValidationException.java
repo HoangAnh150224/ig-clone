@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 public class AppValidationException extends BaseException {
 
-  public AppValidationException(String message) {
-    super(message, "VALIDATION_ERROR", HttpStatus.BAD_REQUEST);
-  }
+    public AppValidationException(String message) {
+        super(message, "VALIDATION_ERROR", HttpStatus.BAD_REQUEST);
+    }
 }

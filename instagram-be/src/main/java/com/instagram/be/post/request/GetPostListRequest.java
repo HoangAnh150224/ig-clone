@@ -15,18 +15,18 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class GetPostListRequest extends BaseRequest {
 
-  // For single-post list queries (likers, comments via post)
-  private UUID postId;
+    // For single-post list queries (likers, comments via post)
+    private UUID postId;
 
-  // For user posts / archived / tagged
-  private UUID targetUserId;
-  private String targetUsername;
+    // For user posts / archived / tagged
+    private UUID targetUserId;
+    private String targetUsername;
 
-  // For feed
-  private String cursor;
-  private PostType typeFilter;
+    // For feed
+    private String cursor;
+    private PostType typeFilter;
 
-  // Offset pagination
-  private int page = 0;
-  private int size = 12;
+    // Offset pagination
+    private int page = 0;
+    private int size = 12;
 }

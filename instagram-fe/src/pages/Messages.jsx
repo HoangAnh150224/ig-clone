@@ -22,6 +22,9 @@ const Messages = () => {
     const [requestChats, setRequestChats] = useState([]);
     const [requestCount, setRequestCount] = useState(0);
     const [activeChatMessages, setActiveChatMessages] = useState([]);
+    const [messagesCursor, setMessagesCursor] = useState(null);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
     const [typingUsers, setTypingUsers] = useState({}); // { userId: boolean }
     const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
     const [tempChat, setTempChat] = useState(null);
@@ -123,17 +126,40 @@ const Messages = () => {
         fetchChats();
     }, [fetchChats]);
 
-    const fetchMessages = useCallback(async (chatId) => {
+    const fetchMessages = useCallback(async (chatId, cursor = null) => {
         if (!chatId || chatId === "primary" || chatId === "requests" || chatId === "temp") return;
+        
+        if (cursor) {
+            setIsLoadingMoreMessages(true);
+        }
+
         try {
-            const response = await messageService.getChatMessages(chatId);
-            const msgs = Array.isArray(response) ? response : (response.content || []);
-            // REVERSE to show oldest first, newest last for chat UI
-            setActiveChatMessages([...msgs].reverse());
-            // Mark as read
-            await messageService.markAsRead(chatId);
+            const response = await messageService.getChatMessages(chatId, cursor);
+            const msgs = response.content || [];
+            const nextCursor = response.nextCursor;
+            const hasMore = response.hasMore;
+
+            if (!cursor) {
+                // Initial load: show newest at bottom
+                setActiveChatMessages([...msgs].reverse());
+            } else {
+                // Loading more (older): prepend to existing
+                setActiveChatMessages(prev => [...[...msgs].reverse(), ...prev]);
+            }
+            
+            setMessagesCursor(nextCursor);
+            setHasMoreMessages(hasMore);
+            
+            // Mark as read only on initial load
+            if (!cursor) {
+                await messageService.markAsRead(chatId);
+            }
         } catch (error) {
             console.error("Failed to fetch messages", error);
+        } finally {
+            if (cursor) {
+                setIsLoadingMoreMessages(false);
+            }
         }
     }, []);
 
@@ -427,6 +453,9 @@ const Messages = () => {
                     onUnsendMessage={handleUnsendMessage}
                     onOpenNewMessage={() => setIsNewMessageOpen(true)}
                     onAcceptRequest={handleAcceptRequest}
+                    onLoadMoreMessages={() => fetchMessages(activeChatId, messagesCursor)}
+                    hasMoreMessages={hasMoreMessages}
+                    isLoadingMoreMessages={isLoadingMoreMessages}
                     currentView={view}
                     isTyping={participantId ? typingUsers[participantId] : false}
                 />

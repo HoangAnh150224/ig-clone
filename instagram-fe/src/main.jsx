@@ -5,6 +5,7 @@ import { Provider as ChakraProvider } from "@/components/ui/provider";
 import { BrowserRouter } from "react-router-dom";
 import { store } from "./store";
 import App from "./App.jsx";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
@@ -12,7 +13,9 @@ createRoot(document.getElementById("root")).render(
         <ReduxProvider store={store}>
             <ChakraProvider>
                 <BrowserRouter>
-                    <App />
+                    <ErrorBoundary>
+                        <App />
+                    </ErrorBoundary>
                 </BrowserRouter>
             </ChakraProvider>
         </ReduxProvider>

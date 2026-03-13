@@ -14,5 +14,5 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class FavoriteRequest extends BaseRequest {
 
-  private UUID targetId;
+    private UUID targetId;
 }

@@ -30,100 +30,100 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SendMessageService extends BaseService<SendMessageRequest, MessageResponse> {
 
-  private final ConversationRepository conversationRepository;
-  private final ConversationParticipantRepository participantRepository;
-  private final MessageRepository messageRepository;
-  private final FollowRepository followRepository;
-  private final BlockRepository blockRepository;
-  private final UserProfileRepository userProfileRepository;
-  private final PostRepository postRepository;
-  private final SimpMessagingTemplate messagingTemplate;
-  private final AutoAcceptConversationService autoAcceptConversationService;
+    private final ConversationRepository conversationRepository;
+    private final ConversationParticipantRepository participantRepository;
+    private final MessageRepository messageRepository;
+    private final FollowRepository followRepository;
+    private final BlockRepository blockRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final PostRepository postRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final AutoAcceptConversationService autoAcceptConversationService;
 
-  @Override
-  @Transactional
-  public MessageResponse execute(SendMessageRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected MessageResponse doProcess(SendMessageRequest request) {
-    if ((request.getContent() == null || request.getContent().isBlank())
-      && request.getMediaUrl() == null
-      && request.getSharedPostId() == null) {
-      throw new AppValidationException("Message must have content, media, or a shared post");
+    @Override
+    @Transactional
+    public MessageResponse execute(SendMessageRequest request) {
+        return super.execute(request);
     }
 
-    UUID senderId = request.getUserContext().getUserId();
-    UUID recipientId = request.getRecipientId();
+    @Override
+    protected MessageResponse doProcess(SendMessageRequest request) {
+        if ((request.getContent() == null || request.getContent().isBlank())
+                && request.getMediaUrl() == null
+                && request.getSharedPostId() == null) {
+            throw new AppValidationException("Message must have content, media, or a shared post");
+        }
 
-    UserProfile sender = userProfileRepository.findById(senderId)
-      .orElseThrow(() -> new IllegalStateException("Sender not found"));
-    UserProfile recipient = userProfileRepository.findById(recipientId)
-      .orElseThrow(() -> new IllegalStateException("Recipient not found"));
+        UUID senderId = request.getUserContext().getUserId();
+        UUID recipientId = request.getRecipientId();
 
-    if (!recipient.isActive()) {
-      throw new BusinessException("Cannot send message to a deactivated account");
+        UserProfile sender = userProfileRepository.findById(senderId)
+                .orElseThrow(() -> new IllegalStateException("Sender not found"));
+        UserProfile recipient = userProfileRepository.findById(recipientId)
+                .orElseThrow(() -> new IllegalStateException("Recipient not found"));
+
+        if (!recipient.isActive()) {
+            throw new BusinessException("Cannot send message to a deactivated account");
+        }
+
+        if (blockRepository.existsBlockBetween(senderId, recipientId)) {
+            throw new BusinessException("Cannot send message to this user");
+        }
+
+        // Find or create conversation
+        Conversation conversation = conversationRepository
+                .findDirectConversation(senderId, recipientId)
+                .orElseGet(() -> {
+                    Conversation conv = conversationRepository.save(Conversation.builder().build());
+
+                    // Auto-accept if sender follows recipient
+                    boolean senderFollowsRecipient = followRepository
+                            .findByFollowerIdAndFollowingId(senderId, recipientId)
+                            .map(f -> f.getStatus() == FollowStatus.ACCEPTED)
+                            .orElse(false);
+
+                    participantRepository.save(ConversationParticipant.builder()
+                            .conversation(conv).user(sender).accepted(true).build());
+                    participantRepository.save(ConversationParticipant.builder()
+                            .conversation(conv).user(recipient).accepted(senderFollowsRecipient).build());
+
+                    return conv;
+                });
+
+        // Trigger 1: if sender is replying to a message request, auto-accept their participant row
+        // (recipientId is the original sender; senderId is the one who had accepted=false)
+        autoAcceptConversationService.accept(recipientId, senderId);
+
+        MediaType mediaType = request.getMediaType() != null
+                ? MediaType.valueOf(request.getMediaType().toUpperCase()) : null;
+
+        Post sharedPost = null;
+        if (request.getSharedPostId() != null) {
+            sharedPost = postRepository.findById(request.getSharedPostId())
+                    .orElseThrow(() -> new AppValidationException("Shared post not found"));
+        }
+
+        Message message = messageRepository.save(Message.builder()
+                .conversation(conversation)
+                .sender(sender)
+                .content(request.getContent())
+                .mediaUrl(request.getMediaUrl())
+                .mediaType(mediaType)
+                .sharedPost(sharedPost)
+                .build());
+
+        MessageResponse response = MessageResponse.from(message);
+
+        // WebSocket push to conversation topic
+        messagingTemplate.convertAndSend("/topic/messages/" + conversation.getId(), response);
+
+        // WebSocket push to recipient's private queue for notifications/updates
+        messagingTemplate.convertAndSendToUser(
+                recipientId.toString(),
+                "/queue/messages",
+                response
+        );
+
+        return response;
     }
-
-    if (blockRepository.existsBlockBetween(senderId, recipientId)) {
-      throw new BusinessException("Cannot send message to this user");
-    }
-
-    // Find or create conversation
-    Conversation conversation = conversationRepository
-      .findDirectConversation(senderId, recipientId)
-      .orElseGet(() -> {
-        Conversation conv = conversationRepository.save(Conversation.builder().build());
-
-        // Auto-accept if sender follows recipient
-        boolean senderFollowsRecipient = followRepository
-          .findByFollowerIdAndFollowingId(senderId, recipientId)
-          .map(f -> f.getStatus() == FollowStatus.ACCEPTED)
-          .orElse(false);
-
-        participantRepository.save(ConversationParticipant.builder()
-          .conversation(conv).user(sender).accepted(true).build());
-        participantRepository.save(ConversationParticipant.builder()
-          .conversation(conv).user(recipient).accepted(senderFollowsRecipient).build());
-
-        return conv;
-      });
-
-    // Trigger 1: if sender is replying to a message request, auto-accept their participant row
-    // (recipientId is the original sender; senderId is the one who had accepted=false)
-    autoAcceptConversationService.accept(recipientId, senderId);
-
-    MediaType mediaType = request.getMediaType() != null
-      ? MediaType.valueOf(request.getMediaType().toUpperCase()) : null;
-
-    Post sharedPost = null;
-    if (request.getSharedPostId() != null) {
-      sharedPost = postRepository.findById(request.getSharedPostId())
-        .orElseThrow(() -> new AppValidationException("Shared post not found"));
-    }
-
-    Message message = messageRepository.save(Message.builder()
-      .conversation(conversation)
-      .sender(sender)
-      .content(request.getContent())
-      .mediaUrl(request.getMediaUrl())
-      .mediaType(mediaType)
-      .sharedPost(sharedPost)
-      .build());
-
-    MessageResponse response = MessageResponse.from(message);
-
-    // WebSocket push to conversation topic
-    messagingTemplate.convertAndSend("/topic/messages/" + conversation.getId(), response);
-
-    // WebSocket push to recipient's private queue for notifications/updates
-    messagingTemplate.convertAndSendToUser(
-      recipientId.toString(),
-      "/queue/messages",
-      response
-    );
-
-    return response;
-  }
 }

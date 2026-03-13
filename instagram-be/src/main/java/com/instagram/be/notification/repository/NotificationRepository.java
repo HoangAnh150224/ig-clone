@@ -9,18 +9,38 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-  @Query(value = "SELECT n FROM Notification n JOIN FETCH n.actor LEFT JOIN FETCH n.post LEFT JOIN FETCH n.comment WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC",
-         countQuery = "SELECT COUNT(n) FROM Notification n WHERE n.recipient.id = :userId")
-  Page<Notification> findByRecipientId(@Param("userId") UUID userId, Pageable pageable);
+    @Query(value = "SELECT n FROM Notification n JOIN FETCH n.actor LEFT JOIN FETCH n.post LEFT JOIN FETCH n.comment WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC",
+            countQuery = "SELECT COUNT(n) FROM Notification n WHERE n.recipient.id = :userId")
+    Page<Notification> findByRecipientId(@Param("userId") UUID userId, Pageable pageable);
 
-  long countByRecipientIdAndReadFalse(UUID recipientId);
+    @Query("""
+            SELECT n FROM Notification n JOIN FETCH n.actor LEFT JOIN FETCH n.post LEFT JOIN FETCH n.comment
+            WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC, n.id DESC
+            """)
+    List<Notification> findFirstByRecipientId(@Param("userId") UUID userId, Pageable pageable);
 
-  @Modifying
-  @Query("UPDATE Notification n SET n.read = true WHERE n.recipient.id = :userId AND n.read = false")
-  void markAllReadByUserId(@Param("userId") UUID userId);
+    @Query("""
+            SELECT n FROM Notification n JOIN FETCH n.actor LEFT JOIN FETCH n.post LEFT JOIN FETCH n.comment
+            WHERE n.recipient.id = :userId
+              AND (n.createdAt < :cursorTime OR (n.createdAt = :cursorTime AND n.id < :cursorId))
+            ORDER BY n.createdAt DESC, n.id DESC
+            """)
+    List<Notification> findWithCursorByRecipientId(
+            @Param("userId") UUID userId,
+            @Param("cursorTime") LocalDateTime cursorTime,
+            @Param("cursorId") UUID cursorId,
+            Pageable pageable);
+
+    long countByRecipientIdAndReadFalse(UUID recipientId);
+
+    @Modifying
+    @Query("UPDATE Notification n SET n.read = true WHERE n.recipient.id = :userId AND n.read = false")
+    void markAllReadByUserId(@Param("userId") UUID userId);
 }

@@ -18,35 +18,35 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateNotificationService {
 
-  private final NotificationRepository notificationRepository;
-  private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-  @Transactional
-  public void create(UserProfile recipient, UserProfile actor, NotificationType type, Post post, Comment comment) {
-    // Don't notify yourself
-    if (recipient.getId().equals(actor.getId())) {
-      return;
+    @Transactional
+    public void create(UserProfile recipient, UserProfile actor, NotificationType type, Post post, Comment comment) {
+        // Don't notify yourself
+        if (recipient.getId().equals(actor.getId())) {
+            return;
+        }
+
+        Notification notification = Notification.builder()
+                .recipient(recipient)
+                .actor(actor)
+                .type(type)
+                .post(post)
+                .comment(comment)
+                .read(false)
+                .build();
+
+        Notification saved = notificationRepository.save(notification);
+        NotificationResponse response = NotificationResponse.from(saved);
+
+        // Real-time push
+        messagingTemplate.convertAndSendToUser(
+                recipient.getId().toString(),
+                "/queue/notifications",
+                response
+        );
+
+        log.debug("Notification created: {} for user {}", type, recipient.getUsername());
     }
-
-    Notification notification = Notification.builder()
-      .recipient(recipient)
-      .actor(actor)
-      .type(type)
-      .post(post)
-      .comment(comment)
-      .read(false)
-      .build();
-
-    Notification saved = notificationRepository.save(notification);
-    NotificationResponse response = NotificationResponse.from(saved);
-
-    // Real-time push
-    messagingTemplate.convertAndSendToUser(
-      recipient.getId().toString(),
-      "/queue/notifications",
-      response
-    );
-
-    log.debug("Notification created: {} for user {}", type, recipient.getUsername());
-  }
 }

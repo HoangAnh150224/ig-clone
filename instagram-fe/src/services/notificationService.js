@@ -5,11 +5,14 @@ import axiosClient from "../api/axiosClient";
  */
 const notificationService = {
     /**
-     * Get paginated notifications.
+     * Get paginated notifications (cursor-based).
      * API: GET /notifications
      */
-    getNotifications: async (page = 0, size = 20) => {
-        return axiosClient.get(`/notifications?page=${page}&size=${size}`);
+    getNotifications: async (cursor = null, size = 20) => {
+        const params = new URLSearchParams();
+        if (cursor) params.append("cursor", cursor);
+        if (size) params.append("size", size);
+        return axiosClient.get(`/notifications?${params.toString()}`);
     },
 
     /**

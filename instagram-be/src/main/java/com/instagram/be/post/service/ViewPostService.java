@@ -19,32 +19,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ViewPostService extends BaseService<PostActionRequest, Void> {
 
-  private final PostRepository postRepository;
-  private final PostViewRepository postViewRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final PostRepository postRepository;
+    private final PostViewRepository postViewRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public Void execute(PostActionRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional
+    public Void execute(PostActionRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected Void doProcess(PostActionRequest request) {
-    UUID postId = request.getPostId();
-    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
+    @Override
+    protected Void doProcess(PostActionRequest request) {
+        UUID postId = request.getPostId();
+        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
 
-    // Only track authenticated views
-    if (viewerId == null) return null;
+        // Only track authenticated views
+        if (viewerId == null) return null;
 
-    Post post = postRepository.findById(postId)
-      .orElseThrow(() -> new NotFoundException("Post", postId));
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post", postId));
 
-    postViewRepository.findByPostIdAndViewerId(postId, viewerId).orElseGet(() -> {
-      UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
-      return postViewRepository.save(PostView.builder().post(post).viewer(viewer).build());
-    });
+        postViewRepository.findByPostIdAndViewerId(postId, viewerId).orElseGet(() -> {
+            UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
+            return postViewRepository.save(PostView.builder().post(post).viewer(viewer).build());
+        });
 
-    return null;
-  }
+        return null;
+    }
 }

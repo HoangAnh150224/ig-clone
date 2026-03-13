@@ -14,6 +14,6 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class CreateReportRequest extends BaseRequest {
 
-  private UUID postId;
-  private String reason;
+    private UUID postId;
+    private String reason;
 }

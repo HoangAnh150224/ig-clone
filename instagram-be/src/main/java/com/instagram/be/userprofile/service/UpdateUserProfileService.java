@@ -16,31 +16,31 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UpdateUserProfileService extends BaseService<UpdateUserProfileRequest, MeResponse> {
 
-  private final UserProfileRepository userProfileRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public MeResponse execute(UpdateUserProfileRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional
+    public MeResponse execute(UpdateUserProfileRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected MeResponse doProcess(UpdateUserProfileRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    UserProfile user = userProfileRepository.findById(userId)
-      .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    @Override
+    protected MeResponse doProcess(UpdateUserProfileRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        UserProfile user = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
 
-    if (request.getFullName() != null) user.setFullName(request.getFullName());
-    if (request.getBio() != null) user.setBio(request.getBio());
-    if (request.getWebsite() != null) user.setWebsite(request.getWebsite());
-    if (request.getGender() != null) user.setGender(request.getGender());
-    if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
+        if (request.getFullName() != null) user.setFullName(request.getFullName());
+        if (request.getBio() != null) user.setBio(request.getBio());
+        if (request.getWebsite() != null) user.setWebsite(request.getWebsite());
+        if (request.getGender() != null) user.setGender(request.getGender());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
 
-    user.setPrivateAccount(request.isPrivateAccount());
-    user.setShowActivityStatus(request.isShowActivityStatus());
-    if (request.getTagPermission() != null) user.setTagPermission(request.getTagPermission());
+        user.setPrivateAccount(request.isPrivateAccount());
+        user.setShowActivityStatus(request.isShowActivityStatus());
+        if (request.getTagPermission() != null) user.setTagPermission(request.getTagPermission());
 
-    UserProfile updated = userProfileRepository.save(user);
-    return MeResponse.from(updated);
-  }
+        UserProfile updated = userProfileRepository.save(user);
+        return MeResponse.from(updated);
+    }
 }

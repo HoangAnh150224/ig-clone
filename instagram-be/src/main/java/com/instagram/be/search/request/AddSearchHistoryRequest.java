@@ -15,17 +15,17 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class AddSearchHistoryRequest extends BaseRequest {
 
-  private UUID searchedUserId;
-  private UUID hashtagId;
+    private UUID searchedUserId;
+    private UUID hashtagId;
 
-  @Override
-  public void validate() {
-    super.validate();
-    if (searchedUserId == null && hashtagId == null) {
-      throw new AppValidationException("Either searchedUserId or hashtagId must be provided");
+    @Override
+    public void validate() {
+        super.validate();
+        if (searchedUserId == null && hashtagId == null) {
+            throw new AppValidationException("Either searchedUserId or hashtagId must be provided");
+        }
+        if (searchedUserId != null && hashtagId != null) {
+            throw new AppValidationException("Only one of searchedUserId or hashtagId can be provided");
+        }
     }
-    if (searchedUserId != null && hashtagId != null) {
-      throw new AppValidationException("Only one of searchedUserId or hashtagId can be provided");
-    }
-  }
 }

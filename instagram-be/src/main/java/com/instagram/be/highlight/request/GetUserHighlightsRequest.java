@@ -12,5 +12,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class GetUserHighlightsRequest extends BaseRequest {
 
-  private String targetUsername;
+    private String targetUsername;
 }

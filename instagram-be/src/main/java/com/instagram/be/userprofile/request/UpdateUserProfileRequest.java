@@ -13,12 +13,12 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class UpdateUserProfileRequest extends BaseRequest {
-  private String fullName;
-  private String bio;
-  private String website;
-  private Gender gender;
-  private String avatarUrl;
-  private boolean privateAccount;
-  private boolean showActivityStatus;
-  private TagPermission tagPermission;
+    private String fullName;
+    private String bio;
+    private String website;
+    private Gender gender;
+    private String avatarUrl;
+    private boolean privateAccount;
+    private boolean showActivityStatus;
+    private TagPermission tagPermission;
 }

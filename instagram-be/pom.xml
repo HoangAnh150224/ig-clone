@@ -125,6 +125,12 @@
             <version>5.9</version>
         </dependency>
 
+        <!-- Cache -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
         <!-- .env file support -->
         <dependency>
             <groupId>me.paulschwarz</groupId>

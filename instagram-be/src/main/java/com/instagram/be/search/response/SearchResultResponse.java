@@ -13,14 +13,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchResultResponse {
-  private List<FollowUserResponse> users;
-  private List<HashtagInfo> hashtags;
+    private List<FollowUserResponse> users;
+    private List<HashtagInfo> hashtags;
 
-  @Data
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class HashtagInfo {
-    private String name;
-    private long postCount;
-  }
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class HashtagInfo {
+        private String name;
+        private long postCount;
+    }
 }

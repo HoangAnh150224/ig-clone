@@ -21,32 +21,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ToggleFavoritePostService extends BaseService<FavoriteRequest, FavoriteResponse> {
 
-  private final FavoritePostRepository favoritePostRepository;
-  private final PostRepository postRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final FavoritePostRepository favoritePostRepository;
+    private final PostRepository postRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public FavoriteResponse execute(FavoriteRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected FavoriteResponse doProcess(FavoriteRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    UUID postId = request.getTargetId();
-
-    Optional<FavoritePost> existing = favoritePostRepository.findByUserIdAndPostId(userId, postId);
-    if (existing.isPresent()) {
-      favoritePostRepository.delete(existing.get());
-      return new FavoriteResponse(false);
+    @Override
+    @Transactional
+    public FavoriteResponse execute(FavoriteRequest request) {
+        return super.execute(request);
     }
 
-    Post post = postRepository.findById(postId)
-      .orElseThrow(() -> new NotFoundException("Post", postId));
-    UserProfile user = userProfileRepository.getReferenceById(userId);
+    @Override
+    protected FavoriteResponse doProcess(FavoriteRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        UUID postId = request.getTargetId();
 
-    favoritePostRepository.save(FavoritePost.builder().user(user).post(post).build());
-    return new FavoriteResponse(true);
-  }
+        Optional<FavoritePost> existing = favoritePostRepository.findByUserIdAndPostId(userId, postId);
+        if (existing.isPresent()) {
+            favoritePostRepository.delete(existing.get());
+            return new FavoriteResponse(false);
+        }
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post", postId));
+        UserProfile user = userProfileRepository.getReferenceById(userId);
+
+        favoritePostRepository.save(FavoritePost.builder().user(user).post(post).build());
+        return new FavoriteResponse(true);
+    }
 }

@@ -14,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,37 +22,37 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetFollowersService extends BaseService<FollowListRequest, PaginatedResponse<FollowUserResponse>> {
 
-  private final FollowRepository followRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final FollowRepository followRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
-    UUID targetId = request.getTargetUserId();
-    UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
-
-    if (!userProfileRepository.existsById(targetId)) {
-      throw new NotFoundException("User", targetId);
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<FollowUserResponse> execute(FollowListRequest request) {
+        return super.execute(request);
     }
 
-    Page<Follow> followPage = followRepository
-      .findFollowersByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable());
+    @Override
+    protected PaginatedResponse<FollowUserResponse> doProcess(FollowListRequest request) {
+        UUID targetId = request.getTargetUserId();
+        UUID viewerId = request.getUserContext() != null ? request.getUserContext().getUserId() : null;
 
-    Set<UUID> followerIds = followPage.getContent().stream()
-      .map(f -> f.getFollower().getId()).collect(Collectors.toSet());
+        if (!userProfileRepository.existsById(targetId)) {
+            throw new NotFoundException("User", targetId);
+        }
 
-    Set<UUID> followedByViewer = (viewerId != null && !followerIds.isEmpty())
-      ? followRepository.findFollowedIds(viewerId, followerIds)
-      : Set.of();
+        Page<Follow> followPage = followRepository
+                .findFollowersByUserId(targetId, FollowStatus.ACCEPTED, request.toPageable());
 
-    Page<FollowUserResponse> page = followPage.map(follow ->
-      FollowUserResponse.of(follow.getFollower(), followedByViewer.contains(follow.getFollower().getId())));
+        Set<UUID> followerIds = followPage.getContent().stream()
+                .map(f -> f.getFollower().getId()).collect(Collectors.toSet());
 
-    return PaginatedResponse.from(page);
-  }
+        Set<UUID> followedByViewer = (viewerId != null && !followerIds.isEmpty())
+                ? followRepository.findFollowedIds(viewerId, followerIds)
+                : Set.of();
+
+        Page<FollowUserResponse> page = followPage.map(follow ->
+                FollowUserResponse.of(follow.getFollower(), followedByViewer.contains(follow.getFollower().getId())));
+
+        return PaginatedResponse.from(page);
+    }
 }

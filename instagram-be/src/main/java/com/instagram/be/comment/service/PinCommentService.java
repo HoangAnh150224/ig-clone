@@ -18,41 +18,41 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PinCommentService extends BaseService<CommentActionRequest, CommentResponse> {
 
-  private final CommentRepository commentRepository;
-  private final CommentLikeRepository commentLikeRepository;
+    private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
-  @Override
-  @Transactional
-  public CommentResponse execute(CommentActionRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected CommentResponse doProcess(CommentActionRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    Comment comment = commentRepository.findById(request.getCommentId())
-      .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
-
-    if (!comment.getPost().getUser().getId().equals(viewerId)) {
-      throw new BusinessException("Only the post owner can pin comments");
+    @Override
+    @Transactional
+    public CommentResponse execute(CommentActionRequest request) {
+        return super.execute(request);
     }
 
-    // Unpin current pinned comment on this post
-    commentRepository.findPinnedCommentId(comment.getPost().getId()).ifPresent(pinnedId -> {
-      if (!pinnedId.equals(comment.getId())) {
-        commentRepository.findById(pinnedId).ifPresent(pinned -> {
-          pinned.setPinned(false);
-          commentRepository.save(pinned);
+    @Override
+    protected CommentResponse doProcess(CommentActionRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        Comment comment = commentRepository.findById(request.getCommentId())
+                .orElseThrow(() -> new NotFoundException("Comment", request.getCommentId()));
+
+        if (!comment.getPost().getUser().getId().equals(viewerId)) {
+            throw new BusinessException("Only the post owner can pin comments");
+        }
+
+        // Unpin current pinned comment on this post
+        commentRepository.findPinnedCommentId(comment.getPost().getId()).ifPresent(pinnedId -> {
+            if (!pinnedId.equals(comment.getId())) {
+                commentRepository.findById(pinnedId).ifPresent(pinned -> {
+                    pinned.setPinned(false);
+                    commentRepository.save(pinned);
+                });
+            }
         });
-      }
-    });
 
-    comment.setPinned(!comment.isPinned());
-    Comment saved = commentRepository.save(comment);
+        comment.setPinned(!comment.isPinned());
+        Comment saved = commentRepository.save(comment);
 
-    long replyCount = commentRepository.countByParentCommentId(saved.getId());
-    long likeCount = commentLikeRepository.countByCommentId(saved.getId());
-    boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(saved.getId(), viewerId);
-    return CommentResponse.of(saved, replyCount, likeCount, isLiked, true);
-  }
+        long replyCount = commentRepository.countByParentCommentId(saved.getId());
+        long likeCount = commentLikeRepository.countByCommentId(saved.getId());
+        boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(saved.getId(), viewerId);
+        return CommentResponse.of(saved, replyCount, likeCount, isLiked, true);
+    }
 }

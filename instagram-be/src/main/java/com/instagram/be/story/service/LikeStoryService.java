@@ -19,32 +19,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LikeStoryService extends BaseService<StoryActionRequest, Void> {
 
-  private final StoryRepository storyRepository;
-  private final StoryViewRepository storyViewRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final StoryRepository storyRepository;
+    private final StoryViewRepository storyViewRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public Void execute(StoryActionRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional
+    public Void execute(StoryActionRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected Void doProcess(StoryActionRequest request) {
-    UUID viewerId = request.getUserContext().getUserId();
-    UUID storyId = request.getStoryId();
+    @Override
+    protected Void doProcess(StoryActionRequest request) {
+        UUID viewerId = request.getUserContext().getUserId();
+        UUID storyId = request.getStoryId();
 
-    Story story = storyRepository.findById(storyId)
-      .orElseThrow(() -> new NotFoundException("Story", storyId));
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new NotFoundException("Story", storyId));
 
-    StoryView view = storyViewRepository.findByStoryIdAndViewerId(storyId, viewerId)
-      .orElseGet(() -> {
-        UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
-        return StoryView.builder().story(story).viewer(viewer).build();
-      });
+        StoryView view = storyViewRepository.findByStoryIdAndViewerId(storyId, viewerId)
+                .orElseGet(() -> {
+                    UserProfile viewer = userProfileRepository.getReferenceById(viewerId);
+                    return StoryView.builder().story(story).viewer(viewer).build();
+                });
 
-    view.setLiked(true);
-    storyViewRepository.save(view);
-    return null;
-  }
+        view.setLiked(true);
+        storyViewRepository.save(view);
+        return null;
+    }
 }

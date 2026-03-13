@@ -16,96 +16,124 @@ import java.util.UUID;
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-  long countByUserIdAndArchivedFalse(UUID userId);
+    long countByUserIdAndArchivedFalse(UUID userId);
 
-  // User's posts (non-archived for non-owners)
-  @Query("SELECT p FROM Post p JOIN FETCH p.user u WHERE p.user.id = :userId AND p.archived = false AND u.active = true ORDER BY p.createdAt DESC")
-  Page<Post> findPublicByUserId(@Param("userId") UUID userId, Pageable pageable);
+    // User's posts (non-archived for non-owners)
+    @Query("SELECT p FROM Post p JOIN FETCH p.user u WHERE p.user.id = :userId AND p.archived = false AND u.active = true ORDER BY p.createdAt DESC")
+    Page<Post> findPublicByUserId(@Param("userId") UUID userId, Pageable pageable);
 
-  @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.createdAt DESC")
-  Page<Post> findAllByUserId(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.createdAt DESC")
+    Page<Post> findAllByUserId(@Param("userId") UUID userId, Pageable pageable);
 
-  @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId AND p.archived = true ORDER BY p.createdAt DESC")
-  Page<Post> findArchivedByUserId(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId AND p.archived = true ORDER BY p.createdAt DESC")
+    Page<Post> findArchivedByUserId(@Param("userId") UUID userId, Pageable pageable);
 
-  // Feed: cursor-based — posts from followed users, non-archived
-  @Query("""
-    SELECT p FROM Post p JOIN FETCH p.user u
-    WHERE u.id IN :followedIds
-      AND p.archived = false
-      AND u.active = true
-      AND (p.createdAt < :cursorTime
-           OR (p.createdAt = :cursorTime AND p.id < :cursorId))
-    ORDER BY p.createdAt DESC, p.id DESC
-    """)
-  List<Post> findFeedPosts(@Param("followedIds") List<UUID> followedIds,
-                           @Param("cursorTime") LocalDateTime cursorTime,
-                           @Param("cursorId") UUID cursorId,
-                           Pageable pageable);
+    // Feed: cursor-based — posts from followed users, non-archived
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u
+            WHERE u.id IN :followedIds
+              AND p.archived = false
+              AND u.active = true
+              AND (p.createdAt < :cursorTime
+                   OR (p.createdAt = :cursorTime AND p.id < :cursorId))
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findFeedPosts(@Param("followedIds") List<UUID> followedIds,
+                             @Param("cursorTime") LocalDateTime cursorTime,
+                             @Param("cursorId") UUID cursorId,
+                             Pageable pageable);
 
-  @Query("""
-    SELECT p FROM Post p JOIN FETCH p.user u
-    WHERE u.id IN :followedIds
-      AND p.archived = false
-      AND u.active = true
-    ORDER BY p.createdAt DESC, p.id DESC
-    """)
-  List<Post> findFeedPostsFirst(@Param("followedIds") List<UUID> followedIds,
-                                Pageable pageable);
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u
+            WHERE u.id IN :followedIds
+              AND p.archived = false
+              AND u.active = true
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findFeedPostsFirst(@Param("followedIds") List<UUID> followedIds,
+                                  Pageable pageable);
 
-  // Reel feed (type filter)
-  @Query("""
-    SELECT p FROM Post p JOIN FETCH p.user u
-    WHERE u.id IN :followedIds
-      AND p.archived = false
-      AND u.active = true
-      AND p.type = com.instagram.be.post.enums.PostType.REEL
-      AND (p.createdAt < :cursorTime
-           OR (p.createdAt = :cursorTime AND p.id < :cursorId))
-    ORDER BY p.createdAt DESC, p.id DESC
-    """)
-  List<Post> findReelFeedPosts(@Param("followedIds") List<UUID> followedIds,
-                               @Param("cursorTime") LocalDateTime cursorTime,
-                               @Param("cursorId") UUID cursorId,
-                               Pageable pageable);
+    // Reel feed (type filter)
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u
+            WHERE u.id IN :followedIds
+              AND p.archived = false
+              AND u.active = true
+              AND p.type = com.instagram.be.post.enums.PostType.REEL
+              AND (p.createdAt < :cursorTime
+                   OR (p.createdAt = :cursorTime AND p.id < :cursorId))
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findReelFeedPosts(@Param("followedIds") List<UUID> followedIds,
+                                 @Param("cursorTime") LocalDateTime cursorTime,
+                                 @Param("cursorId") UUID cursorId,
+                                 Pageable pageable);
 
-  @Query("""
-    SELECT p FROM Post p JOIN FETCH p.user u
-    WHERE u.id IN :followedIds
-      AND p.archived = false
-      AND u.active = true
-      AND p.type = com.instagram.be.post.enums.PostType.REEL
-    ORDER BY p.createdAt DESC, p.id DESC
-    """)
-  List<Post> findReelFeedPostsFirst(@Param("followedIds") List<UUID> followedIds,
-                                    Pageable pageable);
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u
+            WHERE u.id IN :followedIds
+              AND p.archived = false
+              AND u.active = true
+              AND p.type = com.instagram.be.post.enums.PostType.REEL
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findReelFeedPostsFirst(@Param("followedIds") List<UUID> followedIds,
+                                      Pageable pageable);
 
-  @Query("SELECT COUNT(p) FROM Post p JOIN p.hashtags h WHERE h.name = :name AND p.archived = false")
-  long countByHashtagName(@Param("name") String name);
+    @Query("SELECT COUNT(p) FROM Post p JOIN p.hashtags h WHERE h.name = :name AND p.archived = false")
+    long countByHashtagName(@Param("name") String name);
 
-  // Explore: public posts ordered by like count (popular)
-  @Query(value = """
-    SELECT p FROM Post p JOIN FETCH p.user u
-    WHERE p.archived = false AND u.privateAccount = false AND u.active = true
-    ORDER BY p.createdAt DESC
-    """,
-    countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u WHERE p.archived = false AND u.privateAccount = false AND u.active = true")
-  Page<Post> findExplore(Pageable pageable);
+    // Explore: public posts ordered by like count (popular)
+    @Query(value = """
+            SELECT p FROM Post p JOIN FETCH p.user u
+            WHERE p.archived = false AND u.privateAccount = false AND u.active = true
+            ORDER BY p.createdAt DESC
+            """,
+            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u WHERE p.archived = false AND u.privateAccount = false AND u.active = true")
+    Page<Post> findExplore(Pageable pageable);
 
-  // Posts by hashtag
-  @Query(value = """
-    SELECT p FROM Post p JOIN FETCH p.user u JOIN p.hashtags h
-    WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true
-    ORDER BY p.createdAt DESC
-    """,
-    countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u JOIN p.hashtags h WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true")
-  Page<Post> findByHashtagName(@Param("hashtagName") String hashtagName, Pageable pageable);
+    // Posts by hashtag
+    @Query(value = """
+            SELECT p FROM Post p JOIN FETCH p.user u JOIN p.hashtags h
+            WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true
+            ORDER BY p.createdAt DESC
+            """,
+            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u JOIN p.hashtags h WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true")
+    Page<Post> findByHashtagName(@Param("hashtagName") String hashtagName, Pageable pageable);
 
-  // Batch: liked post IDs
-  @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
-  Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+    // Cache hit: fetch posts by IDs (JOIN FETCH avoids N+1 on user)
+    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.id IN :ids ORDER BY p.createdAt DESC, p.id DESC")
+    List<Post> findByIds(@Param("ids") List<UUID> ids);
 
-  // Batch: hashtag names per post (avoids N+1 lazy collection access)
-  @Query("SELECT p.id, h.name FROM Post p JOIN p.hashtags h WHERE p.id IN :postIds")
-  List<Object[]> findHashtagNamesByPostIds(@Param("postIds") Set<UUID> postIds);
+    // Hashtag cursor-based queries
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u JOIN p.hashtags h
+            WHERE h.name = :name AND p.archived = false AND u.privateAccount = false AND u.active = true
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findByHashtagNameFirst(@Param("name") String name, Pageable pageable);
+
+    @Query("""
+            SELECT p FROM Post p JOIN FETCH p.user u JOIN p.hashtags h
+            WHERE h.name = :name AND p.archived = false AND u.privateAccount = false AND u.active = true
+              AND (p.createdAt < :cursorTime OR (p.createdAt = :cursorTime AND p.id < :cursorId))
+            ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findByHashtagNameWithCursor(
+            @Param("name") String name,
+            @Param("cursorTime") LocalDateTime cursorTime,
+            @Param("cursorId") UUID cursorId,
+            Pageable pageable);
+
+    // Cache hit: total count for explore (used in PaginatedResponse)
+    @Query("SELECT COUNT(p) FROM Post p JOIN p.user u WHERE p.archived = false AND u.privateAccount = false AND u.active = true")
+    long countExplore();
+
+    // Batch: liked post IDs
+    @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
+    Set<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") Set<UUID> postIds);
+
+    // Batch: hashtag names per post (avoids N+1 lazy collection access)
+    @Query("SELECT p.id, h.name FROM Post p JOIN p.hashtags h WHERE p.id IN :postIds")
+    List<Object[]> findHashtagNamesByPostIds(@Param("postIds") Set<UUID> postIds);
 }

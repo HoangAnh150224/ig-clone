@@ -13,8 +13,8 @@ import java.util.UUID;
 @Repository
 public interface PostMediaRepository extends JpaRepository<PostMedia, UUID> {
 
-  List<PostMedia> findByPostIdOrderByDisplayOrderAsc(UUID postId);
+    List<PostMedia> findByPostIdOrderByDisplayOrderAsc(UUID postId);
 
-  @Query("SELECT pm FROM PostMedia pm WHERE pm.post.id IN :postIds ORDER BY pm.post.id, pm.displayOrder ASC")
-  List<PostMedia> findByPostIds(@Param("postIds") Set<UUID> postIds);
+    @Query("SELECT pm FROM PostMedia pm WHERE pm.post.id IN :postIds ORDER BY pm.post.id, pm.displayOrder ASC")
+    List<PostMedia> findByPostIds(@Param("postIds") Set<UUID> postIds);
 }

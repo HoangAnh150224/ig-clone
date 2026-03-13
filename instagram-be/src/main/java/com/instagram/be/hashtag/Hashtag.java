@@ -17,6 +17,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Hashtag extends BaseEntity {
 
-  @Column(name = "name", nullable = false, unique = true, length = 100)
-  private String name;
+    @Column(name = "name", nullable = false, unique = true, length = 100)
+    private String name;
 }

@@ -16,11 +16,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class PostView extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "post_id", nullable = false)
-  private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "viewer_id", nullable = false)
-  private UserProfile viewer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "viewer_id", nullable = false)
+    private UserProfile viewer;
 }

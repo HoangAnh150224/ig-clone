@@ -11,22 +11,22 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PresenceService {
 
-  private static final String ONLINE_KEY_PREFIX = "online:";
-  private static final Duration ONLINE_TTL = Duration.ofMinutes(5); // Heartbeat/TTL for safety
-  private final StringRedisTemplate redisTemplate;
+    private static final String ONLINE_KEY_PREFIX = "online:";
+    private static final Duration ONLINE_TTL = Duration.ofMinutes(5); // Heartbeat/TTL for safety
+    private final StringRedisTemplate redisTemplate;
 
-  public void setOnline(UUID userId) {
-    String key = ONLINE_KEY_PREFIX + userId.toString();
-    redisTemplate.opsForValue().set(key, "true", ONLINE_TTL);
-  }
+    public void setOnline(UUID userId) {
+        String key = ONLINE_KEY_PREFIX + userId.toString();
+        redisTemplate.opsForValue().set(key, "true", ONLINE_TTL);
+    }
 
-  public void setOffline(UUID userId) {
-    String key = ONLINE_KEY_PREFIX + userId.toString();
-    redisTemplate.delete(key);
-  }
+    public void setOffline(UUID userId) {
+        String key = ONLINE_KEY_PREFIX + userId.toString();
+        redisTemplate.delete(key);
+    }
 
-  public boolean isOnline(UUID userId) {
-    String key = ONLINE_KEY_PREFIX + userId.toString();
-    return Boolean.TRUE.equals(redisTemplate.hasKey(key));
-  }
+    public boolean isOnline(UUID userId) {
+        String key = ONLINE_KEY_PREFIX + userId.toString();
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
 }

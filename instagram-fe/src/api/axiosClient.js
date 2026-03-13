@@ -4,18 +4,15 @@ import { setGlobalError } from "../store/slices/uiSlice";
 
 const axiosClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-// Add interceptor to attach JWT to each request
+// Add interceptor (no longer attaching JWT here as it is handled via httpOnly cookie)
 axiosClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
         return config;
     },
     (error) => Promise.reject(error),
@@ -51,13 +48,17 @@ axiosClient.interceptors.response.use(
 
             // Handle 401 (Unauthorized) errors centrally
             if (error.response.status === 401) {
-                localStorage.removeItem("token");
                 localStorage.removeItem("user");
                 
                 // Do not redirect forcefully if we are already in Auth
                 if (!window.location.pathname.includes("/accounts/login")) {
                     window.location.href = "/accounts/login";
                 }
+            } else if (error.response.status === 429) {
+                // Handle 429 (Too Many Requests) centrally
+                const message = "Too many requests. Please slow down.";
+                store.dispatch(setGlobalError(message));
+                return Promise.reject(new Error(message));
             } else {
                 // Dispatch global error for non-auth errors
                 store.dispatch(setGlobalError(apiResponse.message || "Server error occurred"));

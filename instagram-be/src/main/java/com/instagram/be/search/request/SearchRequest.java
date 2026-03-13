@@ -12,6 +12,6 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class SearchRequest extends BaseRequest {
 
-  private String query;
-  private int size = 10;
+    private String query;
+    private int size = 10;
 }

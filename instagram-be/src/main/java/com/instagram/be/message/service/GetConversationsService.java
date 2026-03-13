@@ -16,19 +16,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GetConversationsService extends BaseService<UserOnlyRequest, List<ConversationResponse>> {
 
-  private final ConversationParticipantRepository participantRepository;
-  private final ConversationAssembler assembler;
+    private final ConversationParticipantRepository participantRepository;
+    private final ConversationAssembler assembler;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<ConversationResponse> execute(UserOnlyRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConversationResponse> execute(UserOnlyRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<ConversationResponse> doProcess(UserOnlyRequest request) {
-    UUID userId = request.getUserContext().getUserId();
-    var participants = participantRepository.findAcceptedByUserId(userId);
-    return assembler.assembleAll(participants, userId);
-  }
+    @Override
+    protected List<ConversationResponse> doProcess(UserOnlyRequest request) {
+        UUID userId = request.getUserContext().getUserId();
+        var participants = participantRepository.findAcceptedByUserId(userId);
+        return assembler.assembleAll(participants, userId);
+    }
 }

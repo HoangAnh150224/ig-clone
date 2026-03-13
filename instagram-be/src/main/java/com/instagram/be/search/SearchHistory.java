@@ -17,15 +17,15 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class SearchHistory extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private UserProfile user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserProfile user;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "searched_user_id")
-  private UserProfile searchedUser;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "searched_user_id")
+    private UserProfile searchedUser;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hashtag_id")
-  private Hashtag hashtag;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hashtag_id")
+    private Hashtag hashtag;
 }

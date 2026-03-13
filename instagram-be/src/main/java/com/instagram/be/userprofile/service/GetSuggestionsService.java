@@ -18,27 +18,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetSuggestionsService extends BaseService<GetSuggestionsRequest, List<FollowUserResponse>> {
 
-  private final UserProfileRepository userProfileRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<FollowUserResponse> execute(GetSuggestionsRequest request) {
-    return super.execute(request);
-  }
+    @Override
+    @Transactional(readOnly = true)
+    public List<FollowUserResponse> execute(GetSuggestionsRequest request) {
+        return super.execute(request);
+    }
 
-  @Override
-  protected List<FollowUserResponse> doProcess(GetSuggestionsRequest request) {
-    UUID currentUserId = request.getUserContext().getUserId();
-    int limit = request.getLimit() > 0 ? request.getLimit() : 5;
+    @Override
+    protected List<FollowUserResponse> doProcess(GetSuggestionsRequest request) {
+        UUID currentUserId = request.getUserContext().getUserId();
+        int limit = request.getLimit() > 0 ? request.getLimit() : 5;
 
-    List<Object[]> results = userProfileRepository.findSuggestions(currentUserId, PageRequest.of(0, limit));
+        List<Object[]> results = userProfileRepository.findSuggestions(currentUserId, PageRequest.of(0, limit));
 
-    return results.stream()
-      .map(row -> {
-        UserProfile user = (UserProfile) row[0];
-        long mutualCount = (long) row[1];
-        return FollowUserResponse.of(user, false, mutualCount);
-      })
-      .collect(Collectors.toList());
-  }
+        return results.stream()
+                .map(row -> {
+                    UserProfile user = (UserProfile) row[0];
+                    long mutualCount = (long) row[1];
+                    return FollowUserResponse.of(user, false, mutualCount);
+                })
+                .collect(Collectors.toList());
+    }
 }

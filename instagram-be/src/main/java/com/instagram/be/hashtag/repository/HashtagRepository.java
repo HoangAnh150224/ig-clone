@@ -14,10 +14,10 @@ import java.util.UUID;
 @Repository
 public interface HashtagRepository extends JpaRepository<Hashtag, UUID> {
 
-  Optional<Hashtag> findByName(String name);
+    Optional<Hashtag> findByName(String name);
 
-  Set<Hashtag> findByNameIn(Set<String> names);
+    Set<Hashtag> findByNameIn(Set<String> names);
 
-  @Query("SELECT h FROM Hashtag h WHERE LOWER(h.name) LIKE LOWER(CONCAT(:prefix, '%')) ORDER BY h.name ASC")
-  List<Hashtag> findByNameStartingWith(@Param("prefix") String prefix, org.springframework.data.domain.Pageable pageable);
+    @Query("SELECT h FROM Hashtag h WHERE LOWER(h.name) LIKE LOWER(CONCAT(:prefix, '%')) ORDER BY h.name ASC")
+    List<Hashtag> findByNameStartingWith(@Param("prefix") String prefix, org.springframework.data.domain.Pageable pageable);
 }

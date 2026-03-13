@@ -22,47 +22,47 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtUtil jwtUtil;
-  private final UserDetailsServiceImpl userDetailsService;
-  private final StringRedisTemplate redisTemplate;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final StringRedisTemplate redisTemplate;
 
-  @Override
-  protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                  @NonNull HttpServletResponse response,
-                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+    @Override
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-    String token = authHeader.substring(7);
+        String token = authHeader.substring(7);
 
-    try {
-      if (!jwtUtil.isTokenValid(token)) {
+        try {
+            if (!jwtUtil.isTokenValid(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String jti = jwtUtil.extractJti(token);
+            Boolean isBlacklisted = redisTemplate.hasKey("blacklist:" + jti);
+            if (Boolean.TRUE.equals(isBlacklisted)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String username = jwtUtil.extractUsername(token);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserPrincipal userPrincipal = (UserPrincipal) userDetailsService.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (JwtException e) {
+            log.debug("JWT validation failed: {}", e.getMessage());
+        }
+
         filterChain.doFilter(request, response);
-        return;
-      }
-
-      String jti = jwtUtil.extractJti(token);
-      Boolean isBlacklisted = redisTemplate.hasKey("blacklist:" + jti);
-      if (Boolean.TRUE.equals(isBlacklisted)) {
-        filterChain.doFilter(request, response);
-        return;
-      }
-
-      String username = jwtUtil.extractUsername(token);
-      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserPrincipal userPrincipal = (UserPrincipal) userDetailsService.loadUserByUsername(username);
-        UsernamePasswordAuthenticationToken authentication =
-          new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-      }
-    } catch (JwtException e) {
-      log.debug("JWT validation failed: {}", e.getMessage());
     }
-
-    filterChain.doFilter(request, response);
-  }
 }

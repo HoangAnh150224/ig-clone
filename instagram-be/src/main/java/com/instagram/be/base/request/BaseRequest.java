@@ -16,24 +16,24 @@ import java.util.UUID;
 @AllArgsConstructor
 public abstract class BaseRequest {
 
-  @Schema(hidden = true)
-  private UUID requestId;
+    @Schema(hidden = true)
+    private UUID requestId;
 
-  @Schema(hidden = true)
-  private UserContext userContext;
+    @Schema(hidden = true)
+    private UserContext userContext;
 
-  @Schema(hidden = true)
-  private LocalDateTime createdAt;
+    @Schema(hidden = true)
+    private LocalDateTime createdAt;
 
-  public void validate() {
-  }
+    public void validate() {
+    }
 
-  public String toLogString() {
-    return String.format("%s[requestId=%s]", this.getClass().getSimpleName(), requestId);
-  }
+    public String toLogString() {
+        return String.format("%s[requestId=%s]", this.getClass().getSimpleName(), requestId);
+    }
 
-  public void initialize() {
-    if (requestId == null) requestId = UUID.randomUUID();
-    if (createdAt == null) createdAt = LocalDateTime.now();
-  }
+    public void initialize() {
+        if (requestId == null) requestId = UUID.randomUUID();
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 }

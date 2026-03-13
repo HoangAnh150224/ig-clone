@@ -24,45 +24,45 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreateHighlightService extends BaseService<CreateHighlightRequest, HighlightResponse> {
 
-  private final HighlightRepository highlightRepository;
-  private final StoryRepository storyRepository;
-  private final UserProfileRepository userProfileRepository;
+    private final HighlightRepository highlightRepository;
+    private final StoryRepository storyRepository;
+    private final UserProfileRepository userProfileRepository;
 
-  @Override
-  @Transactional
-  public HighlightResponse execute(CreateHighlightRequest request) {
-    return super.execute(request);
-  }
-
-  @Override
-  protected HighlightResponse doProcess(CreateHighlightRequest request) {
-    if (request.getTitle() == null || request.getTitle().isBlank()) {
-      throw new AppValidationException("Title is required");
+    @Override
+    @Transactional
+    public HighlightResponse execute(CreateHighlightRequest request) {
+        return super.execute(request);
     }
 
-    UUID userId = request.getUserContext().getUserId();
-    UserProfile user = userProfileRepository.getReferenceById(userId);
-
-    Set<Story> stories = new HashSet<>();
-    List<UUID> storyIds = request.getStoryIds();
-    if (storyIds != null && !storyIds.isEmpty()) {
-      for (UUID storyId : storyIds) {
-        Story story = storyRepository.findById(storyId)
-          .orElseThrow(() -> new AppValidationException("Story not found: " + storyId));
-        if (!story.getUser().getId().equals(userId)) {
-          throw new BusinessException("You can only add your own stories to highlights");
+    @Override
+    protected HighlightResponse doProcess(CreateHighlightRequest request) {
+        if (request.getTitle() == null || request.getTitle().isBlank()) {
+            throw new AppValidationException("Title is required");
         }
-        stories.add(story);
-      }
+
+        UUID userId = request.getUserContext().getUserId();
+        UserProfile user = userProfileRepository.getReferenceById(userId);
+
+        Set<Story> stories = new HashSet<>();
+        List<UUID> storyIds = request.getStoryIds();
+        if (storyIds != null && !storyIds.isEmpty()) {
+            for (UUID storyId : storyIds) {
+                Story story = storyRepository.findById(storyId)
+                        .orElseThrow(() -> new AppValidationException("Story not found: " + storyId));
+                if (!story.getUser().getId().equals(userId)) {
+                    throw new BusinessException("You can only add your own stories to highlights");
+                }
+                stories.add(story);
+            }
+        }
+
+        Highlight highlight = Highlight.builder()
+                .user(user)
+                .title(request.getTitle())
+                .coverUrl(request.getCoverUrl())
+                .stories(stories)
+                .build();
+
+        return HighlightResponse.from(highlightRepository.save(highlight));
     }
-
-    Highlight highlight = Highlight.builder()
-      .user(user)
-      .title(request.getTitle())
-      .coverUrl(request.getCoverUrl())
-      .stories(stories)
-      .build();
-
-    return HighlightResponse.from(highlightRepository.save(highlight));
-  }
 }

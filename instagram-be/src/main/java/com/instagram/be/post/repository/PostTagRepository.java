@@ -15,14 +15,14 @@ import java.util.UUID;
 @Repository
 public interface PostTagRepository extends JpaRepository<PostTag, UUID> {
 
-  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id = :postId")
-  List<PostTag> findWithUserByPostId(@Param("postId") UUID postId);
+    @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id = :postId")
+    List<PostTag> findWithUserByPostId(@Param("postId") UUID postId);
 
-  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id IN :postIds")
-  List<PostTag> findWithUserByPostIds(@Param("postIds") Set<UUID> postIds);
+    @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.taggedUser WHERE pt.post.id IN :postIds")
+    List<PostTag> findWithUserByPostIds(@Param("postIds") Set<UUID> postIds);
 
-  void deleteByPostId(UUID postId);
+    void deleteByPostId(UUID postId);
 
-  @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.post p JOIN FETCH p.user WHERE pt.taggedUser.id = :userId AND p.archived = false")
-  Page<PostTag> findByTaggedUserIdAndNotArchived(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT pt FROM PostTag pt JOIN FETCH pt.post p JOIN FETCH p.user WHERE pt.taggedUser.id = :userId AND p.archived = false")
+    Page<PostTag> findByTaggedUserIdAndNotArchived(@Param("userId") UUID userId, Pageable pageable);
 }

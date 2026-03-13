@@ -12,6 +12,6 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class HashtagSearchRequest extends BaseRequest {
 
-  private String q;
-  private int limit = 10;
+    private String q;
+    private int limit = 10;
 }

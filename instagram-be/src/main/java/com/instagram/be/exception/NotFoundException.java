@@ -7,11 +7,11 @@ import java.util.UUID;
 
 public class NotFoundException extends BaseException {
 
-  public NotFoundException(String message) {
-    super(message, "RESOURCE_NOT_FOUND", HttpStatus.NOT_FOUND);
-  }
+    public NotFoundException(String message) {
+        super(message, "RESOURCE_NOT_FOUND", HttpStatus.NOT_FOUND);
+    }
 
-  public NotFoundException(String resourceName, UUID id) {
-    super(resourceName + " not found with id: " + id, "RESOURCE_NOT_FOUND", HttpStatus.NOT_FOUND);
-  }
+    public NotFoundException(String resourceName, UUID id) {
+        super(resourceName + " not found with id: " + id, "RESOURCE_NOT_FOUND", HttpStatus.NOT_FOUND);
+    }
 }
