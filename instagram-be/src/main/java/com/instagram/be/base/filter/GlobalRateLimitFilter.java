@@ -3,6 +3,7 @@ package com.instagram.be.base.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.instagram.be.base.api.ApiResponse;
 import com.instagram.be.base.ratelimit.RateLimiter;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.exception.BusinessException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -46,7 +47,7 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
         String ip = getClientIp(request);
         try {
-            rateLimiter.check("rate:global:" + ip, 200, 1);
+            rateLimiter.check(RedisKeys.rateGlobal(ip), 200, 1);
         } catch (BusinessException ex) {
             response.setStatus(429);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);

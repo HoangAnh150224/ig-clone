@@ -4,6 +4,7 @@ import com.instagram.be.auth.jwt.JwtUtil;
 import com.instagram.be.auth.repository.AuthRepository;
 import com.instagram.be.auth.request.LoginRequest;
 import com.instagram.be.auth.response.AuthResponse;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.userprofile.UserProfile;
@@ -20,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginService extends BaseService<LoginRequest, AuthResponse> {
 
-    private static final String RATE_LIMIT_PREFIX = "rate:login:";
     private static final int MAX_ATTEMPTS = 5;
     private static final long LOCKOUT_MINUTES = 15;
 
@@ -33,7 +33,7 @@ public class LoginService extends BaseService<LoginRequest, AuthResponse> {
     @Transactional
     protected AuthResponse doProcess(LoginRequest request) {
         String ip = request.getUserContext() != null ? request.getUserContext().getIpAddress() : "unknown";
-        String rateLimitKey = RATE_LIMIT_PREFIX + ip;
+        String rateLimitKey = RedisKeys.rateLogin(ip);
 
         String attempts = redisTemplate.opsForValue().get(rateLimitKey);
         if (attempts != null && Integer.parseInt(attempts) >= MAX_ATTEMPTS) {
@@ -50,7 +50,7 @@ public class LoginService extends BaseService<LoginRequest, AuthResponse> {
             if (Long.valueOf(1).equals(newCount)) {
                 redisTemplate.expire(rateLimitKey, LOCKOUT_MINUTES, TimeUnit.MINUTES);
             }
-            throw new BusinessException("Invalid credentials");
+            throw new BusinessException("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
 
         if (!user.isActive()) {
@@ -64,8 +64,13 @@ public class LoginService extends BaseService<LoginRequest, AuthResponse> {
                 user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()
         );
 
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+        long refreshTtlSeconds = jwtUtil.getRefreshExpirationMs() / 1000;
+        redisTemplate.opsForValue().set(RedisKeys.refresh(user.getId()), refreshToken, refreshTtlSeconds, TimeUnit.SECONDS);
+
         return AuthResponse.of(
                 token,
+                refreshToken,
                 jwtUtil.getRemainingTtlSeconds(token),
                 user.getId(),
                 user.getUsername(),

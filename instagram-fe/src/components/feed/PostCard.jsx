@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, lazy, Suspense } from "react";
 import {
     Box,
     HStack,
@@ -30,14 +30,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleLike, updatePostInStore } from "../../store/slices/postSlice";
 import { toggleMute } from "../../store/slices/uiSlice";
 import { useNavigate } from "react-router-dom";
-import PostDetailModal from "../modals/PostDetailModal";
 import ImageCarousel from "../common/ImageCarousel";
-import UserListModal from "../modals/UserListModal";
-import MoreOptionsModal from "../modals/MoreOptionsModal";
 import { formatPostDate } from "../../utils/dateUtils";
 import postService from "../../services/postService";
 import commentService from "../../services/commentService";
-import ShareModal from "../modals/ShareModal";
+
+const PostDetailModal = lazy(() => import("../modals/PostDetailModal"));
+const UserListModal = lazy(() => import("../modals/UserListModal"));
+const MoreOptionsModal = lazy(() => import("../modals/MoreOptionsModal"));
+const ShareModal = lazy(() => import("../modals/ShareModal"));
 
 const PostCard = ({ post }) => {
     const dispatch = useDispatch();
@@ -528,29 +529,31 @@ const PostCard = ({ post }) => {
                 </Box>
             </Box>
 
-            <PostDetailModal
-                isOpen={isCommentModalOpen}
-                onClose={() => setIsCommentModalOpen(false)}
-                post={post}
-            />
-            <UserListModal
-                isOpen={isLikeListOpen}
-                onClose={() => setIsLikeListOpen(false)}
-                title="Likes"
-                users={likedUsers}
-            />
-            <MoreOptionsModal
-                isOpen={isMoreOptionsOpen}
-                onClose={() => setIsMoreOptionsOpen(false)}
-                isOwnPost={isOwnPost}
-                post={post}
-                isFavoriteUser={isFavoriteUser}
-            />
-            <ShareModal
-                isOpen={isShareModalOpen}
-                onClose={() => setIsShareModalOpen(false)}
-                post={post}
-            />
+            <Suspense fallback={null}>
+                <PostDetailModal
+                    isOpen={isCommentModalOpen}
+                    onClose={() => setIsCommentModalOpen(false)}
+                    post={post}
+                />
+                <UserListModal
+                    isOpen={isLikeListOpen}
+                    onClose={() => setIsLikeListOpen(false)}
+                    title="Likes"
+                    users={likedUsers}
+                />
+                <MoreOptionsModal
+                    isOpen={isMoreOptionsOpen}
+                    onClose={() => setIsMoreOptionsOpen(false)}
+                    isOwnPost={isOwnPost}
+                    post={post}
+                    isFavoriteUser={isFavoriteUser}
+                />
+                <ShareModal
+                    isOpen={isShareModalOpen}
+                    onClose={() => setIsShareModalOpen(false)}
+                    post={post}
+                />
+            </Suspense>
         </>
     );
 };

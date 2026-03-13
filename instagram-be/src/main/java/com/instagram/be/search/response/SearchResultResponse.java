@@ -15,6 +15,7 @@ import java.util.List;
 public class SearchResultResponse {
     private List<FollowUserResponse> users;
     private List<HashtagInfo> hashtags;
+    private List<PostInfo> posts;
 
     @Data
     @AllArgsConstructor
@@ -22,5 +23,13 @@ public class SearchResultResponse {
     public static class HashtagInfo {
         private String name;
         private long postCount;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PostInfo {
+        private java.util.UUID id;
+        private String caption;
     }
 }

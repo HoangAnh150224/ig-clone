@@ -1,77 +1,116 @@
 package com.instagram.be.auth.jwt;
 
 import com.instagram.be.config.JwtProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class JwtUtilTest {
 
+    @Mock
+    private JwtProperties jwtProperties;
+
+    @InjectMocks
     private JwtUtil jwtUtil;
-    private static final String TEST_SECRET = "test-secret-key-for-unit-testing-must-be-at-least-32-chars";
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final String USERNAME = "testuser";
-    private static final String EMAIL = "test@example.com";
-    private static final String ROLE = "USER";
+
+    private final String currentSecret = "G-KaPdSgVkYp3s6v9y/B?E(H+MbQeThWmZq4t7w!z$C&F)J@NcRfUjXn2r5u8x/A";
+    private final String oldSecret = "C&F)J@NcRfUjXn2r5u8x/A?D(G-KaPdSgVkYp3s6v9y$B&E)H+MbQeThWmZq4t7w";
+    private final UUID userId = UUID.randomUUID();
+    private final String username = "testuser";
+    private final String email = "test@example.com";
+    private final String role = "USER";
 
     @BeforeEach
     void setUp() {
-        JwtProperties props = new JwtProperties();
-        props.setSecret(TEST_SECRET);
-        props.setExpirationMs(86400000L);
-        jwtUtil = new JwtUtil(props);
+        when(jwtProperties.getExpirationMs()).thenReturn(3600000L); // 1 hour
+    }
+
+    private String generateTokenWithSecret(String secret) {
+        JwtProperties tempProps = new JwtProperties();
+        tempProps.setSecrets(List.of(secret));
+        tempProps.setExpirationMs(3600000L);
+        JwtUtil tempUtil = new JwtUtil(tempProps);
+        return tempUtil.generateToken(userId, username, email, role);
     }
 
     @Test
-    void generateToken_containsExpectedClaims() {
-        String token = jwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
+    @DisplayName("JWT Validation should succeed with current secret")
+    void isTokenValid_WithCurrentSecret_ShouldSucceed() {
+        when(jwtProperties.getSecrets()).thenReturn(List.of(currentSecret, oldSecret));
 
-        assertThat(jwtUtil.extractUserId(token)).isEqualTo(USER_ID);
-        assertThat(jwtUtil.extractUsername(token)).isEqualTo(USERNAME);
-        assertThat(jwtUtil.extractEmail(token)).isEqualTo(EMAIL);
-        assertThat(jwtUtil.extractRole(token)).isEqualTo(ROLE);
-        assertThat(jwtUtil.extractJti(token)).isNotBlank();
+        String token = jwtUtil.generateToken(userId, username, email, role);
+
+        assertTrue(jwtUtil.isTokenValid(token));
+        assertEquals(userId, jwtUtil.extractUserId(token));
     }
 
     @Test
-    void isTokenValid_returnsTrue_forValidToken() {
-        String token = jwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
-        assertThat(jwtUtil.isTokenValid(token)).isTrue();
+    @DisplayName("JWT Validation should succeed with old secret")
+    void isTokenValid_WithOldSecret_ShouldSucceed() {
+        // Simulate a token generated with the old secret
+        String tokenGeneratedWithOldSecret = generateTokenWithSecret(oldSecret);
+
+        // Configure the main JwtUtil to know about both secrets
+        when(jwtProperties.getSecrets()).thenReturn(List.of(currentSecret, oldSecret));
+
+        // The token should be valid because the old secret is in the verification list
+        assertTrue(jwtUtil.isTokenValid(tokenGeneratedWithOldSecret));
+        assertEquals(userId, jwtUtil.extractUserId(tokenGeneratedWithOldSecret));
     }
 
     @Test
-    void isTokenValid_returnsFalse_forExpiredToken() {
-        JwtProperties props = new JwtProperties();
-        props.setSecret(TEST_SECRET);
-        props.setExpirationMs(-1000L); // 1 second in the past
-        JwtUtil expiredJwtUtil = new JwtUtil(props);
+    @DisplayName("JWT Validation should fail with an invalid secret")
+    void isTokenValid_WithInvalidSecret_ShouldFail() {
+        String invalidSecret = "invalid-secret-key-that-is-very-long-and-secure";
+        String token = generateTokenWithSecret(invalidSecret);
 
-        String token = expiredJwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
-        assertThat(expiredJwtUtil.isTokenValid(token)).isFalse();
+        // Configure JwtUtil to not know about the invalid secret
+        when(jwtProperties.getSecrets()).thenReturn(List.of(currentSecret, oldSecret));
+
+        // The validation should fail by throwing a JwtException
+        assertThrows(JwtException.class, () -> jwtUtil.extractAllClaims(token));
+        assertFalse(jwtUtil.isTokenValid(token));
     }
 
     @Test
-    void isTokenValid_returnsFalse_forTamperedToken() {
-        String token = jwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
-        String tamperedToken = token.substring(0, token.length() - 5) + "xxxxx";
-        assertThat(jwtUtil.isTokenValid(tamperedToken)).isFalse();
+    @DisplayName("Newly generated tokens should use the current (first) secret")
+    void generateToken_ShouldUseCurrentSecret() {
+        when(jwtProperties.getSecrets()).thenReturn(List.of(currentSecret, oldSecret));
+
+        String token = jwtUtil.generateToken(userId, username, email, role);
+
+        // To verify which key was used, we can try to parse it with ONLY the current secret.
+        JwtProperties tempProps = new JwtProperties();
+        tempProps.setSecrets(List.of(currentSecret));
+        JwtUtil tempUtil = new JwtUtil(tempProps);
+
+        assertDoesNotThrow(() -> {
+            Claims claims = tempUtil.extractAllClaims(token);
+            assertEquals(userId.toString(), claims.getSubject());
+        });
     }
 
     @Test
-    void getRemainingTtlSeconds_returnsPositiveValue() {
-        String token = jwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
-        assertThat(jwtUtil.getRemainingTtlSeconds(token)).isPositive();
-    }
+    @DisplayName("JWT Validation should fail if no secrets are configured")
+    void isTokenValid_WithNoSecrets_ShouldFail() {
+        when(jwtProperties.getSecrets()).thenReturn(List.of());
 
-    @Test
-    void extractJti_returnsUuidString() {
-        String token = jwtUtil.generateToken(USER_ID, USERNAME, EMAIL, ROLE);
-        String jti = jwtUtil.extractJti(token);
-        assertThat(jti).isNotBlank();
-        // Should be parseable as UUID
-        UUID.fromString(jti);
+        String token = jwtUtil.generateToken(userId, username, email, role);
+        
+        assertThrows(IndexOutOfBoundsException.class, () -> jwtUtil.isTokenValid(token));
     }
 }

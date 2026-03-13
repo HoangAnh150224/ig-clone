@@ -2,21 +2,20 @@ package com.instagram.be.comment.service;
 
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.comment.Comment;
-import com.instagram.be.comment.repository.CommentLikeRepository;
 import com.instagram.be.comment.repository.CommentRepository;
 import com.instagram.be.comment.request.AddCommentRequest;
 import com.instagram.be.comment.response.CommentResponse;
+import com.instagram.be.events.CommentEvent;
 import com.instagram.be.exception.AppValidationException;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
-import com.instagram.be.notification.enums.NotificationType;
-import com.instagram.be.notification.service.CreateNotificationService;
 import com.instagram.be.post.Post;
 import com.instagram.be.post.PostAccessGuard;
 import com.instagram.be.post.repository.PostRepository;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +27,9 @@ public class AddCommentService extends BaseService<AddCommentRequest, CommentRes
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final CommentLikeRepository commentLikeRepository;
     private final PostAccessGuard postAccessGuard;
     private final UserProfileRepository userProfileRepository;
-    private final CreateNotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -75,12 +73,10 @@ public class AddCommentService extends BaseService<AddCommentRequest, CommentRes
 
         Comment saved = commentRepository.save(comment);
 
-        // Notify post owner
-        notificationService.create(post.getUser(), user, NotificationType.COMMENT, post, saved);
+        eventPublisher.publishEvent(new CommentEvent(this, post.getUser(), user, post, saved));
 
-        // If reply, notify parent comment owner as well
         if (parentComment != null) {
-            notificationService.create(parentComment.getUser(), user, NotificationType.COMMENT, post, saved);
+            eventPublisher.publishEvent(new CommentEvent(this, parentComment.getUser(), user, post, saved));
         }
 
         long replyCount = 0;

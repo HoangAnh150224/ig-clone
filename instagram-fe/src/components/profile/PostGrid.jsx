@@ -11,7 +11,8 @@ import {
 import { AiFillHeart } from "react-icons/ai";
 import { FaComment } from "react-icons/fa";
 import { BsCollectionPlayFill } from "react-icons/bs";
-import PostDetailModal from "../modals/PostDetailModal";
+
+const PostDetailModal = React.lazy(() => import("../modals/PostDetailModal"));
 
 const PostGridItem = ({ post, onClick }) => {
     const isReel = post.type === "REEL";
@@ -139,11 +140,13 @@ const PostGrid = ({ posts, loading }) => {
             </SimpleGrid>
 
             {selectedPost && (
-                <PostDetailModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    post={selectedPost}
-                />
+                <React.Suspense fallback={null}>
+                    <PostDetailModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        post={selectedPost}
+                    />
+                </React.Suspense>
             )}
         </>
     );

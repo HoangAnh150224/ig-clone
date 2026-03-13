@@ -15,6 +15,7 @@ import java.util.Map;
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;
+    private final FileValidator fileValidator;
 
     /**
      * Upload a file to Cloudinary.
@@ -24,6 +25,7 @@ public class CloudinaryService {
      * @return UploadResult with the secure URL and public_id
      */
     public UploadResult upload(MultipartFile file, String folder) {
+        fileValidator.validate(file);
         try {
             Map<?, ?> result = cloudinary.uploader().upload(
                     file.getBytes(),

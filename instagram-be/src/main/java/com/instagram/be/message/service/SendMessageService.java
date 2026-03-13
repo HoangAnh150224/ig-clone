@@ -1,5 +1,6 @@
 package com.instagram.be.message.service;
 
+import java.util.List;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.block.repository.BlockRepository;
 import com.instagram.be.exception.AppValidationException;
@@ -71,8 +72,9 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
         }
 
         // Find or create conversation
+        List<UUID> participantIds = List.of(senderId, recipientId);
         Conversation conversation = conversationRepository
-                .findDirectConversation(senderId, recipientId)
+                .findConversationByExactParticipants(participantIds, 2L)
                 .orElseGet(() -> {
                     Conversation conv = conversationRepository.save(Conversation.builder().build());
 

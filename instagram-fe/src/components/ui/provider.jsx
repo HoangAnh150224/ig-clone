@@ -3,7 +3,7 @@ import { ThemeProvider } from "next-themes";
 
 export function Provider(props) {
     return (
-        <ChakraProvider value={defaultSystem}>
+        <ChakraProvider value={defaultSystem} cssVarsRoot="#app" resetCSS={false}>
             <ThemeProvider attribute="class" disableTransitionOnChange>
                 {props.children}
             </ThemeProvider>

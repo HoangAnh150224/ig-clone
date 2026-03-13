@@ -8,12 +8,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "highlight")
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE highlight SET is_deleted = true WHERE id = ?")
 @Getter
 @Setter
 @SuperBuilder

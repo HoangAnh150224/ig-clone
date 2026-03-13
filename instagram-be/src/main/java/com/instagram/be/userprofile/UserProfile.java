@@ -10,9 +10,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.elasticsearch.annotations.Document;
+import com.instagram.be.userprofile.listener.UserProfileElasticsearchListener;
 
 @Entity
 @Table(name = "user_profile")
+@EntityListeners(UserProfileElasticsearchListener.class)
+@Document(indexName = "users")
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE user_profile SET is_deleted = true WHERE id = ?")
 @Getter
 @Setter
 @SuperBuilder

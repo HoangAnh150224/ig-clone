@@ -136,4 +136,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     // Batch: hashtag names per post (avoids N+1 lazy collection access)
     @Query("SELECT p.id, h.name FROM Post p JOIN p.hashtags h WHERE p.id IN :postIds")
     List<Object[]> findHashtagNamesByPostIds(@Param("postIds") Set<UUID> postIds);
+
+    @Query("SELECT p FROM Post p JOIN FETCH p.user u WHERE lower(p.caption) LIKE lower(concat('%', :keyword, '%')) AND p.archived = false AND u.active = true ORDER BY p.createdAt DESC")
+    List<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

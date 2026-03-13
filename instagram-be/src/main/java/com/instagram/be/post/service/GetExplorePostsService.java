@@ -2,6 +2,7 @@ package com.instagram.be.post.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.base.request.PaginatedRequest;
 import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.base.service.BaseService;
@@ -53,7 +54,7 @@ public class GetExplorePostsService extends BaseService<PaginatedRequest, Pagina
         int size = request.getSize() != null ? request.getSize() : 20;
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        String cacheKey = "cache:explore:" + page + ":" + size;
+        String cacheKey = RedisKeys.exploreCache(page, size);
 
         List<Post> posts;
         long totalElements;

@@ -2,6 +2,7 @@ package com.instagram.be.post.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.base.response.CursorResponse;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.base.util.CursorUtils;
@@ -54,7 +55,7 @@ public class GetHashtagPostsService extends BaseService<GetHashtagPostsRequest, 
         String cursorParam = request.getCursor();
         PageRequest pageRequest = PageRequest.of(0, size + 1);
 
-        String cacheKey = "cache:hashtag:" + name + ":" + (cursorParam != null ? cursorParam : "first") + ":" + size;
+        String cacheKey = RedisKeys.hashtagCache(name, cursorParam != null ? cursorParam : "first", size);
 
         List<Post> posts = null;
         String cached = redisTemplate.opsForValue().get(cacheKey);

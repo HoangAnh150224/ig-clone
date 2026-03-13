@@ -10,6 +10,7 @@ import com.instagram.be.post.enums.PostType;
 import com.instagram.be.post.request.*;
 import com.instagram.be.post.response.*;
 import com.instagram.be.post.service.*;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,7 @@ public class PostController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@RequestBody CreatePostRequest request) {
+    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@Valid @RequestBody CreatePostRequest request) {
         request.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createPostService.execute(request), "Post created", 201));
@@ -59,7 +60,7 @@ public class PostController {
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
-            @PathVariable UUID id, @RequestBody UpdatePostRequest request) {
+            @PathVariable UUID id, @Valid @RequestBody UpdatePostRequest request) {
         request.setPostId(id);
         request.setUserContext(currentUser());
         return ResponseEntity.ok(ApiResponse.success(updatePostService.execute(request), "Post updated", 200));

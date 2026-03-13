@@ -2,11 +2,8 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import { useSelector } from "react-redux";
-import CreatePostModal from "./components/modals/CreatePostModal";
 import InstagramAlert from "./components/common/InstagramAlert";
-import useAuthSync from "./hooks/useAuthSync";
-import useFavoriteSync from "./hooks/useFavoriteSync";
-import useNotificationSync from "./hooks/useNotificationSync";
+import useAppInitialization from "./hooks/useAppInitialization";
 
 // Lazy pages
 const Home = lazy(() => import("./pages/Home"));
@@ -19,6 +16,9 @@ const Archive = lazy(() => import("./pages/Archive"));
 const Explore = lazy(() => import("./pages/Explore"));
 const Reels = lazy(() => import("./pages/Reels"));
 
+// Lazy modals
+const CreatePostModal = lazy(() => import("./components/modals/CreatePostModal"));
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -30,9 +30,8 @@ const App = () => {
     const { isAuthenticated } = useSelector((state) => state.auth);
     const globalError = useSelector((state) => state.ui.error);
 
-    useAuthSync();
-    useFavoriteSync();
-    useNotificationSync();
+    // Initialize all app-level syncs and websockets
+    useAppInitialization();
 
     return (
         <div className="app-container">

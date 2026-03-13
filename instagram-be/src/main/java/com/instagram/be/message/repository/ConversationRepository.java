@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,15 +14,20 @@ import java.util.UUID;
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
 
     @Query("""
-            SELECT c FROM Conversation c
-            WHERE c.id IN (
-                SELECT cp1.conversation.id FROM ConversationParticipant cp1
-                WHERE cp1.user.id = :userA
-            )
-            AND c.id IN (
-                SELECT cp2.conversation.id FROM ConversationParticipant cp2
-                WHERE cp2.user.id = :userB
-            )
+            SELECT conv FROM Conversation conv WHERE conv.id IN (
+                SELECT cp.conversation.id
+                FROM ConversationParticipant cp
+                WHERE cp.user.id IN :participantIds
+                GROUP BY cp.conversation.id
+                HAVING COUNT(DISTINCT cp.user.id) = :participantCount
+            ) AND (
+                SELECT COUNT(cp2.id)
+                FROM ConversationParticipant cp2
+                WHERE cp2.conversation.id = conv.id
+            ) = :participantCount
             """)
-    Optional<Conversation> findDirectConversation(@Param("userA") UUID userA, @Param("userB") UUID userB);
+    Optional<Conversation> findConversationByExactParticipants(
+            @Param("participantIds") List<UUID> participantIds,
+            @Param("participantCount") long participantCount
+    );
 }

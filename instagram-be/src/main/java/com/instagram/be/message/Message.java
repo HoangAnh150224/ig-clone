@@ -9,9 +9,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "message")
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE message SET is_deleted = true WHERE id = ?")
 @Getter
 @Setter
 @SuperBuilder
@@ -39,7 +43,4 @@ public class Message extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shared_post_id")
     private Post sharedPost;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false;
 }

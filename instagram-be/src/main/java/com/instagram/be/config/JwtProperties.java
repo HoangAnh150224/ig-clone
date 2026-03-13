@@ -1,5 +1,6 @@
 package com.instagram.be.config;
 
+import java.util.List;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -13,9 +14,11 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app.jwt")
 public class JwtProperties {
 
-    @NotBlank
-    private String secret;
+    private List<String> secrets;
 
     @Positive
     private long expirationMs;
+
+    @Positive
+    private long refreshExpirationMs;
 }

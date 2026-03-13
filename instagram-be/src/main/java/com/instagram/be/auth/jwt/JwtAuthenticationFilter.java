@@ -2,6 +2,7 @@ package com.instagram.be.auth.jwt;
 
 import com.instagram.be.auth.security.UserDetailsServiceImpl;
 import com.instagram.be.auth.security.UserPrincipal;
+import com.instagram.be.base.redis.RedisKeys;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -45,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String jti = jwtUtil.extractJti(token);
-            Boolean isBlacklisted = redisTemplate.hasKey("blacklist:" + jti);
+            Boolean isBlacklisted = redisTemplate.hasKey(RedisKeys.blacklist(jti));
             if (Boolean.TRUE.equals(isBlacklisted)) {
                 filterChain.doFilter(request, response);
                 return;

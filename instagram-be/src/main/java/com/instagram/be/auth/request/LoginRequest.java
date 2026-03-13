@@ -2,6 +2,7 @@ package com.instagram.be.auth.request;
 
 import com.instagram.be.base.request.BaseRequest;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 public class LoginRequest extends BaseRequest {
 
     @NotBlank(message = "Identifier is required")
+    @Size(max = 255)
     private String identifier;
 
     @NotBlank(message = "Password is required")

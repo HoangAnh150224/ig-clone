@@ -16,9 +16,9 @@ const useStomp = (endpoint = "/ws") => {
     const connect = useCallback(() => {
         if (!token || clientRef.current) return;
 
-        const apiBaseUrl =
-            import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
-        const wsUrl = apiBaseUrl + endpoint;
+        const socketUrl =
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+        const wsUrl = `${socketUrl}${endpoint}`;
 
         const client = new Client({
             webSocketFactory: () => new SockJS(wsUrl),

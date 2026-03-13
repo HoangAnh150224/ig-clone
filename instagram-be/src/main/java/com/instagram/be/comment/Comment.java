@@ -8,9 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "comment")
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE comment SET is_deleted = true WHERE id = ?")
 @Getter
 @Setter
 @SuperBuilder

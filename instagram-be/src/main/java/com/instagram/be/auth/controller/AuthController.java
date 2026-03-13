@@ -7,6 +7,7 @@ import com.instagram.be.auth.service.*;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.UserContext;
 import com.instagram.be.base.api.ApiResponse;
+import com.instagram.be.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AuthController {
     private final ChangePasswordService changePasswordService;
     private final ForgotPasswordService forgotPasswordService;
     private final ResetPasswordService resetPasswordService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
@@ -47,6 +49,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(response, "Login successful", HttpStatus.OK.value()));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
+            @Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = refreshTokenService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Token refreshed successfully", HttpStatus.OK.value()));
+    }
+
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest httpRequest) {
@@ -63,7 +72,7 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MeResponse>> getMe() {
         UserContext ctx = SecurityUtils.getCurrentUserContext()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+                .orElseThrow(() -> new BusinessException("No authenticated user", HttpStatus.UNAUTHORIZED));
         GetMeRequest request = GetMeRequest.builder().userContext(ctx).build();
         MeResponse response = getMeService.execute(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile retrieved", HttpStatus.OK.value()));
@@ -74,7 +83,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request) {
         UserContext ctx = SecurityUtils.getCurrentUserContext()
-                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+                .orElseThrow(() -> new BusinessException("No authenticated user", HttpStatus.UNAUTHORIZED));
         request.setUserContext(ctx);
         changePasswordService.execute(request);
         return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully", HttpStatus.OK.value()));

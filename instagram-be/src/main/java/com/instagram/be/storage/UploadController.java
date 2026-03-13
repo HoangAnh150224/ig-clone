@@ -3,6 +3,7 @@ package com.instagram.be.storage;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.api.ApiResponse;
 import com.instagram.be.base.ratelimit.RateLimiter;
+import com.instagram.be.base.redis.RedisKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,7 +36,7 @@ public class UploadController {
             @RequestParam(value = "folder", defaultValue = "general") String folder) {
 
         UUID userId = SecurityUtils.getCurrentUserId().orElseThrow();
-        rateLimiter.check("rate:upload:" + userId, 30, 60);
+        rateLimiter.check(RedisKeys.rateUpload(userId), 30, 60);
 
         CloudinaryService.UploadResult result = cloudinaryService.upload(file, folder);
         return ResponseEntity.ok(ApiResponse.success(
@@ -53,7 +54,7 @@ public class UploadController {
             @RequestParam(value = "folder", defaultValue = "general") String folder) {
 
         UUID userId = SecurityUtils.getCurrentUserId().orElseThrow();
-        rateLimiter.check("rate:upload:" + userId, 30, 60);
+        rateLimiter.check(RedisKeys.rateUpload(userId), 30, 60);
 
         List<UploadResponse> results = files.stream()
                 .map(f -> {

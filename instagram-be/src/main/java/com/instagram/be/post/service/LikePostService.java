@@ -1,9 +1,8 @@
 package com.instagram.be.post.service;
 
 import com.instagram.be.base.service.BaseService;
+import com.instagram.be.events.LikeEvent;
 import com.instagram.be.exception.NotFoundException;
-import com.instagram.be.notification.enums.NotificationType;
-import com.instagram.be.notification.service.CreateNotificationService;
 import com.instagram.be.post.Post;
 import com.instagram.be.post.PostAccessGuard;
 import com.instagram.be.post.PostLike;
@@ -14,6 +13,7 @@ import com.instagram.be.post.response.LikeResponse;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +27,7 @@ public class LikePostService extends BaseService<PostActionRequest, LikeResponse
     private final PostLikeRepository postLikeRepository;
     private final PostAccessGuard postAccessGuard;
     private final UserProfileRepository userProfileRepository;
-    private final CreateNotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -54,9 +54,7 @@ public class LikePostService extends BaseService<PostActionRequest, LikeResponse
             UserProfile user = userProfileRepository.getReferenceById(viewerId);
             postLikeRepository.save(PostLike.builder().post(post).user(user).build());
             liked = true;
-
-            // Notify owner
-            notificationService.create(post.getUser(), user, NotificationType.LIKE, post, null);
+            eventPublisher.publishEvent(new LikeEvent(this, post.getUser(), user, post));
         }
 
         long likeCount = postLikeRepository.countByPostId(postId);

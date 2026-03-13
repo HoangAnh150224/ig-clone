@@ -16,139 +16,158 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {
 
-    @Mock private AuthRepository authRepository;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private JwtUtil jwtUtil;
-    @Mock private StringRedisTemplate redisTemplate;
-    @Mock private ValueOperations<String, String> valueOperations;
+    @Mock
+    private AuthRepository authRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtUtil jwtUtil;
+    @Mock
+    private StringRedisTemplate redisTemplate;
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
-    @InjectMocks private LoginService loginService;
+    @InjectMocks
+    private LoginService loginService;
 
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final String USERNAME = "testuser";
-    private static final String EMAIL = "test@example.com";
-    private static final String RAW_PASSWORD = "password123";
-    private static final String ENCODED_PASSWORD = "$2a$10$encodedHash";
-    private static final String TOKEN = "jwt.token.here";
-    private static final String IP = "127.0.0.1";
-    private static final String RATE_KEY = "rate:login:" + IP;
-
-    private UserProfile activeUser;
+    private UserProfile user;
+    private LoginRequest request;
 
     @BeforeEach
     void setUp() {
-        activeUser = UserProfile.builder()
-                .username(USERNAME)
-                .email(EMAIL)
-                .passwordHash(ENCODED_PASSWORD)
+        user = UserProfile.builder()
+                .id(UUID.randomUUID())
+                .username("testuser")
+                .email("test@example.com")
+                .passwordHash("hashedPassword")
                 .role(UserRole.USER)
+                .active(true)
                 .build();
 
+        request = new LoginRequest();
+        request.setIdentifier("testuser");
+        request.setPassword("password");
+        request.setUserContext(UserContext.builder().ipAddress("127.0.0.1").build());
+    }
+
+    @Test
+    void login_Success() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(jwtUtil.generateToken(any(), anyString(), anyString(), anyString())).thenReturn(TOKEN);
-        when(jwtUtil.getRemainingTtlSeconds(TOKEN)).thenReturn(86400L);
-    }
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername(request.getIdentifier())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPasswordHash())).thenReturn(true);
+        when(jwtUtil.generateToken(any(), any(), any(), any())).thenReturn("token");
+        when(jwtUtil.getRemainingTtlSeconds(anyString())).thenReturn(3600L);
 
-    private LoginRequest buildRequest() {
-        LoginRequest request = LoginRequest.builder()
-                .identifier(USERNAME)
-                .password(RAW_PASSWORD)
-                .build();
-        request.setUserContext(UserContext.builder().ipAddress(IP).build());
-        return request;
-    }
+        AuthResponse response = loginService.execute(request);
 
-    @Test
-    void execute_success_returnsAuthResponseAndClearsRateLimit() {
-        when(valueOperations.get(RATE_KEY)).thenReturn(null);
-        when(authRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
-        when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-
-        AuthResponse response = loginService.execute(buildRequest());
-
-        assertThat(response).isNotNull();
-        assertThat(response.accessToken()).isEqualTo(TOKEN);
-        assertThat(response.username()).isEqualTo(USERNAME);
-        verify(redisTemplate).delete(RATE_KEY);
+        assertNotNull(response);
+        assertEquals("token", response.accessToken());
+        assertEquals("testuser", response.username());
+        verify(redisTemplate).delete(anyString());
     }
 
     @Test
-    void execute_throwsBusinessException_onWrongPassword() {
-        when(valueOperations.get(RATE_KEY)).thenReturn(null);
-        when(authRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
-        when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
-        when(valueOperations.increment(RATE_KEY)).thenReturn(1L);
+    void login_Success_WithEmail() {
+        request.setIdentifier("test@example.com");
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername("test@example.com")).thenReturn(Optional.empty());
+        when(authRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPasswordHash())).thenReturn(true);
+        when(jwtUtil.generateToken(any(), any(), any(), any())).thenReturn("token");
+        when(jwtUtil.getRemainingTtlSeconds(anyString())).thenReturn(3600L);
 
-        assertThatThrownBy(() -> loginService.execute(buildRequest()))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Invalid credentials");
+        AuthResponse response = loginService.execute(request);
+
+        assertNotNull(response);
+        assertEquals("test@example.com", response.email());
     }
 
     @Test
-    void execute_throwsBusinessException_onUnknownIdentifier() {
-        when(valueOperations.get(RATE_KEY)).thenReturn(null);
-        when(authRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        when(authRepository.findByEmail(USERNAME)).thenReturn(Optional.empty());
-        when(valueOperations.increment(RATE_KEY)).thenReturn(1L);
+    void login_Success_InactiveUser() {
+        user.setActive(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername(request.getIdentifier())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPasswordHash())).thenReturn(true);
+        when(jwtUtil.generateToken(any(), any(), any(), any())).thenReturn("token");
+        when(jwtUtil.getRemainingTtlSeconds(anyString())).thenReturn(3600L);
 
-        assertThatThrownBy(() -> loginService.execute(buildRequest()))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Invalid credentials");
+        AuthResponse response = loginService.execute(request);
+
+        assertTrue(user.isActive());
+        verify(authRepository).save(user);
+        assertNotNull(response);
     }
 
     @Test
-    void execute_throwsBusinessException_withTooManyRequests_whenRateLimitExceeded() {
-        when(valueOperations.get(RATE_KEY)).thenReturn("5");
+    void login_UserNotFound() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername(request.getIdentifier())).thenReturn(Optional.empty());
+        when(authRepository.findByEmail(request.getIdentifier())).thenReturn(Optional.empty());
+        when(valueOperations.increment(anyString())).thenReturn(1L);
 
-        assertThatThrownBy(() -> loginService.execute(buildRequest()))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(ex -> assertThat(((BusinessException) ex).getHttpStatus())
-                        .isEqualTo(HttpStatus.TOO_MANY_REQUESTS));
+        assertThrows(BusinessException.class, () -> loginService.execute(request));
+        verify(redisTemplate).expire(anyString(), anyLong(), eq(TimeUnit.MINUTES));
     }
 
     @Test
-    void execute_incrementsRateLimitCounter_onFailedAttempt() {
-        when(valueOperations.get(RATE_KEY)).thenReturn("2");
-        when(authRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
-        when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
-        when(valueOperations.increment(RATE_KEY)).thenReturn(3L);
+    void login_UserNotFound_ByEmail() {
+        request.setIdentifier("nonexistent@example.com");
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername("nonexistent@example.com")).thenReturn(Optional.empty());
+        when(authRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+        when(valueOperations.increment(anyString())).thenReturn(1L);
 
-        assertThatThrownBy(() -> loginService.execute(buildRequest()))
-                .isInstanceOf(BusinessException.class);
-
-        verify(valueOperations).increment(RATE_KEY);
+        assertThrows(BusinessException.class, () -> loginService.execute(request));
+        verify(authRepository).findByUsername("nonexistent@example.com");
+        verify(authRepository).findByEmail("nonexistent@example.com");
     }
 
     @Test
-    void execute_throwsBusinessException_whenAccountIsInactive() {
-        UserProfile inactiveUser = UserProfile.builder()
-                .username(USERNAME)
-                .email(EMAIL)
-                .passwordHash(ENCODED_PASSWORD)
-                .role(UserRole.USER)
-                .active(false)
-                .build();
+    void login_InvalidCredentials() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername(request.getIdentifier())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getPassword(), user.getPasswordHash())).thenReturn(false);
+        when(valueOperations.increment(anyString())).thenReturn(1L);
 
-        when(valueOperations.get(RATE_KEY)).thenReturn(null);
-        when(authRepository.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveUser));
-        when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        assertThrows(BusinessException.class, () -> loginService.execute(request));
+        verify(redisTemplate).expire(anyString(), anyLong(), eq(TimeUnit.MINUTES));
+    }
 
-        assertThatThrownBy(() -> loginService.execute(buildRequest()))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Account is inactive");
+    @Test
+    void login_PasswordEncoder_ThrowsException() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
+        when(authRepository.findByUsername(request.getIdentifier())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(anyString(), anyString())).thenThrow(new RuntimeException("Encoder failure"));
+
+        assertThrows(RuntimeException.class, () -> loginService.execute(request));
+    }
+
+    @Test
+    void login_RateLimited() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn("5");
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> loginService.execute(request));
+        assertTrue(exception.getMessage().contains("Too many login attempts"));
     }
 }

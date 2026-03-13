@@ -6,11 +6,13 @@ import com.instagram.be.comment.CommentLike;
 import com.instagram.be.comment.repository.CommentLikeRepository;
 import com.instagram.be.comment.repository.CommentRepository;
 import com.instagram.be.comment.request.CommentActionRequest;
+import com.instagram.be.events.CommentLikeEvent;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.post.response.LikeResponse;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class LikeCommentService extends BaseService<CommentActionRequest, LikeRe
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final UserProfileRepository userProfileRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -47,6 +50,8 @@ public class LikeCommentService extends BaseService<CommentActionRequest, LikeRe
             UserProfile user = userProfileRepository.getReferenceById(viewerId);
             commentLikeRepository.save(CommentLike.builder().comment(comment).user(user).build());
             liked = true;
+
+            eventPublisher.publishEvent(new CommentLikeEvent(this, comment.getUser(), user, comment.getPost(), comment));
         }
 
         long likeCount = commentLikeRepository.countByCommentId(commentId);

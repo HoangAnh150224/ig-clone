@@ -2,12 +2,14 @@ package com.instagram.be.auth.service;
 
 import com.instagram.be.auth.jwt.JwtUtil;
 import com.instagram.be.auth.request.LogoutRequest;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.AppValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -27,8 +29,11 @@ public class LogoutService extends BaseService<LogoutRequest, Void> {
         long ttlSeconds = jwtUtil.getRemainingTtlSeconds(token);
         if (ttlSeconds > 0) {
             String jti = jwtUtil.extractJti(token);
-            redisTemplate.opsForValue().set("blacklist:" + jti, "1", ttlSeconds, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(RedisKeys.blacklist(jti), "1", ttlSeconds, TimeUnit.SECONDS);
         }
+
+        UUID userId = jwtUtil.extractUserId(token);
+        redisTemplate.delete(RedisKeys.refresh(userId));
 
         return null;
     }

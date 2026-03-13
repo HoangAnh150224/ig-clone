@@ -1,6 +1,7 @@
 package com.instagram.be.story.service;
 
 import com.instagram.be.base.service.BaseService;
+import com.instagram.be.events.StoryLikeEvent;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.story.Story;
 import com.instagram.be.story.StoryView;
@@ -10,6 +11,7 @@ import com.instagram.be.story.request.StoryActionRequest;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class LikeStoryService extends BaseService<StoryActionRequest, Void> {
     private final StoryRepository storyRepository;
     private final StoryViewRepository storyViewRepository;
     private final UserProfileRepository userProfileRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -43,8 +46,13 @@ public class LikeStoryService extends BaseService<StoryActionRequest, Void> {
                     return StoryView.builder().story(story).viewer(viewer).build();
                 });
 
+        boolean wasLiked = view.isLiked();
         view.setLiked(true);
         storyViewRepository.save(view);
+
+        if (!wasLiked) {
+            eventPublisher.publishEvent(new StoryLikeEvent(this, story.getUser(), view.getViewer(), story));
+        }
         return null;
     }
 }

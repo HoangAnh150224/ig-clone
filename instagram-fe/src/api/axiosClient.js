@@ -3,7 +3,7 @@ import { store } from "../store";
 import { setGlobalError } from "../store/slices/uiSlice";
 
 const axiosClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_BASE_URL || "/api/v1",
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",

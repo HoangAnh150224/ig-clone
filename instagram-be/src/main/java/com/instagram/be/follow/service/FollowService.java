@@ -10,8 +10,11 @@ import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.follow.request.FollowRequest;
 import com.instagram.be.follow.response.FollowResponse;
 import com.instagram.be.message.service.AutoAcceptConversationService;
+
+import com.instagram.be.events.FollowEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.instagram.be.notification.enums.NotificationType;
-import com.instagram.be.notification.service.CreateNotificationService;
+
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import com.instagram.be.userprofile.service.ProfileCountCacheService;
@@ -29,7 +32,7 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
     private final FollowRepository followRepository;
     private final UserProfileRepository userProfileRepository;
     private final BlockRepository blockRepository;
-    private final CreateNotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final AutoAcceptConversationService autoAcceptConversationService;
     private final ProfileCountCacheService profileCountCacheService;
 
@@ -85,7 +88,7 @@ public class FollowService extends BaseService<FollowRequest, FollowResponse> {
 
         // Notify target
         NotificationType type = (status == FollowStatus.ACCEPTED) ? NotificationType.FOLLOW : NotificationType.FOLLOW_REQUEST;
-        notificationService.create(target, follower, type, null, null);
+        eventPublisher.publishEvent(new FollowEvent(this, target, follower, type));
 
         return FollowResponse.from(saved);
     }

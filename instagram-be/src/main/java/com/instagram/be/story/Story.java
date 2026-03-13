@@ -9,11 +9,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "story")
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE story SET is_deleted = true WHERE id = ?")
 @Getter
 @Setter
 @SuperBuilder

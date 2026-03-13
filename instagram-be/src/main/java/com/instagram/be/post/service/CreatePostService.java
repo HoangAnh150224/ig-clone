@@ -1,6 +1,7 @@
 package com.instagram.be.post.service;
 
 import com.instagram.be.base.ratelimit.RateLimiter;
+import com.instagram.be.base.redis.RedisKeys;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.AppValidationException;
 import com.instagram.be.hashtag.Hashtag;
@@ -57,7 +58,7 @@ public class CreatePostService extends BaseService<CreatePostRequest, CreatePost
         }
 
         UUID userId = request.getUserContext().getUserId();
-        rateLimiter.check("rate:create_post:" + userId, 20, 60);
+        rateLimiter.check(RedisKeys.rateCreatePost(userId), 20, 60);
         UserProfile author = userProfileRepository.getReferenceById(userId);
 
         PostType type = request.getType() != null ? request.getType() : PostType.POST;
