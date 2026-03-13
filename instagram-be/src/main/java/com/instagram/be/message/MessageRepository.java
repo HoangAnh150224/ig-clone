@@ -16,6 +16,7 @@ import java.util.UUID;
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     @Query("SELECT m FROM Message m JOIN FETCH m.sender " +
+            "LEFT JOIN FETCH m.sharedPost sp LEFT JOIN FETCH sp.user " +
             "WHERE m.conversation.id = :convId " +
             "AND m.deleted = false " +
             "AND (:afterDate IS NULL OR m.createdAt > :afterDate) " +

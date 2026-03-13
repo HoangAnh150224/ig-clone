@@ -22,4 +22,5 @@ public class SendMessageRequest extends BaseRequest {
     private String content;
     private String mediaUrl;
     private String mediaType;
+    private UUID sharedPostId;
 }

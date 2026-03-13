@@ -135,6 +135,9 @@ const MoreOptionsModal = ({
                 case "toggle_favorite_user":
                     await userService.toggleFavoriteUser(targetUserId);
                     break;
+                case "toggle_favorite_post":
+                    await postService.togglePostFavorite(post.id);
+                    break;
                 case "copy_link": {
                     const linkToCopy = isProfile
                         ? window.location.origin + `/${user.username}`
@@ -217,6 +220,11 @@ const MoreOptionsModal = ({
                                                 <OptionButton label="Report" color="#ed4956" fontWeight="bold" onClick={() => handleAction("report_init")} />
                                                 <Box width="100%" height="1px" bg="gray.100" />
                                                 <OptionButton label="Unfollow" color="#ed4956" fontWeight="bold" onClick={() => handleAction("unfollow")} />
+                                                <Box width="100%" height="1px" bg="gray.100" />
+                                                <OptionButton 
+                                                    label={post.isFavorite ? "Remove from favorites" : "Add to favorites"} 
+                                                    onClick={() => handleAction("toggle_favorite_post")} 
+                                                />
                                             </>
                                         )}
 

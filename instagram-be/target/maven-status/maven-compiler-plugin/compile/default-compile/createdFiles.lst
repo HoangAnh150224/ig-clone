@@ -95,6 +95,7 @@ com\instagram\be\story\StoryReplyRepository.class
 com\instagram\be\story\StoryView$StoryViewBuilder.class
 com\instagram\be\auth\service\RegisterService.class
 com\instagram\be\notification\request\NotificationActionRequest$NotificationActionRequestBuilderImpl.class
+com\instagram\be\message\response\MessageResponse$SharedPostInfo.class
 com\instagram\be\story\StoryMention$StoryMentionBuilderImpl.class
 com\instagram\be\base\request\UserOnlyRequest.class
 com\instagram\be\notification\controller\NotificationController.class
