@@ -57,6 +57,10 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
         UserProfile recipient = userProfileRepository.findById(recipientId)
                 .orElseThrow(() -> new IllegalStateException("Recipient not found"));
 
+        if (!recipient.isActive()) {
+            throw new BusinessException("Cannot send message to a deactivated account");
+        }
+
         if (blockRepository.existsBlockBetween(senderId, recipientId)) {
             throw new BusinessException("Cannot send message to this user");
         }

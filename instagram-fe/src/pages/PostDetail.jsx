@@ -32,6 +32,8 @@ import UserAvatar from "../components/common/UserAvatar";
 import CommentCard from "../components/Comment/CommentCard";
 import ImageCarousel from "../components/common/ImageCarousel";
 import PostDetailSkeleton from "../components/skeletons/PostDetailSkeleton";
+import ShareModal from "../components/modals/ShareModal";
+import MoreOptionsModal from "../components/modals/MoreOptionsModal";
 import { formatPostDate } from "../utils/dateUtils";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleMute } from "../store/slices/uiSlice";
@@ -49,6 +51,10 @@ const PostDetail = () => {
     const [isSaved, setIsSaved] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const videoRef = useRef(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+
+    const { user: authUser } = useSelector((state) => state.auth);
 
     // COMMENT LOGIC
     const [commentValue, setCommentValue] = useState("");
@@ -60,7 +66,7 @@ const PostDetail = () => {
         const fetchPost = async () => {
             setLoading(true);
             try {
-                const result = await postService.getPostById(postId);
+                const result = await postService.getPost(postId);
                 if (result) {
                     setPost(result);
                     setError(false);
@@ -304,12 +310,9 @@ const PostDetail = () => {
                                 Following
                             </Text>
                         </HStack>
-                        <IconButton
-                            variant="ghost"
-                            icon={<BsThreeDots />}
-                            aria-label="More options"
-                            color="black"
-                        />
+                        <Box cursor="pointer" color="black" onClick={() => setIsMoreOptionsOpen(true)}>
+                            <BsThreeDots size={20} />
+                        </Box>
                     </Flex>
 
                     {/* Comments Area */}
@@ -370,6 +373,7 @@ const PostDetail = () => {
                                         comment={c}
                                         postId={postId}
                                         onReply={handleReply}
+                                        postOwnerId={post?.author?.id}
                                     />
                                 ))
                             ) : (                                <Center h="100px">
@@ -411,6 +415,7 @@ const PostDetail = () => {
                                     size={26}
                                     cursor="pointer"
                                     color="black"
+                                    onClick={() => setIsShareModalOpen(true)}
                                 />
                             </HStack>
                             <Box
@@ -508,6 +513,19 @@ const PostDetail = () => {
                     </Box>
                 </Box>
             </Flex>
+            
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                post={post}
+            />
+
+            <MoreOptionsModal
+                isOpen={isMoreOptionsOpen}
+                onClose={() => setIsMoreOptionsOpen(false)}
+                post={post}
+                isOwnPost={post.author?.id === authUser?.id}
+            />
         </Box>
     );
 };

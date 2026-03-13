@@ -132,6 +132,14 @@ const profileService = {
     },
 
     /**
+     * Get stories inside a specific highlight.
+     * API: GET /highlights/{id}/stories
+     */
+    getHighlightStories: async (id) => {
+        return axiosClient.get(`/highlights/${id}/stories`);
+    },
+
+    /**
      * Create a new Highlight.
      * API: POST /highlights
      * @param {File} cover - Optional cover image file
@@ -154,7 +162,7 @@ const profileService = {
                 "Content-Type": "multipart/form-data",
             },
         });
-    }
+    },
     /**
      * Delete a highlight.
      * API: DELETE /highlights/{id}

@@ -9,6 +9,7 @@ import {
     Flex,
     Text,
     HStack,
+    VStack,
     IconButton,
 } from "@chakra-ui/react";
 import {
@@ -32,6 +33,7 @@ import CommentCard from "../Comment/CommentCard";
 import ImageCarousel from "../common/ImageCarousel";
 import UserListModal from "./UserListModal";
 import MoreOptionsModal from "./MoreOptionsModal";
+import ShareModal from "../modals/ShareModal";
 import "../Comment/CommentModal.css";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -57,6 +59,7 @@ const PostDetailModal = ({
     const authUser = useSelector((state) => state.auth.user);
     const [isLikeListOpen, setIsLikeListOpen] = useState(false);
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [showHeartAnim, setShowHeartAnim] = useState(false);
     const [comments, setComments] = useState([]);
@@ -86,6 +89,7 @@ const PostDetailModal = ({
 
     const isOwnPost = authUser?.id === post?.author?.id;
     const isReel = post?.type === "REEL";
+    const isFavoriteUser = authUser?.favoriteUserIds?.includes(post?.author?.id);
 
     useEffect(() => {
         if (isOpen && post?.id) {
@@ -214,6 +218,30 @@ const PostDetailModal = ({
         }
     };
 
+    const renderCaptionWithHashtags = (caption) => {
+        if (!caption) return null;
+        return caption.split(/(\s+)/).map((part, index) => {
+            if (part.startsWith("#")) {
+                return (
+                    <Text
+                        key={index}
+                        as="span"
+                        color="#00376b"
+                        cursor="pointer"
+                        _hover={{ textDecoration: "underline" }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/explore?q=${part.substring(1)}`);
+                        }}
+                    >
+                        {part}
+                    </Text>
+                );
+            }
+            return part;
+        });
+    };
+
     const togglePlay = () => {
         if (videoRef.current) {
             if (isPlaying) videoRef.current.pause();
@@ -257,7 +285,7 @@ const PostDetailModal = ({
                         overflow="hidden"
                     >
                         <DialogBody p={0} height="100%">
-                            <Flex h="100%" direction={{ base: "column", md: "row" }}>
+                            <Flex h="100%" direction="row">
                                 {/* Media Section */}
                                 <Box
                                     flex={1.5}
@@ -327,9 +355,32 @@ const PostDetailModal = ({
                                             <Box cursor="pointer" onClick={() => navigate(`/${post.author?.username}`)}>
                                                 <UserAvatar src={post.author?.avatarUrl} size="32px" />
                                             </Box>
-                                            <Text fontWeight="bold" fontSize="sm" color="black" cursor="pointer" onClick={() => navigate(`/${post.author?.username}`)}>
-                                                {post.author?.username}
-                                            </Text>
+                                            <VStack align="start" gap={0}>
+                                                <Text fontWeight="bold" fontSize="sm" color="black" cursor="pointer" onClick={() => navigate(`/${post.author?.username}`)}>
+                                                    {post.author?.username}
+                                                </Text>
+                                                {post.locationName && (
+                                                    <Text fontSize="12px" color="gray.600" mt="-2px">
+                                                        {post.locationName}
+                                                    </Text>
+                                                )}
+                                            </VStack>
+                                            {isFavoriteUser && (
+                                                <Box display="flex" alignItems="center" justifyContent="center">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <defs>
+                                                            <linearGradient id={`detail-star-gradient-${post.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                                                <stop offset="0%" stopColor="#f09433" />
+                                                                <stop offset="25%" stopColor="#e6683c" />
+                                                                <stop offset="50%" stopColor="#dc2743" />
+                                                                <stop offset="75%" stopColor="#cc2366" />
+                                                                <stop offset="100%" stopColor="#bc1888" />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={`url(#detail-star-gradient-${post.id})`} />
+                                                    </svg>
+                                                </Box>
+                                            )}
                                             {!isOwnPost && (
                                                 <Text 
                                                     fontSize="sm" 
@@ -342,7 +393,9 @@ const PostDetailModal = ({
                                                 </Text>
                                             )}
                                         </HStack>
-                                        <BsThreeDots cursor="pointer" color="black" onClick={() => setIsMoreOptionsOpen(true)} />
+                                        <Box cursor="pointer" color="black" onClick={() => setIsMoreOptionsOpen(true)}>
+                                            <BsThreeDots size={20} />
+                                        </Box>
                                     </Flex>
 
                                     {/* Comments List */}
@@ -352,27 +405,36 @@ const PostDetailModal = ({
                                             <Box>
                                                 <Text fontSize="14px" color="black">
                                                     <Text as="span" fontWeight="bold" mr={2}>{post.author?.username}</Text>
-                                                    {post.caption}
+                                                    {renderCaptionWithHashtags(post.caption)}
                                                 </Text>
                                                 <Text fontSize="12px" color="gray.500" mt={2}>{formatPostDate(post.createdAt)}</Text>
                                             </Box>
                                         </Flex>
-                                        <Box display="flex" flexDirection="column" gap={4}>
-                                            {comments.map((c) => (
-                                                <CommentCard 
-                                                    key={c.id} 
-                                                    comment={c} 
-                                                    postId={post.id} 
-                                                    onClose={onClose} 
-                                                    onReply={handleReply}
-                                                />
-                                            ))}
-                                            {comments.length === 0 && (
-                                                <Flex h="100px" align="center" justify="center">
-                                                    <Text color="gray.400" fontSize="sm">No comments yet.</Text>
-                                                </Flex>
-                                            )}
-                                        </Box>
+                                        
+                                        {!post.commentsDisabled ? (
+                                            <Box display="flex" flexDirection="column" gap={4}>
+                                                {Array.from(new Map(comments.map(c => [c.id, c])).values()).map((c) => (
+                                                    <CommentCard 
+                                                        key={c.id} 
+                                                        comment={c} 
+                                                        postId={post.id} 
+                                                        onClose={onClose} 
+                                                        onReply={handleReply}
+                                                        postOwnerId={post.author?.id}
+                                                    />
+                                                ))}
+                                                {comments.length === 0 && (
+                                                    <Flex h="100px" align="center" justify="center">
+                                                        <Text color="gray.400" fontSize="sm">No comments yet.</Text>
+                                                    </Flex>
+                                                )}
+                                            </Box>
+                                        ) : (
+                                            <Flex height="100%" align="center" justify="center" direction="column" gap={2}>
+                                                <Text fontWeight="bold" fontSize="18px" color="black">Comments are disabled.</Text>
+                                                <Text fontSize="14px" color="gray.500">The author has turned off commenting for this post.</Text>
+                                            </Flex>
+                                        )}
                                     </Box>
 
                                     {/* Footer Actions */}
@@ -382,21 +444,30 @@ const PostDetailModal = ({
                                                 <Box onClick={handleLike} cursor="pointer">
                                                     {localIsLiked ? <AiFillHeart size={28} color="#ff3040" /> : <AiOutlineHeart size={28} color="black" />}
                                                 </Box>
-                                                <FaRegComment size={26} cursor="pointer" color="black" />
-                                                <RiSendPlaneFill size={26} cursor="pointer" color="black" />
+                                                {!post.commentsDisabled && (
+                                                    <FaRegComment size={26} cursor="pointer" color="black" />
+                                                )}
+                                                <RiSendPlaneFill 
+                                                    size={26} 
+                                                    cursor="pointer" 
+                                                    color="black" 
+                                                    onClick={() => setIsShareModalOpen(true)}
+                                                />
                                             </HStack>
                                             <Box onClick={handleSave} cursor="pointer">
                                                 {localIsSaved ? <BsBookmarkFill size={24} color="black" /> : <BsBookmark size={24} color="black" />}
                                             </Box>
                                         </Flex>
-                                        <Text fontWeight="bold" fontSize="sm" color="black" cursor="pointer" onClick={fetchLikers}>
-                                            {localLikeCount?.toLocaleString()} likes
-                                        </Text>
+                                        {!post.hideLikeCount && (
+                                            <Text fontWeight="bold" fontSize="sm" color="black" cursor="pointer" onClick={fetchLikers}>
+                                                {localLikeCount?.toLocaleString()} likes
+                                            </Text>
+                                        )}
                                         <Text fontSize="10px" color="gray.500" mt={1}>{formatPostDate(post.createdAt)}</Text>
                                     </Box>
 
                                     {/* Replying Status */}
-                                    {replyingTo && (
+                                    {replyingTo && !post.commentsDisabled && (
                                         <Flex bg="gray.50" px={4} py={2} justify="space-between" align="center" borderTop="1px solid" borderColor="gray.100">
                                             <Text fontSize="12px" color="gray.500">Replying to {replyingTo.username}</Text>
                                             <Box cursor="pointer" onClick={() => { setReplyingTo(null); setCommentText(""); }}>
@@ -406,27 +477,37 @@ const PostDetailModal = ({
                                     )}
 
                                     {/* Input Section */}
-                                    <HStack p={4} gap={3} borderTop="1px solid" borderColor="gray.100">
-                                        <BsEmojiSmile size={24} cursor="pointer" color="black" />
-                                        <input
-                                            ref={inputRef}
-                                            style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", backgroundColor: "white", color: "black" }}
-                                            placeholder="Add a comment..."
-                                            value={commentText}
-                                            onChange={(e) => setCommentText(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
-                                        />
-                                        <Text
-                                            color="#0095f6"
-                                            fontWeight="bold"
-                                            fontSize="sm"
-                                            cursor={commentText.trim() && !isSubmittingComment ? "pointer" : "default"}
-                                            opacity={commentText.trim() && !isSubmittingComment ? 1 : 0.3}
-                                            onClick={handlePostComment}
-                                        >
-                                            Post
-                                        </Text>
-                                    </HStack>
+                                    <Box borderTop="1px solid" borderColor="gray.100">
+                                        {!post.commentsDisabled ? (
+                                            <HStack p={4} gap={3}>
+                                                <BsEmojiSmile size={24} cursor="pointer" color="black" />
+                                                <input
+                                                    ref={inputRef}
+                                                    style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", backgroundColor: "white", color: "black" }}
+                                                    placeholder="Add a comment..."
+                                                    value={commentText}
+                                                    onChange={(e) => setCommentText(e.target.value)}
+                                                    onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
+                                                />
+                                                <Text
+                                                    color="#0095f6"
+                                                    fontWeight="bold"
+                                                    fontSize="sm"
+                                                    cursor={commentText.trim() && !isSubmittingComment ? "pointer" : "default"}
+                                                    opacity={commentText.trim() && !isSubmittingComment ? 1 : 0.3}
+                                                    onClick={handlePostComment}
+                                                >
+                                                    Post
+                                                </Text>
+                                            </HStack>
+                                        ) : (
+                                            <Box p={4} textAlign="center">
+                                                <Text fontSize="14px" color="gray.500">
+                                                    Comments are disabled.
+                                                </Text>
+                                            </Box>
+                                        )}
+                                    </Box>
                                 </Box>
                             </Flex>
                         </DialogBody>
@@ -442,6 +523,12 @@ const PostDetailModal = ({
                 isOwnPost={isOwnPost} 
                 onParentClose={onClose} 
                 onPostAction={onPostAction}
+            />
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                post={post}
             />
         </>
     );

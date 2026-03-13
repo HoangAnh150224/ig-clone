@@ -2,13 +2,14 @@ import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCurrentUser } from "./store/slices/authSlice";
+import { fetchCurrentUser, setUser } from "./store/slices/authSlice";
 import { setUnreadNotificationCount, incrementUnreadNotificationCount } from "./store/slices/uiSlice";
 import { updateUserProfile } from "./store/slices/userSlice";
 import CreatePostModal from "./components/modals/CreatePostModal";
 import useStomp from "./hooks/useStomp";
 import InstagramAlert from "./components/common/InstagramAlert";
 import notificationService from "./services/notificationService";
+import userService from "./services/userService";
 
 // Lazy pages
 const Home = lazy(() => import("./pages/Home"));
@@ -41,6 +42,23 @@ const App = () => {
             }).catch(console.error);
         }
     }, [dispatch, token]);
+
+    // Fetch favorites to sync across the app
+    useEffect(() => {
+        if (isAuthenticated && user?.id && !user.favoriteUserIds) {
+            userService.getFavoriteUsers().then(res => {
+                // Handle ApiResponse structure (res.data)
+                const data = res?.data || res;
+                const list = Array.isArray(data) ? data : (data?.content || []);
+                const favoriteUserIds = list.map(u => u.id);
+                
+                dispatch(setUser({
+                    ...user,
+                    favoriteUserIds: favoriteUserIds
+                }));
+            }).catch(console.error);
+        }
+    }, [dispatch, isAuthenticated, user?.id, user?.favoriteUserIds]);
 
     // GLOBAL WEBSOCKET FOR NOTIFICATIONS
     const { connected, subscribe } = useStomp("/ws");

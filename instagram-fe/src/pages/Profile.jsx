@@ -17,6 +17,7 @@ import ProfileHighlights from "../components/profile/ProfileHighlights";
 import ProfileSkeleton from "../components/skeletons/ProfileSkeleton";
 import profileService from "../services/profileService";
 import postService from "../services/postService";
+import storyService from "../services/storyService";
 import {
     setUserProfile,
     setProfilePosts,
@@ -32,6 +33,7 @@ const Profile = () => {
     const [activeTab, setActiveTab] = useState("posts");
     const [highlights, setHighlights] = useState([]);
     const [tabLoading, setTabLoading] = useState(false);
+    const [errorState, setErrorState] = useState(false);
 
     const isOwnProfile = authUser?.username === username;
 
@@ -60,19 +62,40 @@ const Profile = () => {
     const fetchInitialData = useCallback(async () => {
         dispatch(resetProfile());
         dispatch(setLoading(true));
+        setErrorState(false);
         try {
             const [profileRes, highlightsRes] = await Promise.all([
                 profileService.getUserProfile(username),
                 profileService.getUserHighlights(username),
             ]);
-            dispatch(setUserProfile(profileRes));
-            setHighlights(highlightsRes || []);
+            
+            const profileData = profileRes?.data || profileRes;
+            
+            // Fetch stories for this user by username
+            let activeStories = [];
+            try {
+                const storiesRes = await storyService.getUserStories(username);
+                activeStories = storiesRes?.data || (Array.isArray(storiesRes) ? storiesRes : []);
+            } catch (err) {
+                // 404 or 403 handled by backend, we just show no story circle
+                console.warn("Could not fetch user stories", err.message);
+            }
+
+            const updatedProfile = {
+                ...profileData,
+                hasStory: activeStories.length > 0,
+                stories: activeStories
+            };
+
+            dispatch(setUserProfile(updatedProfile));
+            setHighlights(highlightsRes?.data || highlightsRes || []);
             
             // Fetch posts for the initial active tab
             const postsRes = await profileService.getUserPosts(username);
             dispatch(setProfilePosts(postsRes.content || postsRes));
         } catch (error) {
             console.error("Failed to fetch initial profile data", error);
+            setErrorState(true);
         } finally {
             dispatch(setLoading(false));
         }
@@ -86,14 +109,14 @@ const Profile = () => {
     const handleRefreshHighlights = async () => {
         try {
             const highlightsRes = await profileService.getUserHighlights(username);
-            setHighlights(highlightsRes || []);
+            setHighlights(highlightsRes?.data || highlightsRes || []);
         } catch (error) {
             console.error("Failed to refresh highlights", error);
         }
     };
 
     useEffect(() => {
-        if (userProfile && activeTab !== "posts") {
+        if (userProfile) {
             fetchTabData(activeTab);
         }
     }, [activeTab, fetchTabData, userProfile]);
@@ -106,7 +129,7 @@ const Profile = () => {
         );
     }
 
-    if (!userProfile && !loading) {
+    if ((errorState || !userProfile || userProfile.isActive === false) && !loading) {
         return (
             <VStack h="50vh" justify="center" gap={4}>
                 <Text fontSize="2xl" fontWeight="bold">

@@ -109,16 +109,18 @@ const ReelCard = ({ reel, onOpenComments, onOpenMoreOptions, isActive }) => {
 
     return (
         <Box
-            height="98vh"
+            height="calc(100vh - 40px)"
+            my={5}
             width="min(470px, 98vw)"
             bg="black"
-            borderRadius="0px"
+            borderRadius="8px"
             position="relative"
             overflow="hidden"
-            scrollSnapAlign="start"
+            scrollSnapAlign="center"
             cursor="pointer"
             onClick={togglePlay}
             onDoubleClick={handleDoubleLike}
+            boxShadow="lg"
         >
             <Box
                 as="video"
@@ -246,7 +248,14 @@ const Reels = () => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
-                    setVisibleReelId(entry.target.getAttribute("data-id"));
+                    const reelId = entry.target.getAttribute("data-id");
+                    setVisibleReelId(reelId);
+                    
+                    // If comments are open, sync the active reel
+                    if (isCommentOpen) {
+                        const newActiveReel = reels.find(r => r.id === reelId);
+                        if (newActiveReel) setActiveReel(newActiveReel);
+                    }
                 }
             });
         }, options);
@@ -255,7 +264,7 @@ const Reels = () => {
         currentReels.forEach((el) => observer.observe(el));
 
         return () => observer.disconnect();
-    }, [reels]);
+    }, [reels, isCommentOpen]);
 
     const handleOpenComments = (reel) => {
         setActiveReel(reel);
@@ -277,24 +286,25 @@ const Reels = () => {
 
     return (
         <Box height="100vh" width="100%" bg="white" overflow="hidden">
-            <Flex height="100%" width="100%" align="center" justify="center" position="relative">
+            <Flex height="100%" width="100%" align="center" justify="center" position="relative" gap="15px">
                 <Box
                     ref={containerRef}
                     height="100vh"
                     overflowY="auto"
-                    width="100%"
+                    width={isCommentOpen ? "auto" : "100%"}
                     display="flex"
                     flexDirection="column"
                     alignItems="center"
+                    transition="width 0.3s ease"
                     css={{
                         scrollSnapType: "y mandatory",
                         scrollbarWidth: "none",
                         "&::-webkit-scrollbar": { display: "none" }
                     }}
                 >
-                    <VStack gap={0} py={0} width="full" align="center">
+                    <VStack gap={0} py={0} width={isCommentOpen ? "auto" : "full"} align="center">
                         {Array.isArray(reels) && reels.map((reel) => (
-                            <Box key={reel.id} data-id={reel.id} className="reel-item" width="full" display="flex" justifyContent="center">
+                            <Box key={reel.id} data-id={reel.id} className="reel-item" width="full" display="flex" justifyContent={isCommentOpen ? "flex-end" : "center"}>
                                 <ReelCard
                                     reel={reel}
                                     isActive={visibleReelId === reel.id}

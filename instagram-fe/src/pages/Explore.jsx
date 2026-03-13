@@ -1,26 +1,35 @@
 import React, { useEffect, useCallback, useRef } from "react";
-import { Box, Container, Spinner, Center, VStack, Text } from "@chakra-ui/react";
+import { Box, Container, Spinner, Center, VStack, Text, Heading } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import ExploreGrid from "../components/profile/ExploreGrid";
 import ExploreSkeleton from "../components/skeletons/ExploreSkeleton";
-import { fetchExplorePosts, resetExplore } from "../store/slices/exploreSlice";
+import { fetchExplorePosts, fetchHashtagPosts, resetExplore } from "../store/slices/exploreSlice";
 
 const Explore = () => {
     const dispatch = useDispatch();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const query = searchParams.get("q");
+
     const { posts, loading, page, hasMore, error } = useSelector((state) => state.explore);
     const isFetchingMore = loading && page > 0;
     
     const loadMoreRef = useRef(null);
 
     const loadPosts = useCallback((pageNum = 0) => {
-        dispatch(fetchExplorePosts({ page: pageNum, size: 18 }));
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (posts.length === 0) {
-            loadPosts(0);
+        if (query) {
+            dispatch(fetchHashtagPosts({ name: query, page: pageNum, size: 18 }));
+        } else {
+            dispatch(fetchExplorePosts({ page: pageNum, size: 18 }));
         }
-    }, [loadPosts, posts.length]);
+    }, [dispatch, query]);
+
+    // Reset and load when query changes
+    useEffect(() => {
+        dispatch(resetExplore());
+        loadPosts(0);
+    }, [dispatch, query, loadPosts]);
 
     // Infinite Scroll Implementation
     useEffect(() => {
@@ -58,6 +67,13 @@ const Explore = () => {
 
     return (
         <Container maxW="935px" p={0} py={8} bg="white">
+            {query && (
+                <Box mb={8} px={4}>
+                    <Heading size="lg" mb={2}>#{query}</Heading>
+                    <Text color="gray.500">{posts.length > 0 ? `${posts.length}+ posts` : "Finding posts..."}</Text>
+                </Box>
+            )}
+
             {loading && posts.length === 0 ? (
                 <ExploreSkeleton />
             ) : (
@@ -66,7 +82,7 @@ const Explore = () => {
                         <ExploreGrid posts={posts} />
                     ) : !loading && (
                         <Center py={20}>
-                            <Text color="gray.500">No explore posts found.</Text>
+                            <Text color="gray.500">No posts found for #{query || "explore"}.</Text>
                         </Center>
                     )}
                     
@@ -80,7 +96,7 @@ const Explore = () => {
                     {!hasMore && posts.length > 0 && (
                         <Center py={10}>
                             <Text color="gray.500" fontSize="sm" fontStyle="italic">
-                                You've seen all new explore posts.
+                                You've seen all posts.
                             </Text>
                         </Center>
                     )}

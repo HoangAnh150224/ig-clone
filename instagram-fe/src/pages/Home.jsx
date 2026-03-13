@@ -55,7 +55,7 @@ const Home = () => {
                         [1, 2, 3].map((i) => <PostCardSkeleton key={i} />)
                     ) : (
                         <>
-                            {posts.map((post) => (
+                            {Array.from(new Map(posts.map(p => [p.id, p])).values()).map((post) => (
                                 <div key={post.id} className="w-full">
                                     <PostCard post={post} />
                                 </div>

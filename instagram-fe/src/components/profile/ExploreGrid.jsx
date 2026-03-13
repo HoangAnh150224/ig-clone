@@ -118,7 +118,7 @@ const ExploreGrid = ({ posts }) => {
                 maxW="935px"
                 mx="auto"
             >
-                {posts.map((post, index) => {
+                {Array.from(new Map(posts.map(p => [p.id, p])).values()).map((post, index) => {
                     // Instagram Explore Logic:
                     // Every 10 posts, there are 2 large posts (positions 3 and 6 in the cluster of 10)
                     const isLargeRight = index % 10 === 2;

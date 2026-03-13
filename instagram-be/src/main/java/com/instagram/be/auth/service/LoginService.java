@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +30,7 @@ public class LoginService extends BaseService<LoginRequest, AuthResponse> {
     private final StringRedisTemplate redisTemplate;
 
     @Override
+    @Transactional
     protected AuthResponse doProcess(LoginRequest request) {
         String ip = request.getUserContext() != null ? request.getUserContext().getIpAddress() : "unknown";
         String rateLimitKey = RATE_LIMIT_PREFIX + ip;
@@ -52,7 +54,8 @@ public class LoginService extends BaseService<LoginRequest, AuthResponse> {
         }
 
         if (!user.isActive()) {
-            throw new BusinessException("Account is inactive");
+            user.setActive(true);
+            authRepository.save(user);
         }
 
         redisTemplate.delete(rateLimitKey);

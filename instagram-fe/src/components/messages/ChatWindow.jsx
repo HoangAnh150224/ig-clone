@@ -13,7 +13,9 @@ import {
     PopoverBody,
     PopoverPositioner,
     IconButton,
-    Center
+    Center,
+    Image,
+    Spinner,
 } from "@chakra-ui/react";
 import {
     AiOutlineInfoCircle,
@@ -67,7 +69,7 @@ const SharedPostPreview = ({ post, onClick }) => {
     );
 };
 
-const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadAt }) => {
+const MessageItem = ({ msg, isMe, onUnsendMessage, isLastMe, lastReadAt }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
@@ -151,6 +153,29 @@ const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadA
                             />
                         </Box>
                     )}
+
+                    {msg.mediaUrl && !isDeleted && (
+                        <Box 
+                            mb={1} 
+                            borderRadius="22px" 
+                            overflow="hidden" 
+                            border="1px solid" 
+                            borderColor="gray.100"
+                            maxW="300px"
+                        >
+                            {msg.mediaType?.startsWith("video") || msg.mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                                <Box as="video" src={msg.mediaUrl} controls width="100%" borderRadius="18px" />
+                            ) : (
+                                <Image 
+                                    src={msg.mediaUrl} 
+                                    alt="Sent media" 
+                                    width="100%" 
+                                    objectFit="cover" 
+                                    fallback={<Center p={4}><Spinner size="sm" /></Center>}
+                                />
+                            )}
+                        </Box>
+                    )}
                     
                     {(msg.text || msg.content || isDeleted) && (
                         <Box
@@ -182,7 +207,6 @@ const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadA
 import messageService from "../../services/messageService";
 
 import cloudinaryService from "../../services/cloudinaryService";
-import { Spinner } from "@chakra-ui/react";
 
 const ChatWindow = ({ 
     activeChat, 
@@ -271,6 +295,7 @@ const ChatWindow = ({
 
     const participant = activeChat.participant || activeChat.user;
     const isBlocked = authUser?.blockedUserIds?.some(id => String(id) === String(participant?.id));
+    const isDeactivated = participant?.active === false;
 
     if (!participant) {
         return (
@@ -299,7 +324,7 @@ const ChatWindow = ({
                     <UserAvatar src={participant?.avatarUrl || participant?.avatar} size="32px" />
                     <VStack align="start" gap={0}>
                         <Text fontWeight="bold" color="black" fontSize="sm">{participant?.username}</Text>
-                        {activeChat.isOnline && !isBlocked && <Text fontSize="xs" color="green.500">Active now</Text>}
+                        {activeChat.isOnline && !isBlocked && !isDeactivated && <Text fontSize="xs" color="green.500">Active now</Text>}
                     </VStack>
                 </HStack>
                 
@@ -374,7 +399,7 @@ const ChatWindow = ({
                         );
                     });
                 })()}
-                {isTyping && !isBlocked && (
+                {isTyping && !isBlocked && !isDeactivated && (
                     <Flex justify="flex-start">
                         <Box p={3} px={4} borderRadius="22px" bg="gray.100" color="gray.500" fontSize="xs">
                             Typing...
@@ -394,7 +419,14 @@ const ChatWindow = ({
                     onChange={handleImageUpload} 
                 />
                 
-                {isBlocked ? (
+                {isDeactivated ? (
+                    <Center py={4} bg="gray.50" borderRadius="12px" border="1px solid" borderColor="gray.100">
+                        <VStack gap={2}>
+                            <Text fontWeight="bold" color="black">Account deactivated</Text>
+                            <Text fontSize="xs" color="gray.500">You can no longer message this account.</Text>
+                        </VStack>
+                    </Center>
+                ) : isBlocked ? (
                     <Center py={4} bg="gray.50" borderRadius="12px" border="1px solid" borderColor="gray.100">
                         <VStack gap={2}>
                             <Text fontWeight="bold" color="black">You blocked this user</Text>

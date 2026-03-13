@@ -18,7 +18,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     long countByUserIdAndArchivedFalse(UUID userId);
 
     // User's posts (non-archived for non-owners)
-    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId AND p.archived = false ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Post p JOIN FETCH p.user u WHERE p.user.id = :userId AND p.archived = false AND u.active = true ORDER BY p.createdAt DESC")
     Page<Post> findPublicByUserId(@Param("userId") UUID userId, Pageable pageable);
 
     @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.createdAt DESC")
@@ -32,6 +32,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             SELECT p FROM Post p JOIN FETCH p.user u
             WHERE u.id IN :followedIds
               AND p.archived = false
+              AND u.active = true
               AND (p.createdAt < :cursorTime
                    OR (p.createdAt = :cursorTime AND p.id < :cursorId))
             ORDER BY p.createdAt DESC, p.id DESC
@@ -45,6 +46,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             SELECT p FROM Post p JOIN FETCH p.user u
             WHERE u.id IN :followedIds
               AND p.archived = false
+              AND u.active = true
             ORDER BY p.createdAt DESC, p.id DESC
             """)
     List<Post> findFeedPostsFirst(@Param("followedIds") List<UUID> followedIds,
@@ -55,6 +57,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             SELECT p FROM Post p JOIN FETCH p.user u
             WHERE u.id IN :followedIds
               AND p.archived = false
+              AND u.active = true
               AND p.type = com.instagram.be.post.enums.PostType.REEL
               AND (p.createdAt < :cursorTime
                    OR (p.createdAt = :cursorTime AND p.id < :cursorId))
@@ -69,6 +72,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             SELECT p FROM Post p JOIN FETCH p.user u
             WHERE u.id IN :followedIds
               AND p.archived = false
+              AND u.active = true
               AND p.type = com.instagram.be.post.enums.PostType.REEL
             ORDER BY p.createdAt DESC, p.id DESC
             """)
@@ -81,19 +85,19 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     // Explore: public posts ordered by like count (popular)
     @Query(value = """
             SELECT p FROM Post p JOIN FETCH p.user u
-            WHERE p.archived = false AND u.privateAccount = false
+            WHERE p.archived = false AND u.privateAccount = false AND u.active = true
             ORDER BY p.createdAt DESC
             """,
-            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u WHERE p.archived = false AND u.privateAccount = false")
+            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u WHERE p.archived = false AND u.privateAccount = false AND u.active = true")
     Page<Post> findExplore(Pageable pageable);
 
     // Posts by hashtag
     @Query(value = """
             SELECT p FROM Post p JOIN FETCH p.user u JOIN p.hashtags h
-            WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false
+            WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true
             ORDER BY p.createdAt DESC
             """,
-            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u JOIN p.hashtags h WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false")
+            countQuery = "SELECT COUNT(p) FROM Post p JOIN p.user u JOIN p.hashtags h WHERE h.name = :hashtagName AND p.archived = false AND u.privateAccount = false AND u.active = true")
     Page<Post> findByHashtagName(@Param("hashtagName") String hashtagName, Pageable pageable);
 
     // Batch: liked post IDs

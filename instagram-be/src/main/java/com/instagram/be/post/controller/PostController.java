@@ -11,14 +11,11 @@ import com.instagram.be.post.service.GetExplorePostsService;
 import com.instagram.be.post.service.GetHashtagPostsService;
 import com.instagram.be.post.response.*;
 import com.instagram.be.post.service.*;
-import com.instagram.be.storage.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +25,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final CloudinaryService cloudinaryService;
     private final CreatePostService createPostService;
     private final GetPostService getPostService;
     private final UpdatePostService updatePostService;
@@ -46,25 +42,10 @@ public class PostController {
     private final GetExplorePostsService getExplorePostsService;
     private final GetHashtagPostsService getHashtagPostsService;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(
-            @RequestPart("files") List<MultipartFile> files,
-            @RequestPart("data") CreatePostRequest request) {
-        UserContext ctx = currentUser();
-        request.setUserContext(ctx);
-
-        // Upload each file to Cloudinary and build media list
-        List<CreatePostRequest.MediaItem> media = files.stream()
-                .map(file -> {
-                    CloudinaryService.UploadResult result = cloudinaryService.upload(file, "posts");
-                    String mediaType = file.getContentType() != null && file.getContentType().startsWith("video")
-                            ? "VIDEO" : "IMAGE";
-                    return new CreatePostRequest.MediaItem(result.url(), mediaType);
-                })
-                .toList();
-        request.setMedia(media);
-
+    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@RequestBody CreatePostRequest request) {
+        request.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createPostService.execute(request), "Post created", 201));
     }

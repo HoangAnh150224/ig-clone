@@ -16,12 +16,38 @@ import {
     Button,
     Separator,
     Input,
-    Switch,
+    Center,
+    Spinner,
 } from "@chakra-ui/react";
 import { useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
 import postService from "../../services/postService";
 import { updatePostInStore } from "../../store/slices/postSlice";
+
+const CustomSwitch = ({ checked, onCheckedChange }) => (
+    <Box 
+        as="button" 
+        p={1} 
+        width="44px" 
+        height="24px" 
+        borderRadius="full" 
+        bg={checked ? "#0095f6" : "gray.300"} 
+        transition="0.3s" 
+        onClick={() => onCheckedChange({ checked: !checked })} 
+        position="relative"
+    >
+        <Box 
+            boxSize="16px" 
+            bg="white" 
+            borderRadius="full" 
+            position="absolute" 
+            top="4px" 
+            left={checked ? "24px" : "4px"} 
+            transition="0.3s" 
+            shadow="sm" 
+        />
+    </Box>
+);
 
 const EditPostModal = ({ isOpen, onClose, post }) => {
     const dispatch = useDispatch();
@@ -108,23 +134,40 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                         <Flex height="100%">
                             {/* Media Preview */}
                             <Box flex={1.2} bg="black" display="flex" alignItems="center" justifyContent="center">
-                                {isReel ? (
-                                    <Box
-                                        as="video"
-                                        src={post.media?.[0]?.url}
-                                        width="100%"
-                                        height="100%"
-                                        objectFit="contain"
-                                        muted
-                                    />
-                                ) : (
-                                    <Image
-                                        src={post.media?.[0]?.url}
-                                        width="100%"
-                                        height="100%"
-                                        objectFit="contain"
-                                    />
-                                )}
+                                {(() => {
+                                    const firstMedia = post.media?.[0];
+                                    const mediaUrl = firstMedia?.url || firstMedia?.mediaUrl || firstMedia?.contentUrl;
+                                    
+                                    if (isReel) {
+                                        return (
+                                            <Box
+                                                as="video"
+                                                src={mediaUrl}
+                                                width="100%"
+                                                height="100%"
+                                                objectFit="contain"
+                                                autoPlay
+                                                muted
+                                                loop
+                                                playsInline
+                                            />
+                                        );
+                                    }
+                                    
+                                    return (
+                                        <Image
+                                            src={mediaUrl}
+                                            width="100%"
+                                            height="100%"
+                                            objectFit="contain"
+                                            fallback={
+                                                <Center h="100%">
+                                                    <Spinner color="white" />
+                                                </Center>
+                                            }
+                                        />
+                                    );
+                                })()}
                             </Box>
 
                             {/* Edit Section */}
@@ -167,9 +210,7 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                                         <VStack align="stretch" gap={3}>
                                             <Flex justify="space-between" align="center">
                                                 <Text fontSize="14px" color="black">Hide like and view counts</Text>
-                                                <Switch 
-                                                    colorPalette="blue" 
-                                                    size="sm" 
+                                                <CustomSwitch 
                                                     checked={hideLikeCount} 
                                                     onCheckedChange={(e) => setHideLikeCount(e.checked)}
                                                 />
@@ -178,9 +219,7 @@ const EditPostModal = ({ isOpen, onClose, post }) => {
                                             
                                             <Flex justify="space-between" align="center" mt={2}>
                                                 <Text fontSize="14px" color="black">Turn off commenting</Text>
-                                                <Switch 
-                                                    colorPalette="blue" 
-                                                    size="sm" 
+                                                <CustomSwitch 
                                                     checked={commentsDisabled} 
                                                     onCheckedChange={(e) => setCommentsDisabled(e.checked)}
                                                 />

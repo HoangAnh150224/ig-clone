@@ -79,6 +79,7 @@ public class MessageController {
                 .content(body.getContent())
                 .mediaUrl(body.getMediaUrl())
                 .mediaType(body.getMediaType())
+                .sharedPostId(body.getSharedPostId())
                 .build();
         return ResponseEntity.ok(ApiResponse.success(sendMessageService.execute(request), "Message sent", 200));
     }

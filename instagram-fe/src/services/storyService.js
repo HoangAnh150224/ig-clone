@@ -7,19 +7,10 @@ const storyService = {
     /**
      * Create a new story.
      * API: POST /stories
-     * @param {File} file - The story media file
-     * @param {boolean} closeFriends - Whether this story is for close friends only
+     * @param {Object} storyData - { mediaUrl, mediaType, closeFriendsOnly, caption }
      */
-    createStory: async (file, closeFriends = false) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("closeFriends", closeFriends);
-
-        return axiosClient.post("/stories", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+    createStory: async (storyData) => {
+        return axiosClient.post("/stories", storyData);
     },
 
     /**
@@ -28,6 +19,14 @@ const storyService = {
      */
     getFeedStories: async () => {
         return axiosClient.get("/stories/feed");
+    },
+
+    /**
+     * Get active stories for a specific user by username.
+     * API: GET /stories/user/{username}
+     */
+    getUserStories: async (username) => {
+        return axiosClient.get(`/stories/user/${username}`);
     },
 
     /**
@@ -84,6 +83,14 @@ const storyService = {
      */
     getStoryViewers: async (id) => {
         return axiosClient.get(`/stories/${id}/viewers`);
+    },
+
+    /**
+     * Get replies of a story.
+     * API: GET /stories/{id}/replies
+     */
+    getStoryReplies: async (id) => {
+        return axiosClient.get(`/stories/${id}/replies`);
     }
 };
 

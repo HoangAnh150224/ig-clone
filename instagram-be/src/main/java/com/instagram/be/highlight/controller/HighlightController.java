@@ -7,6 +7,7 @@ import com.instagram.be.highlight.request.*;
 import com.instagram.be.highlight.response.HighlightResponse;
 import com.instagram.be.highlight.service.*;
 import com.instagram.be.storage.CloudinaryService;
+import com.instagram.be.story.response.StoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,29 @@ public class HighlightController {
     private final CreateHighlightService createHighlightService;
     private final AddStoryToHighlightService addStoryToHighlightService;
     private final DeleteHighlightService deleteHighlightService;
+    private final GetUserHighlightsService getUserHighlightsService;
+    private final GetHighlightStoriesService getHighlightStoriesService;
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<HighlightResponse>>> getUserHighlights(
+            @RequestParam String username) {
+        GetUserHighlightsRequest request = GetUserHighlightsRequest.builder()
+                .targetUsername(username)
+                .userContext(currentUser())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(getUserHighlightsService.execute(request), "Highlights retrieved", 200));
+    }
+
+    @GetMapping("/{id}/stories")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<StoryResponse>>> getHighlightStories(@PathVariable UUID id) {
+        HighlightActionRequest request = HighlightActionRequest.builder()
+                .highlightId(id)
+                .userContext(currentUser())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(getHighlightStoriesService.execute(request), "Stories retrieved", 200));
+    }
 
     @PostMapping(consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useDispatch } from "react-redux";
 import CreateHighlightModal from "../modals/CreateHighlightModal";
 import StoryModal from "../modals/StoryModal";
 

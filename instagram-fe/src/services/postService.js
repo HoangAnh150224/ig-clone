@@ -7,29 +7,11 @@ const postService = {
     /**
      * Create a new post.
      * API: POST /posts
-     * @param {File[]} files - Array of files to upload
-     * @param {Object} postData - Post metadata (caption, type, tags, etc.)
+     * @param {Object} postData - Post metadata including media URLs, caption, type, tags, etc.
+     * Expected structure: { caption, type, locationName, media: [{ url, mediaType, displayOrder }], hashtags, taggedUserIds }
      */
-    createPost: async (files, postData) => {
-        const formData = new FormData();
-        
-        // Append files
-        if (Array.isArray(files)) {
-            files.forEach((file) => formData.append("files", file));
-        } else if (files) {
-            formData.append("files", files);
-        }
-
-        // Append data as JSON string (Backend uses @RequestPart("data"))
-        formData.append("data", new Blob([JSON.stringify(postData)], {
-            type: "application/json"
-        }));
-
-        return axiosClient.post("/posts", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+    createPost: async (postData) => {
+        return axiosClient.post("/posts", postData);
     },
 
     /**

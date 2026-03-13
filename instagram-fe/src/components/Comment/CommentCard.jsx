@@ -7,13 +7,15 @@ import UserListModal from "../modals/UserListModal";
 import { useSelector } from "react-redux";
 
 import commentService from "../../services/commentService";
+import { formatRelativeTime } from "../../utils/dateUtils";
 
-const CommentCard = ({ comment, postId, onClose, onReply }) => {
+const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
     const authUser = useSelector((state) => state.auth.user);
     const [showReplies, setShowReplies] = useState(false);
     const [replies, setReplies] = useState([]);
     const [loadingReplies, setLoadingReplies] = useState(false);
     const [isLiked, setIsLiked] = useState(comment.isLiked || false);
+    const [isPinned, setIsPinned] = useState(comment.isPinned || false);
     const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount || 0);
     const [isLikeListOpen, setIsListOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -24,6 +26,7 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
     if (!comment) return null;
 
     const isOwner = authUser?.id === comment.author?.id;
+    const isPostOwner = authUser?.id === postOwnerId;
 
     const handleNavigate = (username) => {
         if (onClose) onClose();
@@ -40,6 +43,17 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
         } catch {
             setIsLiked(previousState);
             setLocalLikeCount(previousCount);
+        }
+    };
+
+    const handlePin = async () => {
+        const previousState = isPinned;
+        setIsPinned(!isPinned);
+        try {
+            await commentService.pinComment(postId, comment.id);
+        } catch (error) {
+            console.error("Failed to pin/unpin comment", error);
+            setIsPinned(previousState);
         }
     };
 
@@ -133,24 +147,35 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
                         </VStack>
                     ) : (
                         <>
-                            <Text fontSize="14px" lineHeight="1.4" color="black">
-                                <Text
-                                    as="span"
-                                    fontWeight="bold"
-                                    mr={2}
-                                    cursor="pointer"
-                                    onClick={() =>
-                                        handleNavigate(comment.author?.username)
-                                    }
-                                    _hover={{ opacity: 0.7 }}
-                                >
-                                    {comment.author?.username}
+                            <Box>
+                                {isPinned && (
+                                    <HStack spacing={1} mb={1}>
+                                        <svg aria-label="Pinned" color="#8e8e8e" fill="#8e8e8e" height="12" role="img" viewBox="0 0 24 24" width="12">
+                                            <title>Pinned</title>
+                                            <path d="M12 2a.75.75 0 0 1 .75.75V8.5h4.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-1.5v6.5a.75.75 0 0 1-1.5 0V13h-4.5a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 .75-.75h1.5V2.75A.75.75 0 0 1 12 2Z"></path>
+                                        </svg>
+                                        <Text fontSize="12px" color="gray.500" fontWeight="bold">Pinned</Text>
+                                    </HStack>
+                                )}
+                                <Text fontSize="14px" lineHeight="1.4" color="black">
+                                    <Text
+                                        as="span"
+                                        fontWeight="bold"
+                                        mr={2}
+                                        cursor="pointer"
+                                        onClick={() =>
+                                            handleNavigate(comment.author?.username)
+                                        }
+                                        _hover={{ opacity: 0.7 }}
+                                    >
+                                        {comment.author?.username}
+                                    </Text>
+                                    {comment.content}
                                 </Text>
-                                {comment.content}
-                            </Text>
+                            </Box>
                             <HStack gap={4} mt={2}>
                                 <Text fontSize="12px" color="gray.500">
-                                    {comment.timeAgo || 'just now'}
+                                    {comment.createdAt ? formatRelativeTime(comment.createdAt) : (comment.timeAgo || 'just now')}
                                 </Text>
                                 {localLikeCount > 0 && (
                                     <Text
@@ -182,6 +207,17 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
                                         onClick={() => setIsEditing(true)}
                                     >
                                         Edit
+                                    </Text>
+                                )}
+                                {isPostOwner && (
+                                    <Text
+                                        fontSize="12px"
+                                        color="gray.500"
+                                        fontWeight="bold"
+                                        cursor="pointer"
+                                        onClick={handlePin}
+                                    >
+                                        {isPinned ? "Unpin" : "Pin"}
                                     </Text>
                                 )}
                             </HStack>
@@ -244,6 +280,7 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
                                         onNavigate={handleNavigate}
                                         onReply={onReply}
                                         parentComment={comment}
+                                        postOwnerId={postOwnerId}
                                     />
                                 ))
                             )}
@@ -262,10 +299,18 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
     );
 };
 
-const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment }) => {
+const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwnerId }) => {
+    const authUser = useSelector((state) => state.auth.user);
     const [isLiked, setIsLiked] = useState(reply.isLiked || false);
+    const [isPinned, setIsPinned] = useState(reply.isPinned || false);
     const [localLikeCount, setLocalLikeCount] = useState(reply.likeCount || 0);
     const [isListOpen, setIsListOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(reply.content || "");
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const isOwner = authUser?.id === reply.author?.id;
+    const isPostOwner = authUser?.id === postOwnerId;
 
     const handleLike = async () => {
         const previousState = isLiked;
@@ -277,6 +322,34 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment }) => {
         } catch {
             setIsLiked(previousState);
             setLocalLikeCount(previousCount);
+        }
+    };
+
+    const handlePin = async () => {
+        const previousState = isPinned;
+        setIsPinned(!isPinned);
+        try {
+            await commentService.pinComment(postId, reply.id);
+        } catch (error) {
+            console.error("Failed to pin/unpin reply", error);
+            setIsPinned(previousState);
+        }
+    };
+
+    const handleUpdateReply = async () => {
+        if (!editContent.trim() || editContent === reply.content) {
+            setIsEditing(false);
+            return;
+        }
+        setIsUpdating(true);
+        try {
+            await commentService.updateComment(postId, reply.id, editContent);
+            reply.content = editContent; // Update local object
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Failed to update reply", error);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -295,43 +368,118 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment }) => {
                 <UserAvatar src={reply.author?.avatarUrl} size="24px" />
             </Box>
             <Box flex={1}>
-                <Text fontSize="14px" color="black" lineHeight="1.4">
-                    <Text
-                        as="span"
-                        fontWeight="bold"
-                        mr={2}
-                        cursor="pointer"
-                        onClick={() => onNavigate(reply.author?.username)}
-                    >
-                        {reply.author?.username}
-                    </Text>
-                    {reply.content}
-                </Text>
-                <HStack gap={4} mt={1}>
-                    <Text fontSize="12px" color="gray.500">
-                        {reply.timeAgo || 'just now'}
-                    </Text>
-                    {localLikeCount > 0 && (
-                        <Text
-                            fontSize="12px"
-                            color="gray.500"
-                            fontWeight="bold"
-                            cursor="pointer"
-                            onClick={() => setIsListOpen(true)}
-                        >
-                            {localLikeCount.toLocaleString()} likes
-                        </Text>
-                    )}
-                    <Text
-                        fontSize="12px"
-                        color="gray.500"
-                        fontWeight="bold"
-                        cursor="pointer"
-                        onClick={handleReplyClick}
-                    >
-                        Reply
-                    </Text>
-                </HStack>
+                {isEditing ? (
+                    <VStack align="stretch" gap={2}>
+                        <Box 
+                            as="textarea"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            style={{
+                                width: "100%",
+                                fontSize: "14px",
+                                border: "1px solid #dbdbdb",
+                                borderRadius: "4px",
+                                padding: "8px",
+                                backgroundColor: "white",
+                                color: "black",
+                                minHeight: "40px"
+                            }}
+                        />
+                        <HStack gap={3}>
+                            <Text 
+                                fontSize="12px" 
+                                color="#0095f6" 
+                                fontWeight="bold" 
+                                cursor="pointer"
+                                onClick={handleUpdateReply}
+                            >
+                                {isUpdating ? "Saving..." : "Save"}
+                            </Text>
+                            <Text 
+                                fontSize="12px" 
+                                color="gray.500" 
+                                fontWeight="bold" 
+                                cursor="pointer"
+                                onClick={() => setIsEditing(false)}
+                            >
+                                Cancel
+                            </Text>
+                        </HStack>
+                    </VStack>
+                ) : (
+                    <>
+                        <Box>
+                            {isPinned && (
+                                <HStack spacing={1} mb={1}>
+                                    <svg aria-label="Pinned" color="#8e8e8e" fill="#8e8e8e" height="10" role="img" viewBox="0 0 24 24" width="10">
+                                        <title>Pinned</title>
+                                        <path d="M12 2a.75.75 0 0 1 .75.75V8.5h4.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-1.5v6.5a.75.75 0 0 1-1.5 0V13h-4.5a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 .75-.75h1.5V2.75A.75.75 0 0 1 12 2Z"></path>
+                                    </svg>
+                                    <Text fontSize="10px" color="gray.500" fontWeight="bold">Pinned</Text>
+                                </HStack>
+                            )}
+                            <Text fontSize="14px" color="black" lineHeight="1.4">
+                                <Text
+                                    as="span"
+                                    fontWeight="bold"
+                                    mr={2}
+                                    cursor="pointer"
+                                    onClick={() => onNavigate(reply.author?.username)}
+                                >
+                                    {reply.author?.username}
+                                </Text>
+                                {reply.content}
+                            </Text>
+                        </Box>
+                        <HStack gap={4} mt={1}>
+                            <Text fontSize="12px" color="gray.500">
+                                {reply.createdAt ? formatRelativeTime(reply.createdAt) : (reply.timeAgo || 'just now')}
+                            </Text>
+                            {localLikeCount > 0 && (
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
+                                    cursor="pointer"
+                                    onClick={() => setIsListOpen(true)}
+                                >
+                                    {localLikeCount.toLocaleString()} likes
+                                </Text>
+                            )}
+                            <Text
+                                fontSize="12px"
+                                color="gray.500"
+                                fontWeight="bold"
+                                cursor="pointer"
+                                onClick={handleReplyClick}
+                            >
+                                Reply
+                            </Text>
+                            {isOwner && (
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
+                                    cursor="pointer"
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    Edit
+                                </Text>
+                            )}
+                            {isPostOwner && (
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
+                                    cursor="pointer"
+                                    onClick={handlePin}
+                                >
+                                    {isPinned ? "Unpin" : "Pin"}
+                                </Text>
+                            )}
+                        </HStack>
+                    </>
+                )}
             </Box>
             <Box
                 pt={1}

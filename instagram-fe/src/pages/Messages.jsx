@@ -40,14 +40,20 @@ const Messages = () => {
             
             const formatChats = (list) => {
                 const data = Array.isArray(list) ? list : (list.content || []);
-                return data.map(chat => {
-                    const isObject = typeof chat.lastMessage === 'object';
-                    return {
-                        ...chat,
-                        lastMessage: isObject ? chat.lastMessage?.content : chat.lastMessage,
-                        lastMessageSenderId: isObject ? chat.lastMessage?.senderId : null
-                    };
-                });
+                return data
+                    .map(chat => {
+                        const isObject = typeof chat.lastMessage === 'object';
+                        // Extract time from the message object if available, fallback to conversation times
+                        const lastMsgTime = isObject ? (chat.lastMessage?.createdAt || chat.lastMessage?.timestamp) : null;
+                        
+                        return {
+                            ...chat,
+                            lastMessage: isObject ? chat.lastMessage?.content : chat.lastMessage,
+                            lastMessageSenderId: isObject ? chat.lastMessage?.senderId : null,
+                            sortTime: new Date(lastMsgTime || chat.lastMessageAt || chat.updatedAt || chat.createdAt).getTime()
+                        };
+                    })
+                    .sort((a, b) => b.sortTime - a.sortTime);
             };
 
             const pChats = formatChats(primaryRes);

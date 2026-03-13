@@ -11,7 +11,8 @@ public record FollowUserResponse(
         String avatarUrl,
         boolean verified,
         boolean isFollowing,
-        long mutualCount) {
+        long mutualCount,
+        boolean active) {
 
     public static FollowUserResponse from(UserProfile user) {
         return new FollowUserResponse(
@@ -21,7 +22,8 @@ public record FollowUserResponse(
                 user.getAvatarUrl(),
                 user.isVerified(),
                 false,
-                0
+                0,
+                user.isActive()
         );
     }
 
@@ -33,7 +35,8 @@ public record FollowUserResponse(
                 user.getAvatarUrl(),
                 user.isVerified(),
                 isFollowing,
-                0
+                0,
+                user.isActive()
         );
     }
 
@@ -45,7 +48,8 @@ public record FollowUserResponse(
                 user.getAvatarUrl(),
                 user.isVerified(),
                 isFollowing,
-                mutualCount
+                mutualCount,
+                user.isActive()
         );
     }
 }

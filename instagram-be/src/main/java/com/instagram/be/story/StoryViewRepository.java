@@ -20,4 +20,6 @@ public interface StoryViewRepository extends JpaRepository<StoryView, UUID> {
 
     @Query("SELECT sv FROM StoryView sv JOIN FETCH sv.viewer WHERE sv.story.id = :storyId ORDER BY sv.createdAt DESC")
     List<StoryView> findViewersByStoryId(@Param("storyId") UUID storyId);
+
+    void deleteAllByStory(Story story);
 }

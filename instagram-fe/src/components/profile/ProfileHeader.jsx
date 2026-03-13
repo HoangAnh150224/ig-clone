@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
     Box,
     HStack,
@@ -21,10 +21,12 @@ import profileService from "../../services/profileService";
 import userService from "../../services/userService";
 import { toggleFollow } from "../../store/slices/userSlice";
 import { setUser } from "../../store/slices/authSlice";
+import UserAvatar from "../common/UserAvatar";
 
 const ProfileHeader = ({ user, isOwnProfile }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const fileInputRef = useRef(null);
     const authUser = useSelector((state) => state.auth.user);
     const [isStoryOpen, setIsStoryOpen] = useState(false);
     const [isListOpen, setIsListOpen] = useState(false);
@@ -54,8 +56,11 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
 
     const handleAvatarClick = () => {
         if (isBlocked) return;
+        
+        const userStories = user.stories || user.activeStories || [];
+        
         // ONLY OPEN IF THERE ARE NEW STORIES (Active Story)
-        if (user.hasStory && user.stories?.length > 0) {
+        if (user.hasStory && userStories.length > 0) {
             setIsStoryOpen(true);
         } else if (isOwnProfile) {
             dispatch(openCreatePostModal());
@@ -68,7 +73,6 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
             if (type === "followers") {
                 setListTitle("Followers");
                 const response = await profileService.getUserFollowers(user.id);
-                // Extract content from PaginatedResponse or fallback to array
                 setListUsers(response.content || (Array.isArray(response) ? response : []));
             } else {
                 setListTitle("Following");
@@ -87,78 +91,71 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
     };
 
     // STORY DATA ONLY CONTAINS NEW STORIES, NO HIGHLIGHTS
-    const activeStoryData = user.hasStory && !isBlocked
+    const userStories = user.stories || user.activeStories || [];
+    const hasUnseenStory = userStories.some(s => !s.seen);
+    const hasStory = user.hasStory && userStories.length > 0;
+
+    const activeStoryData = hasStory && !isBlocked
         ? [
               {
                   id: "active-story",
                   title: "Story",
                   user: user,
-                  stories: user.stories,
+                  stories: userStories,
               },
           ]
         : [];
 
     return (
         <>
-            <div className="flex flex-row gap-8 md:gap-20 pt-12 pb-10 px-4 items-start max-w-[935px] mx-auto">
+            <div className="flex flex-row gap-20 pt-12 pb-10 px-4 items-start max-w-[935px] mx-auto">
                 {/* Avatar Section */}
                 <Box flexShrink={0} pt={2}>
                     <Box
-                        width={{ base: "77px", md: "150px" }}
-                        height={{ base: "77px", md: "150px" }}
+                        width="168px"
+                        height="168px"
                         borderRadius="full"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
                         position="relative"
-                        cursor={user.hasStory && !isBlocked ? "pointer" : "default"}
+                        cursor={hasStory && !isBlocked ? "pointer" : "default"}
                         p="4px"
                         onClick={handleAvatarClick}
                         bg={
-                            user.hasStory && !isBlocked
-                                ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)"
+                            hasStory && !isBlocked
+                                ? hasUnseenStory
+                                    ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)"
+                                    : "transparent"
                                 : "transparent"
                         }
-                        border={!user.hasStory || isBlocked ? "1px solid" : "none"}
-                        borderColor="gray.200"
+                        border={hasStory && !isBlocked && !hasUnseenStory ? "1.5px solid" : "none"}
+                        borderColor="gray.300"
                     >
-                        <Box
-                            bg="white"
-                            borderRadius="full"
-                            p={user.hasStory && !isBlocked ? "3px" : "0"}
-                            width="100%"
-                            height="100%"
-                        >
-                            <Box
-                                width="100%"
-                                height="100%"
-                                borderRadius="full"
-                                overflow="hidden"
-                            >
-                                <Image
-                                    src={user.avatarUrl}
-                                    alt={user.username}
-                                    w="100%"
-                                    h="100%"
-                                    objectFit="cover"
-                                    filter={isBlocked ? "grayscale(100%) opacity(0.5)" : "none"}
-                                />
-                            </Box>
-                        </Box>
-                        {isOwnProfile && !user.hasStory && (
+                        <UserAvatar
+                            src={user.avatarUrl}
+                            size="150px"
+                            hasBorder={!hasStory}
+                        />
+                        {isOwnProfile && !hasStory && (
                             <Box
                                 position="absolute"
-                                bottom={{ base: "2px", md: "10px" }}
-                                right={{ base: "2px", md: "10px" }}
+                                bottom="10px"
+                                right="10px"
                                 bg="#0095f6"
                                 borderRadius="full"
                                 border="3px solid white"
-                                width={{ base: "20px", md: "32px" }}
-                                height={{ base: "20px", md: "32px" }}
+                                width="32px"
+                                height="32px"
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
                                 color="white"
+                                cursor="pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    dispatch(openCreatePostModal());
+                                }}
                             >
                                 <FiPlus size={18} strokeWidth={4} />
                             </Box>
@@ -169,9 +166,27 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                 {/* Info Section */}
                 <VStack align="start" gap={4} flex={1} width="100%">
                     <HStack gap={4} wrap="wrap" width="100%">
-                        <Text fontSize="20px" fontWeight="400" color="black">
-                            {user.username}
-                        </Text>
+                        <HStack gap={2}>
+                            <Text fontSize="20px" fontWeight="400" color="black">
+                                {user.username}
+                            </Text>
+                            {authUser?.favoriteUserIds?.includes(user.id) && (
+                                <Box display="flex" alignItems="center" justifyContent="center">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id={`profile-star-gradient-${user.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stopColor="#f09433" />
+                                                <stop offset="25%" stopColor="#e6683c" />
+                                                <stop offset="50%" stopColor="#dc2743" />
+                                                <stop offset="75%" stopColor="#cc2366" />
+                                                <stop offset="100%" stopColor="#bc1888" />
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={`url(#profile-star-gradient-${user.id})`} />
+                                    </svg>
+                                </Box>
+                            )}
+                        </HStack>
                         {isOwnProfile ? (
                             <HStack gap={2}>
                                 <Button

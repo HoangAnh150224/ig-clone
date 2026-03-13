@@ -95,10 +95,15 @@ const Settings = () => {
                 tagPermission: authUser.tagPermission || "EVERYONE"
             });
             setIsPrivate(authUser.privateAccount || authUser.isPrivate || false);
+        }
+    }, [authUser?.id]);
+
+    useEffect(() => {
+        if (authUser?.id) {
             fetchFavorites();
             fetchBlockedUsers();
         }
-    }, [authUser]);
+    }, [authUser?.id]);
 
     const fetchFavorites = async () => {
         try {
@@ -176,7 +181,7 @@ const Settings = () => {
                 title: "Success",
                 message: "User blocking status updated.",
             });
-        } catch (error) {
+        } catch {
             setAlertConfig({
                 isOpen: true,
                 title: "Error",

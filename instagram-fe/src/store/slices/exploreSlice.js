@@ -13,6 +13,18 @@ export const fetchExplorePosts = createAsyncThunk(
     }
 );
 
+export const fetchHashtagPosts = createAsyncThunk(
+    "explore/fetchHashtagPosts",
+    async ({ name, page, size }, { rejectWithValue }) => {
+        try {
+            const response = await postService.getHashtagPosts(name, page, size);
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.apiResponse || error.message);
+        }
+    }
+);
+
 const initialState = {
     posts: [],
     loading: false,
@@ -59,6 +71,29 @@ const exploreSlice = createSlice({
                 state.loading = false;
             })
             .addCase(fetchExplorePosts.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.hasMore = false;
+            })
+            // Hashtag cases
+            .addCase(fetchHashtagPosts.pending, (state) => {
+                state.loading = state.page === 0;
+            })
+            .addCase(fetchHashtagPosts.fulfilled, (state, action) => {
+                const newPosts = action.payload.content || action.payload.posts || (Array.isArray(action.payload) ? action.payload : []);
+                const isLast = action.payload.last === true;
+                
+                if (state.page === 0) {
+                    state.posts = newPosts;
+                } else {
+                    state.posts = [...state.posts, ...newPosts];
+                }
+                
+                state.hasMore = !isLast && newPosts.length > 0;
+                state.page += 1;
+                state.loading = false;
+            })
+            .addCase(fetchHashtagPosts.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
                 state.hasMore = false;

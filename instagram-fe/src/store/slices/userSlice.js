@@ -96,7 +96,7 @@ const userSlice = createSlice({
                     state.userProfile.isPending = (status === "PENDING");
                 }
             })
-            .addCase(toggleFollow.rejected, (state) => {
+            .addCase(toggleFollow.rejected, () => {
                 // Simple rollback for now - usually we'd need old state
                 // This is a bit tricky with multiple toggle modes, 
                 // but for now let's just force a refresh or accept the glitch.

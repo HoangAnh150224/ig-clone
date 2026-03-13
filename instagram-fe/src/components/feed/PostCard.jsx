@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Box, HStack, Text, Input, Flex, Icon } from "@chakra-ui/react";
+import { Box, HStack, VStack, Text, Input, Flex, Icon, Center } from "@chakra-ui/react";
 import {
     AiOutlineHeart,
     AiFillHeart,
@@ -55,6 +55,8 @@ const PostCard = ({ post }) => {
     const isSaved = post.isSaved || false;
     const isOwnPost = post.author?.id === authUser?.id;
     const isReel = post.type === "REEL";
+
+    if (post.author?.isActive === false) return null;
 
     const handleLike = () => {
         dispatch(toggleLike(post.id));
@@ -112,6 +114,30 @@ const PostCard = ({ post }) => {
         }
     };
 
+    const renderCaptionWithHashtags = (caption) => {
+        if (!caption) return null;
+        return caption.split(/(\s+)/).map((part, index) => {
+            if (part.startsWith("#")) {
+                return (
+                    <Text
+                        key={index}
+                        as="span"
+                        color="#00376b"
+                        cursor="pointer"
+                        _hover={{ textDecoration: "underline" }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/explore?q=${part.substring(1)}`);
+                        }}
+                    >
+                        {part}
+                    </Text>
+                );
+            }
+            return part;
+        });
+    };
+
     return (
         <>
             <Box
@@ -134,14 +160,21 @@ const PostCard = ({ post }) => {
                         onClick={() => navigate(`/${post.author?.username}`)}
                     >
                         <UserAvatar src={post.author?.avatarUrl} />
-                        <Text
-                            fontSize="14px"
-                            fontWeight="600"
-                            color="black"
-                            _hover={{ color: "gray.500" }}
-                        >
-                            {post.author?.username || "user"}
-                        </Text>
+                        <VStack align="start" gap={0}>
+                            <Text
+                                fontSize="14px"
+                                fontWeight="600"
+                                color="black"
+                                _hover={{ color: "gray.500" }}
+                            >
+                                {post.author?.username || "user"}
+                            </Text>
+                            {post.locationName && (
+                                <Text fontSize="12px" color="gray.600" mt="-1px">
+                                    {post.locationName}
+                                </Text>
+                            )}
+                        </VStack>
                     </HStack>
 
                     <HStack gap={3}>
@@ -149,7 +182,7 @@ const PostCard = ({ post }) => {
                             <Box display="flex" alignItems="center" justifyContent="center">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <defs>
-                                        <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <linearGradient id={`star-gradient-${post.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
                                             <stop offset="0%" stopColor="#f09433" />
                                             <stop offset="25%" stopColor="#e6683c" />
                                             <stop offset="50%" stopColor="#dc2743" />
@@ -157,7 +190,7 @@ const PostCard = ({ post }) => {
                                             <stop offset="100%" stopColor="#bc1888" />
                                         </linearGradient>
                                     </defs>
-                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#star-gradient)" />
+                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={`url(#star-gradient-${post.id})`} />
                                 </svg>
                             </Box>
                         )}
@@ -195,18 +228,24 @@ const PostCard = ({ post }) => {
                     >
                         {isReel ? (
                             <>
-                                <Box
-                                    as="video"
-                                    ref={videoRef}
-                                    src={post.media?.[0]?.url}
-                                    autoPlay
-                                    loop
-                                    muted={isMuted}
-                                    playsInline
-                                    width="100%"
-                                    height="100%"
-                                    objectFit="cover"
-                                />
+                                {(() => {
+                                    const firstMedia = post.media?.[0];
+                                    const mediaUrl = firstMedia?.url || firstMedia?.mediaUrl || firstMedia?.contentUrl;
+                                    return (
+                                        <Box
+                                            as="video"
+                                            ref={videoRef}
+                                            src={mediaUrl}
+                                            autoPlay
+                                            loop
+                                            muted={isMuted}
+                                            playsInline
+                                            width="100%"
+                                            height="100%"
+                                            objectFit="cover"
+                                        />
+                                    );
+                                })()}
                                 {!isPlaying && (
                                     <Box
                                         position="absolute"
@@ -240,7 +279,7 @@ const PostCard = ({ post }) => {
                             </>
                         ) : (
                             <ImageCarousel
-                                images={post.media?.map(m => m.url) || []}
+                                images={post.media?.map(m => m.url || m.mediaUrl || m.contentUrl) || []}
                                 height="100%"
                             />
                         )}
@@ -332,11 +371,11 @@ const PostCard = ({ post }) => {
                             >
                                 {post.author?.username}
                             </Text>
-                            {post.caption}
+                            {renderCaptionWithHashtags(post.caption)}
                         </Text>
                     </Box>
 
-                    {post.commentCount > 0 && (
+                    {post.commentCount > 0 && !post.commentsDisabled && (
                         <Text
                             fontSize="14px"
                             color="gray.500"
@@ -345,6 +384,12 @@ const PostCard = ({ post }) => {
                             onClick={() => setIsCommentModalOpen(true)}
                         >
                             View all {post.commentCount} comments
+                        </Text>
+                    )}
+
+                    {post.commentsDisabled && (
+                        <Text fontSize="13px" color="gray.500" mb={2}>
+                            Comments are disabled for this post.
                         </Text>
                     )}
 
@@ -365,32 +410,40 @@ const PostCard = ({ post }) => {
                     px={3}
                     py={3}
                     bg="white"
-                    display={{ base: "none", md: "block" }}
+                    display="block"
                 >
-                    <HStack gap={3} bg="white">
-                        <FaRegSmile size={20} cursor="pointer" color="black" />
-                        <Input
-                            placeholder="Add a comment..."
-                            variant="unstyled"
-                            fontSize="14px"
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            _placeholder={{ color: "gray.500" }}
-                            color="black"
-                            bg="white"
-                        />
-                        <Text
-                            as="button"
-                            color="#0095f6"
-                            fontSize="14px"
-                            fontWeight="600"
-                            opacity={comment.trim() && !isSubmittingComment ? 1 : 0.3}
-                            cursor={comment.trim() && !isSubmittingComment ? "pointer" : "default"}
-                            onClick={handlePostComment}
-                        >
-                            Post
-                        </Text>
-                    </HStack>
+                    {post.commentsDisabled ? (
+                        <Center py={1}>
+                            <Text fontSize="13px" color="gray.500" fontWeight="400">
+                                Comments are disabled.
+                            </Text>
+                        </Center>
+                    ) : (
+                        <HStack gap={3} bg="white">
+                            <FaRegSmile size={20} cursor="pointer" color="black" />
+                            <Input
+                                placeholder="Add a comment..."
+                                variant="unstyled"
+                                fontSize="14px"
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                _placeholder={{ color: "gray.500" }}
+                                color="black"
+                                bg="white"
+                            />
+                            <Text
+                                as="button"
+                                color="#0095f6"
+                                fontSize="14px"
+                                fontWeight="600"
+                                opacity={comment.trim() && !isSubmittingComment ? 1 : 0.3}
+                                cursor={comment.trim() && !isSubmittingComment ? "pointer" : "default"}
+                                onClick={handlePostComment}
+                            >
+                                Post
+                            </Text>
+                        </HStack>
+                    )}
                 </Box>
             </Box>
 

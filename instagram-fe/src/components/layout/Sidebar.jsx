@@ -25,6 +25,7 @@ import { logout } from "../../store/slices/authSlice";
 import SearchPanel from "./panels/SearchPanel";
 import NotificationPanel from "./panels/NotificationPanel";
 import notificationService from "../../services/notificationService";
+import authService from "../../services/authService";
 
 const SidebarItem = ({
     icon: OutlineIcon,

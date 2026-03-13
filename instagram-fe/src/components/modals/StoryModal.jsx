@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Image, Flex, HStack, Text, VStack, Spinner, Center } from "@chakra-ui/react";
+import { Box, Image, Flex, HStack, Text, VStack, Spinner, Center, Input } from "@chakra-ui/react";
 import {
     AiOutlineClose,
     AiOutlineLeft,
@@ -34,27 +34,68 @@ const StoryModal = ({
     const [isLiked, setIsLiked] = useState(false);
     const [isActivityOpen, setIsActivityOpen] = useState(false);
     const [viewers, setViewers] = useState([]);
+    const [storyReplies, setStoryReplies] = useState([]);
     const [loadingViewers, setLoadingViewers] = useState(false);
     const [isHighlighting, setIsHighlighting] = useState(false);
+    const [replyText, setReplyText] = useState("");
+    const [isSendingReply, setIsSendingReply] = useState(false);
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const [alertConfig, setAlertConfig] = useState({
         isOpen: false,
         title: "",
         message: "",
     });
 
+    const [activeStories, setActiveStories] = useState([]);
+    const [isLoadingStories, setIsLoadingStories] = useState(false);
+
+    useEffect(() => {
+        const fetchHighlightStories = async () => {
+            if (isOpen && highlights?.[highlightIndex]) {
+                const h = highlights[highlightIndex];
+                
+                // If stories/items are already present, use them
+                const existingStories = h.stories || h.items || [];
+                if (existingStories.length > 0) {
+                    setActiveStories(existingStories);
+                    return;
+                }
+
+                // If no stories present and we have an ID, fetch them from the new endpoint
+                if (h.id) {
+                    setIsLoadingStories(true);
+                    try {
+                        const response = await profileService.getHighlightStories(h.id);
+                        // Extract from ApiResponse wrapper (.data)
+                        const stories = response?.data || (Array.isArray(response) ? response : (response?.content || []));
+                        setActiveStories(stories);
+                    } catch (error) {
+                        console.error("Failed to fetch highlight stories", error);
+                        setActiveStories([]);
+                    } finally {
+                        setIsLoadingStories(false);
+                    }
+                } else {
+                    setActiveStories([]);
+                }
+            }
+        };
+
+        fetchHighlightStories();
+    }, [isOpen, highlightIndex, highlights]);
+
     const currentHighlight = highlights?.[highlightIndex];
-    const currentStories = currentHighlight?.stories || [];
+    const currentStories = activeStories;
     const currentStory = currentStories[storyIndex];
     const storyUser = currentHighlight?.user;
 
     const markAsSeen = useCallback(async (storyId) => {
-        if (!storyId || isArchiveMode) return;
+        if (!storyId || isArchiveMode || currentStory?.seen) return;
         try {
             await storyService.viewStory(storyId);
-            // Optionally update local state if needed, but the main goal is the server call
-            if (currentStory) {
-                currentStory.seen = true;
-            }
+            // We update the local object reference which is part of activeStories
+            // This is generally safe in this context as seen is checked before calling.
+            currentStory.seen = true;
         } catch (error) {
             console.error("Failed to mark story as seen", error);
         }
@@ -109,10 +150,19 @@ const StoryModal = ({
         setIsActivityOpen(true);
         setLoadingViewers(true);
         try {
-            const response = await storyService.getStoryViewers(currentStory.id);
-            setViewers(response.content || (Array.isArray(response) ? response : []));
+            const [viewersRes, repliesRes] = await Promise.all([
+                storyService.getStoryViewers(currentStory.id),
+                storyService.getStoryReplies(currentStory.id),
+            ]);
+            
+            // Handle ApiResponse wrapper structure
+            const viewersList = viewersRes?.data || (Array.isArray(viewersRes) ? viewersRes : (viewersRes?.content || []));
+            const repliesList = repliesRes?.data || (Array.isArray(repliesRes) ? repliesRes : (repliesRes?.content || []));
+            
+            setViewers(viewersList);
+            setStoryReplies(repliesList);
         } catch (error) {
-            console.error("Failed to fetch story viewers", error);
+            console.error("Failed to fetch story activity", error);
         } finally {
             setLoadingViewers(false);
         }
@@ -126,31 +176,41 @@ const StoryModal = ({
 
     useEffect(() => {
         if (isOpen) {
-            setHighlightIndex(initialHighlightIndex || 0);
+            const hIndex = initialHighlightIndex || 0;
+            setHighlightIndex(hIndex);
             
             // Jump to the first unseen story of the initial highlight
-            const initialStories = highlights?.[initialHighlightIndex || 0]?.stories || [];
-            setStoryIndex(getFirstUnseenIndex(initialStories));
+            const currentH = highlights?.[hIndex];
+            const initialStories = currentH?.stories || currentH?.items || [];
+            const initialStoryIndex = getFirstUnseenIndex(initialStories);
+            setStoryIndex(initialStoryIndex);
+            
+            // Sync liked state from story data
+            setIsLiked(initialStories[initialStoryIndex]?.liked || false);
             
             setProgress(0);
-            setIsLiked(false);
             setIsActivityOpen(false);
             setViewers([]);
+            setStoryReplies([]);
         }
     }, [isOpen, initialHighlightIndex, highlights, getFirstUnseenIndex]);
 
     const handleNext = useCallback(() => {
         if (isActivityOpen || isHighlighting) return;
         if (storyIndex < currentStories.length - 1) {
-            setStoryIndex((prev) => prev + 1);
+            const nextIdx = storyIndex + 1;
+            setStoryIndex(nextIdx);
+            setIsLiked(currentStories[nextIdx]?.liked || false);
             setProgress(0);
         } else if (highlightIndex < highlights.length - 1) {
             const nextHighlightIndex = highlightIndex + 1;
             setHighlightIndex(nextHighlightIndex);
             
-            // When moving to the next highlight, also jump to its first unseen story
-            const nextStories = highlights[nextHighlightIndex]?.stories || [];
-            setStoryIndex(getFirstUnseenIndex(nextStories));
+            const nextH = highlights[nextHighlightIndex];
+            const nextStories = nextH?.stories || nextH?.items || [];
+            const nextStoryIdx = getFirstUnseenIndex(nextStories);
+            setStoryIndex(nextStoryIdx);
+            setIsLiked(nextStories[nextStoryIdx]?.liked || false);
             
             setProgress(0);
         } else {
@@ -158,7 +218,7 @@ const StoryModal = ({
         }
     }, [
         storyIndex,
-        currentStories.length,
+        currentStories,
         highlightIndex,
         highlights,
         onClose,
@@ -170,24 +230,165 @@ const StoryModal = ({
     const handlePrev = useCallback(() => {
         if (isActivityOpen || isHighlighting) return;
         if (storyIndex > 0) {
-            setStoryIndex((prev) => prev - 1);
+            const prevIdx = storyIndex - 1;
+            setStoryIndex(prevIdx);
+            setIsLiked(currentStories[prevIdx]?.liked || false);
             setProgress(0);
         } else if (highlightIndex > 0) {
-            const prevHighlight = highlights[highlightIndex - 1];
-            setHighlightIndex((prev) => prev - 1);
-            setStoryIndex((prevHighlight.stories?.length || 1) - 1);
+            const prevHighlightIdx = highlightIndex - 1;
+            const prevH = highlights[prevHighlightIdx];
+            const prevHighlightStories = prevH?.stories || prevH?.items || [];
+            
+            setHighlightIndex(prevHighlightIdx);
+            const lastIdx = (prevHighlightStories.length || 1) - 1;
+            setStoryIndex(lastIdx);
+            setIsLiked(prevHighlightStories[lastIdx]?.liked || false);
+            
             setProgress(0);
         }
     }, [
         storyIndex,
+        currentStories,
         highlightIndex,
         highlights,
         isActivityOpen,
         isHighlighting,
     ]);
 
+    const handleLike = async () => {
+        if (!currentStory?.id) return;
+        try {
+            const newLikedState = !isLiked;
+            setIsLiked(newLikedState);
+            
+            await storyService.likeStory(currentStory.id);
+            
+            // Sync with local data
+            if (currentStory) {
+                currentStory.liked = newLikedState;
+            }
+        } catch (error) {
+            console.error("Failed to like story", error);
+            setIsLiked(!isLiked); // Rollback
+        }
+    };
+
+    const handleSendReply = async (e) => {
+        if (e.key !== "Enter" || !replyText.trim() || isSendingReply) return;
+
+        setIsSendingReply(true);
+        try {
+            await storyService.replyToStory(currentStory.id, replyText);
+            setReplyText("");
+            setAlertConfig({
+                isOpen: true,
+                title: "Sent",
+                message: "Your reply has been sent.",
+            });
+        } catch (error) {
+            console.error("Failed to send reply", error);
+            setAlertConfig({
+                isOpen: true,
+                title: "Error",
+                message: "Failed to send reply.",
+            });
+        } finally {
+            setIsSendingReply(false);
+        }
+    };
+
+    const handleDeleteStory = async () => {
+        if (!currentStory?.id) return;
+        try {
+            await storyService.deleteStory(currentStory.id);
+            setIsMoreMenuOpen(false);
+            
+            const updatedStories = currentStories.filter(s => s.id !== currentStory.id);
+            setActiveStories(updatedStories);
+
+            if (updatedStories.length > 0) {
+                const nextIdx = storyIndex >= updatedStories.length ? updatedStories.length - 1 : storyIndex;
+                setStoryIndex(nextIdx);
+                setIsLiked(updatedStories[nextIdx]?.liked || false);
+                setProgress(0);
+            } else {
+                onClose();
+            }
+            
+            setAlertConfig({
+                isOpen: true,
+                title: "Deleted",
+                message: "Your story has been deleted.",
+            });
+        } catch (error) {
+            console.error("Failed to delete story", error);
+            setAlertConfig({
+                isOpen: true,
+                title: "Error",
+                message: "Failed to delete story.",
+            });
+        }
+    };
+
+    const handleDeleteHighlight = async () => {
+        if (!currentHighlight?.id) return;
+        try {
+            await profileService.deleteHighlight(currentHighlight.id);
+            setIsMoreMenuOpen(false);
+            onClose();
+            // Optionally trigger a refresh of the profile
+            window.location.reload(); 
+        } catch (error) {
+            console.error("Failed to delete highlight", error);
+            setAlertConfig({
+                isOpen: true,
+                title: "Error",
+                message: "Failed to delete highlight.",
+            });
+        }
+    };
+
+    const handleArchiveStory = async () => {
+        if (!currentStory?.id) return;
+        try {
+            await storyService.archiveStory(currentStory.id);
+            setIsMoreMenuOpen(false);
+            
+            if (!isArchiveMode) {
+                const updatedStories = currentStories.filter(s => s.id !== currentStory.id);
+                setActiveStories(updatedStories);
+
+                if (updatedStories.length > 0) {
+                    const nextIdx = storyIndex >= updatedStories.length ? updatedStories.length - 1 : storyIndex;
+                    setStoryIndex(nextIdx);
+                    setIsLiked(updatedStories[nextIdx]?.liked || false);
+                    setProgress(0);
+                } else {
+                    onClose();
+                }
+            } else {
+                onClose();
+            }
+
+            setAlertConfig({
+                isOpen: true,
+                title: isArchiveMode ? "Unarchived" : "Archived",
+                message: isArchiveMode 
+                    ? "Story has been moved out of archive." 
+                    : "Story has been moved to your archive.",
+            });
+        } catch (error) {
+            console.error("Failed to archive story", error);
+            setAlertConfig({
+                isOpen: true,
+                title: "Error",
+                message: "Failed to update story archive status.",
+            });
+        }
+    };
+
     useEffect(() => {
-        if (!isOpen || isActivityOpen || isHighlighting) return;
+        if (!isOpen || isActivityOpen || isHighlighting || isMoreMenuOpen || replyText.length > 0) return;
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
@@ -198,7 +399,7 @@ const StoryModal = ({
             });
         }, 50);
         return () => clearInterval(interval);
-    }, [isOpen, handleNext, isActivityOpen, isHighlighting]);
+    }, [isOpen, handleNext, isActivityOpen, isHighlighting, isMoreMenuOpen, replyText]);
 
     if (!isOpen || !currentHighlight) return null;
 
@@ -237,7 +438,7 @@ const StoryModal = ({
                     cursor="pointer"
                     color="white"
                     onClick={handlePrev}
-                    display={{ base: "none", lg: "block" }}
+                    display="block"
                     zIndex={2100}
                 >
                     <AiOutlineLeft size={48} />
@@ -250,7 +451,7 @@ const StoryModal = ({
                     cursor="pointer"
                     color="white"
                     onClick={handleNext}
-                    display={{ base: "none", lg: "block" }}
+                    display="block"
                     zIndex={2100}
                 >
                     <AiOutlineRight size={48} />
@@ -262,7 +463,7 @@ const StoryModal = ({
                 maxW="550px"
                 height="98vh"
                 position="relative"
-                borderRadius={{ base: "0", md: "12px" }}
+                borderRadius="12px"
                 overflow="hidden"
                 bg="#000000"
                 isolation="isolate"
@@ -357,12 +558,57 @@ const StoryModal = ({
                     </HStack>
                 </Box>
 
-                <Image
-                    src={currentStory?.url}
-                    width="100%"
-                    height="100%"
-                    objectFit="cover"
-                />
+                {/* Media Content */}
+                {(() => {
+                    // Some backends nest the story object inside the highlight item
+                    const actualStory = currentStory?.story || currentStory;
+                    const mediaUrl = actualStory?.mediaUrl || actualStory?.url || actualStory?.contentUrl;
+                    const isVideo = actualStory?.type === "VIDEO" || 
+                                   mediaUrl?.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) ||
+                                   mediaUrl?.includes("video");
+
+                    if (!mediaUrl) {
+                        return (
+                            <Center h="100%" flexDir="column" gap={4}>
+                                <Spinner color="white" size="lg" />
+                                <Text color="whiteAlpha.600" fontSize="sm">Loading media...</Text>
+                            </Center>
+                        );
+                    }
+
+                    if (isVideo) {
+                        return (
+                            <Box width="100%" height="100%" bg="black">
+                                <video
+                                    src={mediaUrl}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                    }}
+                                    autoPlay
+                                    muted
+                                    playsInline
+                                    onEnded={handleNext}
+                                />
+                            </Box>
+                        );
+                    }
+
+                    return (
+                        <Image
+                            src={mediaUrl}
+                            width="100%"
+                            height="100%"
+                            objectFit="cover"
+                            fallback={
+                                <Center h="100%">
+                                    <Spinner color="white" />
+                                </Center>
+                            }
+                        />
+                    );
+                })()}
 
                 {!isActivityOpen && (
                     <Flex
@@ -443,8 +689,7 @@ const StoryModal = ({
                                             >
                                                 <Image
                                                     src={
-                                                        currentStory?.views?.[0]
-                                                            ?.avatar ||
+                                                        currentStory?.views?.[0]?.viewer?.avatarUrl ||
                                                         "https://i.pravatar.cc/150?u=1"
                                                     }
                                                 />
@@ -460,8 +705,7 @@ const StoryModal = ({
                                             >
                                                 <Image
                                                     src={
-                                                        currentStory?.views?.[1]
-                                                            ?.avatar ||
+                                                        currentStory?.views?.[1]?.viewer?.avatarUrl ||
                                                         "https://i.pravatar.cc/150?u=2"
                                                     }
                                                 />
@@ -482,6 +726,7 @@ const StoryModal = ({
                                         gap={0}
                                         cursor="pointer"
                                         color="white"
+                                        onClick={() => setIsMoreMenuOpen(true)}
                                     >
                                         <BsThreeDots size={24} />
                                         <Text fontSize="10px">More</Text>
@@ -496,16 +741,24 @@ const StoryModal = ({
                                 border="1px solid white"
                                 borderRadius="full"
                                 px={6}
-                                py={3}
+                                py={1}
                                 align="center"
                             >
-                                <Text color="whiteAlpha.900" fontSize="md">
-                                    Reply to {storyUser?.username}...
-                                </Text>
+                                <Input
+                                    variant="unstyled"
+                                    placeholder={`Reply to ${storyUser?.username}...`}
+                                    color="white"
+                                    _placeholder={{ color: "whiteAlpha.700" }}
+                                    fontSize="14px"
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onKeyPress={handleSendReply}
+                                    isDisabled={isSendingReply}
+                                />
                             </Flex>
                             <HStack gap={4} color="white">
                                 <Box
-                                    onClick={() => setIsLiked(!isLiked)}
+                                    onClick={handleLike}
                                     cursor="pointer"
                                 >
                                     {isLiked ? (
@@ -558,7 +811,7 @@ const StoryModal = ({
                             </Flex>
 
                             <Box flex={1} overflowY="auto">
-                                {currentStory?.replies?.length > 0 && (
+                                {storyReplies?.length > 0 && (
                                     <Box
                                         p={4}
                                         borderBottom="1px solid"
@@ -572,44 +825,50 @@ const StoryModal = ({
                                         >
                                             Replies
                                         </Text>
-                                        {currentStory.replies.map((rep, index) => (
-                                            <Flex
-                                                key={rep.id || `reply-${index}`}
-                                                align="center"
-                                                gap={3}
-                                                mb={4}
-                                                cursor="pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onClose();
-                                                    navigate(
-                                                        `/${rep.user.username}`,
-                                                    );
-                                                }}
-                                            >
-                                                <UserAvatar
-                                                    src={rep.user.avatar}
-                                                    size="44px"
-                                                />
-                                                <Box flex={1}>
-                                                    <Text
-                                                        fontWeight="bold"
-                                                        fontSize="sm"
-                                                    >
-                                                        {rep.user.username}
-                                                    </Text>
-                                                    <Text fontSize="sm">
-                                                        {rep.text}
-                                                    </Text>
-                                                </Box>
-                                                <Text
-                                                    fontSize="xs"
-                                                    color="gray.400"
+                                        {storyReplies.map((rep, index) => {
+                                            const replyUser = rep.sender || rep.author || rep.user;
+                                            const username = replyUser?.username;
+                                            const avatarUrl = replyUser?.avatarUrl || replyUser?.avatar;
+
+                                            return (
+                                                <Flex
+                                                    key={rep.id || `reply-${index}`}
+                                                    align="center"
+                                                    gap={3}
+                                                    mb={4}
+                                                    cursor="pointer"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (username) {
+                                                            onClose();
+                                                            navigate(`/${username}`);
+                                                        }
+                                                    }}
                                                 >
-                                                    {rep.time}
-                                                </Text>
-                                            </Flex>
-                                        ))}
+                                                    <UserAvatar
+                                                        src={avatarUrl}
+                                                        size="44px"
+                                                    />
+                                                    <Box flex={1}>
+                                                        <Text
+                                                            fontWeight="bold"
+                                                            fontSize="sm"
+                                                        >
+                                                            {username || "user"}
+                                                        </Text>
+                                                        <Text fontSize="sm">
+                                                            {rep.text || rep.content}
+                                                        </Text>
+                                                    </Box>
+                                                    <Text
+                                                        fontSize="xs"
+                                                        color="gray.400"
+                                                    >
+                                                        {rep.time || "Just now"}
+                                                    </Text>
+                                                </Flex>
+                                            );
+                                        })}
                                     </Box>
                                 )}
 
@@ -627,9 +886,9 @@ const StoryModal = ({
                                             <Spinner color="#0095f6" />
                                         </Flex>
                                     ) : viewers.length > 0 ? (
-                                        viewers.map((viewer, index) => (
+                                            viewers.map((view, index) => (
                                             <Flex
-                                                key={viewer.id || `viewer-${index}`}
+                                                key={view.id || `viewer-${index}`}
                                                 align="center"
                                                 gap={3}
                                                 mb={4}
@@ -638,12 +897,12 @@ const StoryModal = ({
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     onClose();
-                                                    navigate(`/${viewer.username}`);
+                                                    navigate(`/${view.viewer?.username || view.user?.username}`);
                                                 }}
                                             >
                                                 <HStack gap={3}>
                                                     <UserAvatar
-                                                        src={viewer.avatar || viewer.avatarUrl}
+                                                        src={view.viewer?.avatarUrl || view.user?.avatarUrl}
                                                         size="44px"
                                                     />
                                                     <Box>
@@ -652,9 +911,9 @@ const StoryModal = ({
                                                                 fontWeight="bold"
                                                                 fontSize="sm"
                                                             >
-                                                                {viewer.username}
+                                                                {view.viewer?.username || view.user?.username}
                                                             </Text>
-                                                            {viewer.verified && (
+                                                            {(view.viewer?.verified || view.user?.verified) && (
                                                                 <Image src="/verified.png" w="14px" h="14px" />
                                                             )}
                                                         </HStack>
@@ -662,13 +921,13 @@ const StoryModal = ({
                                                             fontSize="xs"
                                                             color="gray.500"
                                                         >
-                                                            {viewer.mutualCount > 0 
-                                                                ? `Followed by ${viewer.mutualCount} mutual` 
-                                                                : viewer.fullName}
+                                                            {(view.viewer?.mutualCount || view.user?.mutualCount) > 0 
+                                                                ? `Followed by ${view.viewer?.mutualCount || view.user?.mutualCount} mutual` 
+                                                                : (view.viewer?.fullName || view.user?.fullName)}
                                                         </Text>
                                                     </Box>
                                                 </HStack>
-                                                {viewer.liked && (
+                                                {(view.liked || view.isLiked) && (
                                                     <AiFillHeart
                                                         color="#ff3040"
                                                         size={20}
@@ -695,6 +954,87 @@ const StoryModal = ({
                 title={alertConfig.title}
                 message={alertConfig.message}
             />
+
+            {/* More Menu Overlay */}
+            {isMoreMenuOpen && (
+                <Box
+                    position="fixed"
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
+                    zIndex={3000}
+                    bg="blackAlpha.700"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                >
+                    <VStack
+                        bg="white"
+                        borderRadius="xl"
+                        width="300px"
+                        overflow="hidden"
+                        spacing={0}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Box
+                            w="full"
+                            py={4}
+                            textAlign="center"
+                            cursor="pointer"
+                            borderBottom="1px solid"
+                            borderColor="gray.100"
+                            onClick={handleArchiveStory}
+                            _hover={{ bg: "gray.50" }}
+                        >
+                            <Text fontWeight="600">
+                                {isArchiveMode ? "Unarchive" : "Archive"}
+                            </Text>
+                        </Box>
+                        <Box
+                            w="full"
+                            py={4}
+                            textAlign="center"
+                            cursor="pointer"
+                            borderBottom="1px solid"
+                            borderColor="gray.100"
+                            onClick={handleDeleteStory}
+                            _hover={{ bg: "gray.50" }}
+                        >
+                            <Text color="#ff3040" fontWeight="bold">
+                                Delete Story
+                            </Text>
+                        </Box>
+                        {!isArchiveMode && currentHighlight?.id !== "active-story" && (
+                            <Box
+                                w="full"
+                                py={4}
+                                textAlign="center"
+                                cursor="pointer"
+                                borderBottom="1px solid"
+                                borderColor="gray.100"
+                                onClick={handleDeleteHighlight}
+                                _hover={{ bg: "gray.50" }}
+                            >
+                                <Text color="#ff3040" fontWeight="bold">
+                                    Delete Highlight
+                                </Text>
+                            </Box>
+                        )}
+                        <Box
+                            w="full"
+                            py={4}
+                            textAlign="center"
+                            cursor="pointer"
+                            onClick={() => setIsMoreMenuOpen(false)}
+                            _hover={{ bg: "gray.50" }}
+                        >
+                            <Text>Cancel</Text>
+                        </Box>
+                    </VStack>
+                </Box>
+            )}
         </Box>
     );
 };

@@ -27,6 +27,9 @@ public class ConversationAssembler {
         ConversationParticipant other = otherOpt.get();
         var otherUser = other.getUser();
 
+        // Hide conversations with deactivated accounts (like Instagram)
+        if (!otherUser.isActive()) return null;
+
         // Online status — only show if user allows it
         boolean isOnline = false;
         if (otherUser.isShowActivityStatus()) {

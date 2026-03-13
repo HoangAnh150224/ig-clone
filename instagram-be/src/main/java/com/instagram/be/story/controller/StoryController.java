@@ -3,7 +3,6 @@ package com.instagram.be.story.controller;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.UserContext;
 import com.instagram.be.base.api.ApiResponse;
-import com.instagram.be.storage.CloudinaryService;
 import com.instagram.be.story.request.*;
 import com.instagram.be.story.response.*;
 import com.instagram.be.story.service.*;
@@ -12,9 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StoryController {
 
-    private final CloudinaryService cloudinaryService;
     private final GetFeedStoriesService getFeedStoriesService;
+    private final GetUserStoriesService getUserStoriesService;
     private final ViewStoryService viewStoryService;
     private final CreateStoryService createStoryService;
     private final DeleteStoryService deleteStoryService;
@@ -34,12 +30,23 @@ public class StoryController {
     private final LikeStoryService likeStoryService;
     private final ReplyToStoryService replyToStoryService;
     private final GetArchivedStoriesService getArchivedStoriesService;
+    private final GetStoryRepliesService getStoryRepliesService;
 
     @GetMapping("/feed")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<StoryFeedResponse>>> getFeedStories() {
         GetFeedStoriesRequest request = GetFeedStoriesRequest.builder().userContext(currentUser()).build();
         return ResponseEntity.ok(ApiResponse.success(getFeedStoriesService.execute(request), "Stories retrieved", 200));
+    }
+
+    @GetMapping("/user/{username}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<StoryItemResponse>>> getUserStories(@PathVariable String username) {
+        GetUserStoriesRequest request = GetUserStoriesRequest.builder()
+                .targetUsername(username)
+                .userContext(currentUser())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(getUserStoriesService.execute(request), "Stories retrieved", 200));
     }
 
     @PostMapping("/{id}/view")
@@ -50,28 +57,12 @@ public class StoryController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<StoryResponse>> createStory(
-            @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "closeFriends", defaultValue = "false") boolean closeFriends) {
-
-        CloudinaryService.UploadResult result = cloudinaryService.upload(file, "stories");
-        String rawType = file.getContentType();
-        com.instagram.be.post.enums.MediaType mediaType =
-                rawType != null && rawType.startsWith("video")
-                        ? com.instagram.be.post.enums.MediaType.VIDEO
-                        : com.instagram.be.post.enums.MediaType.IMAGE;
-
-        CreateStoryRequest request = CreateStoryRequest.builder()
-                .mediaUrl(result.url())
-                .mediaType(mediaType)
-                .closeFriends(closeFriends)
-                .userContext(currentUser())
-                .build();
-
+    public ResponseEntity<ApiResponse<StoryResponse>> createStory(@RequestBody CreateStoryRequest body) {
+        body.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(createStoryService.execute(request), "Story created", 201));
+                .body(ApiResponse.success(createStoryService.execute(body), "Story created", 201));
     }
 
     @DeleteMapping("/{id}")
@@ -113,6 +104,13 @@ public class StoryController {
         request.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(replyToStoryService.execute(request), "Reply sent", 201));
+    }
+
+    @GetMapping("/{id}/replies")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<StoryReplyResponse>>> getReplies(@PathVariable UUID id) {
+        StoryActionRequest request = StoryActionRequest.builder().storyId(id).userContext(currentUser()).build();
+        return ResponseEntity.ok(ApiResponse.success(getStoryRepliesService.execute(request), "Replies retrieved", 200));
     }
 
     private UserContext currentUser() {

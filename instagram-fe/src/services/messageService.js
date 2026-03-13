@@ -44,7 +44,7 @@ const messageService = {
         try {
             const response = await axiosClient.get("/messages/requests");
             return Array.isArray(response) ? response.length : (response.content?.length || 0);
-        } catch (error) {
+        } catch {
             return 0;
         }
     },

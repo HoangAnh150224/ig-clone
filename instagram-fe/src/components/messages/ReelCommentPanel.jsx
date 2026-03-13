@@ -1,59 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Flex, Text, HStack, Input, VStack, Spinner, Center, IconButton } from "@chakra-ui/react";
-import { AiOutlineClose, AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import { Box, Flex, Text, HStack, Input, VStack, Spinner, Center } from "@chakra-ui/react";
+import { AiOutlineClose } from "react-icons/ai";
 import { BsEmojiSmile } from "react-icons/bs";
 import { useSelector, useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
+import CommentCard from "../Comment/CommentCard";
 import commentService from "../../services/commentService";
-import { updatePostInStore } from "../../store/slices/postSlice";
-
-const ReelCommentCard = ({ comment, postId }) => {
-    const [isLiked, setIsLiked] = useState(comment.isLiked || false);
-    const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount || 0);
-
-    const handleLike = async () => {
-        const previousState = isLiked;
-        const previousCount = localLikeCount;
-        setIsLiked(!isLiked);
-        setLocalLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-        try {
-            const response = await commentService.likeComment(postId, comment.id);
-            setIsLiked(response.isLiked);
-            setLocalLikeCount(response.likeCount);
-        } catch {
-            setIsLiked(previousState);
-            setLocalLikeCount(previousCount);
-        }
-    };
-
-    return (
-        <Box mb={6} width="100%">
-            <Flex gap={3} align="start">
-                <UserAvatar src={comment.author?.avatarUrl} size="32px" />
-                <Box flex={1}>
-                    <Flex align="center" gap={2} mb={1}>
-                        <Text fontWeight="bold" fontSize="13px" color="black">
-                            {comment.author?.username}
-                        </Text>
-                        <Text color="gray.500" fontSize="12px">
-                            {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : 'just now'}
-                        </Text>
-                    </Flex>
-                    <Text fontSize="14px" color="black" lineHeight="1.4" mb={2}>
-                        {comment.content}
-                    </Text>
-                    <HStack gap={4} fontSize="12px" color="gray.500" fontWeight="bold">
-                        <Text cursor="pointer">{localLikeCount.toLocaleString()} likes</Text>
-                        <Text cursor="pointer">Reply</Text>
-                    </HStack>
-                </Box>
-                <Box pt={1} cursor="pointer" color={isLiked ? "#ff3040" : "gray.400"} onClick={handleLike}>
-                    {isLiked ? <AiFillHeart size={14} /> : <AiOutlineHeart size={14} />}
-                </Box>
-            </Flex>
-        </Box>
-    );
-};
 
 const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
     const dispatch = useDispatch();
@@ -65,8 +17,10 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
     
     const loadMoreRef = useRef(null);
+    const inputRef = useRef(null);
 
     const fetchComments = useCallback(async (pageNum = 0) => {
         if (!reel?.id) return;
@@ -118,13 +72,21 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
         if (!commentText.trim() || isSubmitting) return;
         setIsSubmitting(true);
         try {
-            const newComment = await commentService.addComment(reel.id, commentText);
-            setComments(prev => [newComment, ...prev]);
-            setCommentText("");
-            // Update UI count
-            if (dispatch) {
-                // Assuming we might have a slice to update this or local state in parent
+            const content = replyingTo ? `@${replyingTo.author?.username} ${commentText}` : commentText;
+            const parentId = replyingTo ? replyingTo.id : null;
+            
+            const newComment = await commentService.addComment(reel.id, content, parentId);
+            
+            if (replyingTo) {
+                // If it's a reply, we might need to refresh the parent's replies or just add to list
+                // For simplicity in Reels, we'll just prepend to the main list if needed or refresh
+                fetchComments(0);
+            } else {
+                setComments(prev => [newComment, ...prev]);
             }
+            
+            setCommentText("");
+            setReplyingTo(null);
         } catch (error) {
             console.error("Failed to post comment", error);
         } finally {
@@ -132,32 +94,34 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
         }
     };
 
+    const handleReply = (comment) => {
+        setReplyingTo(comment);
+        setCommentText("");
+        if (inputRef.current) inputRef.current.focus();
+    };
+
     if (!isOpen || !reel) return null;
 
     return (
         <Box
             width="min(400px, 90vw)"
-            height="95vh"
+            height="calc(100vh - 40px)"
             bg="white"
-            borderRadius="0px"
+            borderRadius="8px"
             display="flex"
             flexDirection="column"
-            ml={{ base: 0, lg: 4 }}
+            ml={0}
             boxShadow="0 0 20px rgba(0,0,0,0.1)"
             border="1px solid"
             borderColor="gray.200"
-            position={{ base: "absolute", lg: "relative" }}
-            right={{ base: 0, lg: "auto" }}
+            position="relative"
             zIndex={100}
+            transition="all 0.3s ease"
         >
             <Flex p={4} justify="space-between" align="center" borderBottom="1px solid" borderColor="gray.100">
-                <IconButton 
-                    aria-label="Close"
-                    icon={<AiOutlineClose size={24} />} 
-                    variant="ghost"
-                    onClick={onClose} 
-                    color="black"
-                />
+                <Box onClick={onClose} cursor="pointer" color="black">
+                    <AiOutlineClose size={24} />
+                </Box>
                 <Text fontWeight="bold" color="black">Comments</Text>
                 <Box width="24px" />
             </Flex>
@@ -168,7 +132,14 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
                 ) : (
                     <>
                         {comments.map((c) => (
-                            <ReelCommentCard key={c.id} comment={c} postId={reel.id} />
+                            <CommentCard 
+                                key={c.id} 
+                                comment={c} 
+                                postId={reel.id} 
+                                onClose={onClose} 
+                                onReply={handleReply}
+                                postOwnerId={reel.author?.id}
+                            />
                         ))}
                         
                         {hasMore && (
@@ -186,12 +157,22 @@ const ReelCommentPanel = ({ isOpen, onClose, reel }) => {
                 )}
             </Box>
 
+            {replyingTo && (
+                <Flex bg="gray.50" px={4} py={2} justify="space-between" align="center" borderTop="1px solid" borderColor="gray.100">
+                    <Text fontSize="12px" color="gray.500">Replying to {replyingTo.author?.username}</Text>
+                    <Box cursor="pointer" onClick={() => setReplyingTo(null)}>
+                        <AiOutlineClose size={12} color="gray" />
+                    </Box>
+                </Flex>
+            )}
+
             <Box p={4} borderTop="1px solid" borderColor="gray.100">
                 <Flex align="center" gap={3} bg="gray.50" p={2} px={4} borderRadius="full" border="1px solid" borderColor="gray.200">
                     <UserAvatar src={authUser?.avatarUrl} size="28px" />
                     <Input
+                        ref={inputRef}
                         variant="unstyled"
-                        placeholder="Add a comment..."
+                        placeholder={replyingTo ? `Reply to ${replyingTo.author?.username}...` : "Add a comment..."}
                         fontSize="14px"
                         color="black"
                         value={commentText}

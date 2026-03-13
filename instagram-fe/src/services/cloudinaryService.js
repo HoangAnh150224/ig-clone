@@ -7,7 +7,7 @@ import axiosClient from "../api/axiosClient";
 const cloudinaryService = {
     /**
      * Upload a file to Cloudinary via backend.
-     * API: POST /api/upload
+     * API: POST /upload
      * 
      * @param {File} file - The file to upload
      * @param {string} folder - Optional folder name
@@ -21,7 +21,7 @@ const cloudinaryService = {
         try {
             // axiosClient handles baseURL and auth headers
             // It returns the 'data' part of ApiResponse directly
-            const response = await axiosClient.post("/api/upload", formData, {
+            const response = await axiosClient.post("/upload", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -40,7 +40,7 @@ const cloudinaryService = {
 
     /**
      * Upload multiple files.
-     * API: POST /api/upload/multiple
+     * API: POST /upload/multiple
      */
     uploadMultiple: async (files, folder = "general") => {
         const formData = new FormData();
@@ -50,7 +50,7 @@ const cloudinaryService = {
         formData.append("folder", folder);
 
         try {
-            return await axiosClient.post("/api/upload/multiple", formData, {
+            return await axiosClient.post("/upload/multiple", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -60,21 +60,6 @@ const cloudinaryService = {
             throw error;
         }
     },
-    /**
-     * Upload multiple files to Cloudinary.
-     * API: POST /upload/multiple
-     */
-    uploadMultiple: async (files, folder = "posts") => {
-        const formData = new FormData();
-        files.forEach(file => formData.append("files", file));
-        formData.append("folder", folder);
-
-        return axiosClient.post("/upload/multiple", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-    }
 };
 
 export default cloudinaryService;

@@ -10,13 +10,14 @@ import {
     Box,
     Text,
 } from "@chakra-ui/react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import postService from "../../services/postService";
 import userService from "../../services/userService";
 import profileService from "../../services/profileService";
 import { updatePostInStore } from "../../store/slices/postSlice";
 import { updatePostInProfile } from "../../store/slices/userSlice";
 import { updatePostInExplore } from "../../store/slices/exploreSlice";
+import { setUser as setAuthUser } from "../../store/slices/authSlice";
 import EditPostModal from "./EditPostModal";
 
 const OptionButton = ({
@@ -53,6 +54,7 @@ const MoreOptionsModal = ({
 }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const authUser = useSelector((state) => state.auth.user);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [view, setView] = useState("main"); // 'main', 'report', or 'block'
     const [reportSuccess, setReportSuccess] = useState(false);
@@ -91,13 +93,15 @@ const MoreOptionsModal = ({
 
             switch (action) {
                 case "delete":
+                    if (!post?.id) return;
                     await postService.deletePost(post.id);
                     if (onPostAction) onPostAction(post.id, "delete");
                     if (onParentClose) onParentClose();
                     break;
                 case "archive": {
+                    if (!post?.id) return;
                     const archivedPost = await postService.archivePost(post.id);
-                    const changes = { archived: archivedPost.archived };
+                    const changes = { archived: archivedPost?.archived };
                     dispatch(updatePostInStore({ id: post.id, changes }));
                     dispatch(updatePostInProfile({ id: post.id, changes }));
                     dispatch(updatePostInExplore({ id: post.id, changes }));
@@ -114,34 +118,53 @@ const MoreOptionsModal = ({
                     setView("report");
                     return;
                 case "report_submit":
+                    if (!post?.id) return;
                     await postService.reportPost(post.id, extraData);
                     setReportSuccess(true);
                     setTimeout(() => handleClose(), 2000);
                     return;
-                case "block_init":
+                case "custom_block_init": // Renamed to avoid conflicts
                     setView("block");
                     return;
                 case "block_submit":
+                    if (!targetUserId) return;
                     await userService.blockUser(targetUserId);
                     setBlockSuccess(true);
                     setTimeout(() => handleClose(), 2000);
                     return;
                 case "unblock":
+                    if (!targetUserId) return;
                     await userService.blockUser(targetUserId); // Toggle
                     break;
                 case "unfollow":
+                    if (!targetUserId) return;
                     await profileService.toggleFollow(targetUserId);
                     break;
-                case "toggle_favorite_user":
+                case "toggle_favorite_user": {
+                    if (!targetUserId) return;
                     await userService.toggleFavoriteUser(targetUserId);
+                    if (authUser) {
+                        const currentFavs = authUser.favoriteUserIds || [];
+                        const isFav = currentFavs.includes(targetUserId);
+                        const newFavs = isFav 
+                            ? currentFavs.filter(id => id !== targetUserId)
+                            : [...currentFavs, targetUserId];
+                        
+                        dispatch(setAuthUser({
+                            ...authUser,
+                            favoriteUserIds: newFavs
+                        }));
+                    }
                     break;
+                }
                 case "toggle_favorite_post":
+                    if (!post?.id) return;
                     await postService.togglePostFavorite(post.id);
                     break;
                 case "copy_link": {
                     const linkToCopy = isProfile
-                        ? window.location.origin + `/${user.username}`
-                        : window.location.origin + `/p/${post.id}`;
+                        ? window.location.origin + `/${user?.username}`
+                        : window.location.origin + `/p/${post?.id}`;
                     await navigator.clipboard.writeText(linkToCopy);
                     break;
                 }
@@ -211,7 +234,7 @@ const MoreOptionsModal = ({
                                             <>
                                                 <OptionButton label="Delete" color="#ed4956" fontWeight="bold" onClick={() => handleAction("delete")} />
                                                 <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label={post.archived ? "Unarchive" : "Archive"} onClick={() => handleAction("archive")} />
+                                                <OptionButton label={post?.archived ? "Unarchive" : "Archive"} onClick={() => handleAction("archive")} />
                                                 <Box width="100%" height="1px" bg="gray.100" />
                                                 <OptionButton label="Edit" onClick={() => handleAction("edit")} />
                                             </>
@@ -222,7 +245,13 @@ const MoreOptionsModal = ({
                                                 <OptionButton label="Unfollow" color="#ed4956" fontWeight="bold" onClick={() => handleAction("unfollow")} />
                                                 <Box width="100%" height="1px" bg="gray.100" />
                                                 <OptionButton 
-                                                    label={post.isFavorite ? "Remove from favorites" : "Add to favorites"} 
+                                                    label={authUser?.favoriteUserIds?.includes(post?.author?.id) ? "Remove from Favorites" : "Add to Favorites"} 
+                                                    color={authUser?.favoriteUserIds?.includes(post?.author?.id) ? "#ed4956" : "black"}
+                                                    onClick={() => handleAction("toggle_favorite_user")} 
+                                                />
+                                                <Box width="100%" height="1px" bg="gray.100" />
+                                                <OptionButton 
+                                                    label={post?.isFavorite ? "Remove from favorite posts" : "Add to favorite posts"} 
                                                     onClick={() => handleAction("toggle_favorite_post")} 
                                                 />
                                             </>

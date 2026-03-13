@@ -43,6 +43,10 @@ public class GetUserProfileService extends BaseService<GetUserProfileRequest, Us
                 .orElseThrow(() -> new NotFoundException("User not found: " + targetUsername));
         UUID targetId = target.getId();
 
+        if (!target.isActive()) {
+            throw new NotFoundException("User not found: " + targetUsername);
+        }
+
         // If either side has blocked the other, treat profile as not found
         if (viewerId != null && !viewerId.equals(targetId)) {
             if (blockRepository.existsBlockBetween(viewerId, targetId)) {

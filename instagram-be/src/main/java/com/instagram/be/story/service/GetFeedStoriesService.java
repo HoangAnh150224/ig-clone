@@ -60,11 +60,24 @@ public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, Li
         return byUser.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
                 .map(e -> {
+                    UUID ownerId = e.getKey();
                     List<Story> userStories = e.getValue();
                     var user = userStories.get(0).getUser();
                     boolean hasUnseen = userStories.stream().anyMatch(s -> !viewedIds.contains(s.getId()));
+                    
                     List<StoryItemResponse> items = userStories.stream()
-                            .map(s -> StoryItemResponse.from(s, viewedIds.contains(s.getId())))
+                            .map(s -> {
+                                boolean seen = viewedIds.contains(s.getId());
+                                if (ownerId.equals(viewerId)) {
+                                    // Owner story: load preview viewers
+                                    List<com.instagram.be.story.StoryView> views = storyViewRepository.findViewersByStoryId(s.getId());
+                                    var previewViews = views.stream().limit(2)
+                                            .map(com.instagram.be.story.response.StoryViewResponse::from)
+                                            .collect(Collectors.toList());
+                                    return StoryItemResponse.fromWithOwnerData(s, seen, views.size(), previewViews);
+                                }
+                                return StoryItemResponse.from(s, seen);
+                            })
                             .collect(Collectors.toList());
                     return new StoryFeedResponse(user.getId(), user.getUsername(), user.getAvatarUrl(), hasUnseen, items);
                 })

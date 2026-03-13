@@ -91,7 +91,7 @@ const RightSidebar = () => {
     return (
         <Box
             width="320px"
-            display={{ base: "none", lg: "block" }}
+            display="block"
             pt={6}
             px={4}
             bg="white"

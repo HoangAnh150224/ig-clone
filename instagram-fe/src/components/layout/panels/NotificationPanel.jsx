@@ -56,6 +56,7 @@ const NotificationPanel = ({ isOpen }) => {
 
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(true);
             notificationService.getNotifications()
                 .then((res) => {

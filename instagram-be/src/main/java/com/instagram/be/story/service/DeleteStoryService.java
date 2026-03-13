@@ -4,9 +4,11 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.story.Story;
+import com.instagram.be.story.StoryMentionRepository;
 import com.instagram.be.story.StoryRepository;
+import com.instagram.be.story.StoryReplyRepository;
+import com.instagram.be.story.StoryViewRepository;
 import com.instagram.be.story.request.StoryActionRequest;
-import com.instagram.be.story.response.StoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,9 @@ import java.util.UUID;
 public class DeleteStoryService extends BaseService<StoryActionRequest, Void> {
 
     private final StoryRepository storyRepository;
+    private final StoryViewRepository storyViewRepository;
+    private final StoryReplyRepository storyReplyRepository;
+    private final StoryMentionRepository storyMentionRepository;
 
     @Override
     @Transactional
@@ -35,6 +40,9 @@ public class DeleteStoryService extends BaseService<StoryActionRequest, Void> {
             throw new BusinessException("You do not have permission to delete this story");
         }
 
+        storyViewRepository.deleteAllByStory(story);
+        storyReplyRepository.deleteAllByStory(story);
+        storyMentionRepository.deleteAllByStory(story);
         storyRepository.delete(story);
         return null;
     }
