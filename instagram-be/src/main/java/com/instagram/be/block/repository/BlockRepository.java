@@ -18,4 +18,7 @@ public interface BlockRepository extends JpaRepository<Block, UUID> {
 
     @Query("SELECT COUNT(b) > 0 FROM Block b WHERE (b.blocker.id = :a AND b.blocked.id = :b) OR (b.blocker.id = :b AND b.blocked.id = :a)")
     boolean existsBlockBetween(@Param("a") UUID userA, @Param("b") UUID userB);
+
+    @Query("SELECT b.blocked FROM Block b WHERE b.blocker.id = :userId")
+    org.springframework.data.domain.Page<com.instagram.be.userprofile.UserProfile> findBlockedUsersByUserId(@Param("userId") UUID userId, org.springframework.data.domain.Pageable pageable);
 }

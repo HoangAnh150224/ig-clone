@@ -26,4 +26,8 @@ public interface SearchHistoryRepository extends JpaRepository<SearchHistory, UU
                                                       @Param("hashtagId") UUID hashtagId);
 
     Optional<SearchHistory> findByIdAndUserId(UUID id, UUID userId);
+
+    @Query("DELETE FROM SearchHistory s WHERE s.user.id = :userId")
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteAllByUserId(@Param("userId") UUID userId);
 }

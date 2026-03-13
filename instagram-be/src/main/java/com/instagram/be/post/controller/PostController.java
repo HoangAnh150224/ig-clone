@@ -11,18 +11,24 @@ import com.instagram.be.post.service.GetExplorePostsService;
 import com.instagram.be.post.service.GetHashtagPostsService;
 import com.instagram.be.post.response.*;
 import com.instagram.be.post.service.*;
+import com.instagram.be.storage.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/posts")
 @RequiredArgsConstructor
 public class PostController {
 
+    private final CloudinaryService cloudinaryService;
     private final CreatePostService createPostService;
     private final GetPostService getPostService;
     private final UpdatePostService updatePostService;
@@ -40,17 +46,30 @@ public class PostController {
     private final GetExplorePostsService getExplorePostsService;
     private final GetHashtagPostsService getHashtagPostsService;
 
-    @PostMapping("/posts")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(
-            @RequestBody CreatePostRequest request) {
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestPart("data") CreatePostRequest request) {
         UserContext ctx = currentUser();
         request.setUserContext(ctx);
+
+        // Upload each file to Cloudinary and build media list
+        List<CreatePostRequest.MediaItem> media = files.stream()
+                .map(file -> {
+                    CloudinaryService.UploadResult result = cloudinaryService.upload(file, "posts");
+                    String mediaType = file.getContentType() != null && file.getContentType().startsWith("video")
+                            ? "VIDEO" : "IMAGE";
+                    return new CreatePostRequest.MediaItem(result.url(), mediaType);
+                })
+                .toList();
+        request.setMedia(media);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createPostService.execute(request), "Post created", 201));
     }
 
-    @GetMapping("/posts/{id}")
+    @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable UUID id) {
         UserContext ctx = SecurityUtils.getCurrentUserContext().orElse(null);
@@ -58,7 +77,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getPostService.execute(request), "Post retrieved", 200));
     }
 
-    @PutMapping("/posts/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable UUID id, @RequestBody UpdatePostRequest request) {
@@ -67,7 +86,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(updatePostService.execute(request), "Post updated", 200));
     }
 
-    @DeleteMapping("/posts/{id}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable UUID id) {
         PostActionRequest request = PostActionRequest.builder().postId(id).userContext(currentUser()).build();
@@ -75,21 +94,21 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(null, "Post deleted", 200));
     }
 
-    @PatchMapping("/posts/{id}/archive")
+    @PatchMapping("/{id}/archive")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PostResponse>> archivePost(@PathVariable UUID id) {
         PostActionRequest request = PostActionRequest.builder().postId(id).userContext(currentUser()).build();
         return ResponseEntity.ok(ApiResponse.success(archivePostService.execute(request), "Archive toggled", 200));
     }
 
-    @PostMapping("/posts/{id}/like")
+    @PostMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<LikeResponse>> likePost(@PathVariable UUID id) {
         PostActionRequest request = PostActionRequest.builder().postId(id).userContext(currentUser()).build();
         return ResponseEntity.ok(ApiResponse.success(likePostService.execute(request), "Like toggled", 200));
     }
 
-    @PostMapping("/posts/{id}/view")
+    @PostMapping("/{id}/view")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> viewPost(@PathVariable UUID id) {
         PostActionRequest request = PostActionRequest.builder().postId(id)
@@ -98,14 +117,14 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/posts/{id}/save")
+    @PostMapping("/{id}/save")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<SaveResponse>> savePost(@PathVariable UUID id) {
         PostActionRequest request = PostActionRequest.builder().postId(id).userContext(currentUser()).build();
         return ResponseEntity.ok(ApiResponse.success(savePostService.execute(request), "Save toggled", 200));
     }
 
-    @GetMapping("/posts/{id}/likers")
+    @GetMapping("/{id}/likers")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<FollowUserResponse>>> getLikers(
             @PathVariable UUID id,
@@ -117,7 +136,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getLikersService.execute(request), "Likers retrieved", 200));
     }
 
-    @GetMapping("/posts/saved")
+    @GetMapping("/saved")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<PostResponse>>> getSavedPosts(
             @RequestParam(defaultValue = "0") int page,
@@ -139,7 +158,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getFeedService.execute(request), "Feed retrieved", 200));
     }
 
-    @GetMapping("/users/{username}/posts")
+    @GetMapping("/user/{username}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<PostResponse>>> getUserPosts(
             @PathVariable String username,
@@ -151,7 +170,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getUserPostsService.execute(request), "Posts retrieved", 200));
     }
 
-    @GetMapping("/archive/posts")
+    @GetMapping("/archive")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<PostResponse>>> getArchivedPosts(
             @RequestParam(defaultValue = "0") int page,
@@ -161,7 +180,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getArchivedPostsService.execute(request), "Archived posts retrieved", 200));
     }
 
-    @GetMapping("/posts/tagged/{userId}")
+    @GetMapping("/tagged/{userId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<PostResponse>>> getTaggedPosts(
             @PathVariable UUID userId,
@@ -183,7 +202,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(getExplorePostsService.execute(request), "Explore feed retrieved", 200));
     }
 
-    @GetMapping("/hashtags/{name}/posts")
+    @GetMapping("/hashtags/{name}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PaginatedResponse<PostResponse>>> getHashtagPosts(
             @PathVariable String name,

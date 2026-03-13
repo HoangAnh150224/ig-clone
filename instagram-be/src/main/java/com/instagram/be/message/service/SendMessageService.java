@@ -1,12 +1,16 @@
 package com.instagram.be.message.service;
 
 import com.instagram.be.base.service.BaseService;
+import com.instagram.be.block.repository.BlockRepository;
 import com.instagram.be.exception.AppValidationException;
+import com.instagram.be.exception.BusinessException;
 import com.instagram.be.follow.enums.FollowStatus;
 import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.message.*;
 import com.instagram.be.message.request.SendMessageRequest;
 import com.instagram.be.message.response.MessageResponse;
+import com.instagram.be.post.Post;
+import com.instagram.be.post.PostRepository;
 import com.instagram.be.post.enums.MediaType;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
@@ -25,7 +29,9 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
     private final ConversationParticipantRepository participantRepository;
     private final MessageRepository messageRepository;
     private final FollowRepository followRepository;
+    private final BlockRepository blockRepository;
     private final UserProfileRepository userProfileRepository;
+    private final PostRepository postRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final AutoAcceptConversationService autoAcceptConversationService;
 
@@ -38,8 +44,9 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
     @Override
     protected MessageResponse doProcess(SendMessageRequest request) {
         if ((request.getContent() == null || request.getContent().isBlank())
-                && request.getMediaUrl() == null) {
-            throw new AppValidationException("Message must have content or media");
+                && request.getMediaUrl() == null
+                && request.getSharedPostId() == null) {
+            throw new AppValidationException("Message must have content, media, or a shared post");
         }
 
         UUID senderId = request.getUserContext().getUserId();
@@ -49,6 +56,10 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
                 .orElseThrow(() -> new IllegalStateException("Sender not found"));
         UserProfile recipient = userProfileRepository.findById(recipientId)
                 .orElseThrow(() -> new IllegalStateException("Recipient not found"));
+
+        if (blockRepository.existsBlockBetween(senderId, recipientId)) {
+            throw new BusinessException("Cannot send message to this user");
+        }
 
         // Find or create conversation
         Conversation conversation = conversationRepository
@@ -77,12 +88,19 @@ public class SendMessageService extends BaseService<SendMessageRequest, MessageR
         MediaType mediaType = request.getMediaType() != null
                 ? MediaType.valueOf(request.getMediaType().toUpperCase()) : null;
 
+        Post sharedPost = null;
+        if (request.getSharedPostId() != null) {
+            sharedPost = postRepository.findById(request.getSharedPostId())
+                    .orElseThrow(() -> new AppValidationException("Shared post not found"));
+        }
+
         Message message = messageRepository.save(Message.builder()
                 .conversation(conversation)
                 .sender(sender)
                 .content(request.getContent())
                 .mediaUrl(request.getMediaUrl())
                 .mediaType(mediaType)
+                .sharedPost(sharedPost)
                 .build());
 
         MessageResponse response = MessageResponse.from(message);

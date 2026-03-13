@@ -28,6 +28,7 @@ import MoreOptionsModal from "../modals/MoreOptionsModal";
 import { formatPostDate } from "../../utils/dateUtils";
 import postService from "../../services/postService";
 import commentService from "../../services/commentService";
+import ShareModal from "../modals/ShareModal";
 
 const PostCard = ({ post }) => {
     const dispatch = useDispatch();
@@ -46,6 +47,7 @@ const PostCard = ({ post }) => {
     const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
     const [isLikeListOpen, setIsLikeListOpen] = useState(false);
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [likedUsers, setLikedUsers] = useState([]);
 
@@ -145,7 +147,18 @@ const PostCard = ({ post }) => {
                     <HStack gap={3}>
                         {isFavoriteUser && (
                             <Box display="flex" alignItems="center" justifyContent="center">
-                                <Icon as={BsStarFill} color="orange.400" boxSize="15px" />
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#f09433" />
+                                            <stop offset="25%" stopColor="#e6683c" />
+                                            <stop offset="50%" stopColor="#dc2743" />
+                                            <stop offset="75%" stopColor="#cc2366" />
+                                            <stop offset="100%" stopColor="#bc1888" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#star-gradient)" />
+                                </svg>
                             </Box>
                         )}
                         <Box
@@ -277,6 +290,7 @@ const PostCard = ({ post }) => {
                                 size={26}
                                 cursor="pointer"
                                 color="black"
+                                onClick={() => setIsShareModalOpen(true)}
                             />
                         </HStack>
                         <Box
@@ -397,6 +411,11 @@ const PostCard = ({ post }) => {
                 isOwnPost={isOwnPost}
                 post={post}
                 isFavoriteUser={isFavoriteUser}
+            />
+            <ShareModal 
+                isOpen={isShareModalOpen} 
+                onClose={() => setIsShareModalOpen(false)} 
+                post={post}
             />
         </>
     );

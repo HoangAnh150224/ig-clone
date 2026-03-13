@@ -3,6 +3,7 @@ package com.instagram.be.story.controller;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.UserContext;
 import com.instagram.be.base.api.ApiResponse;
+import com.instagram.be.storage.CloudinaryService;
 import com.instagram.be.story.request.*;
 import com.instagram.be.story.response.*;
 import com.instagram.be.story.service.*;
@@ -11,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StoryController {
 
+    private final CloudinaryService cloudinaryService;
     private final GetFeedStoriesService getFeedStoriesService;
     private final ViewStoryService viewStoryService;
     private final CreateStoryService createStoryService;
@@ -45,10 +50,26 @@ public class StoryController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping
+    @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<StoryResponse>> createStory(@RequestBody CreateStoryRequest request) {
-        request.setUserContext(currentUser());
+    public ResponseEntity<ApiResponse<StoryResponse>> createStory(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "closeFriends", defaultValue = "false") boolean closeFriends) {
+
+        CloudinaryService.UploadResult result = cloudinaryService.upload(file, "stories");
+        String rawType = file.getContentType();
+        com.instagram.be.post.enums.MediaType mediaType =
+                rawType != null && rawType.startsWith("video")
+                        ? com.instagram.be.post.enums.MediaType.VIDEO
+                        : com.instagram.be.post.enums.MediaType.IMAGE;
+
+        CreateStoryRequest request = CreateStoryRequest.builder()
+                .mediaUrl(result.url())
+                .mediaType(mediaType)
+                .closeFriends(closeFriends)
+                .userContext(currentUser())
+                .build();
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createStoryService.execute(request), "Story created", 201));
     }

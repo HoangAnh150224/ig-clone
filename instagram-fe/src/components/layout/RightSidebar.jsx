@@ -120,6 +120,10 @@ const RightSidebar = () => {
                     fontWeight="600"
                     p={0}
                     height="auto"
+                    border="none"
+                    outline="none"
+                    _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                    _active={{ bg: "transparent" }}
                     _hover={{ bg: "transparent", color: "blue.800" }}
                 >
                     Switch
@@ -138,6 +142,10 @@ const RightSidebar = () => {
                     fontWeight="600"
                     p={0}
                     height="auto"
+                    border="none"
+                    outline="none"
+                    _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                    _active={{ bg: "transparent" }}
                     _hover={{ bg: "transparent", color: "gray.500" }}
                 >
                     See All
@@ -193,6 +201,10 @@ const RightSidebar = () => {
                                 fontWeight="600"
                                 p={0}
                                 height="auto"
+                                border="none"
+                                outline="none"
+                                _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                                _active={{ bg: "transparent" }}
                                 onClick={(e) => handleFollow(e, user.id)}
                                 _hover={{
                                     bg: "transparent",

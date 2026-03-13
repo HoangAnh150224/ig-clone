@@ -3,6 +3,7 @@ package com.instagram.be.config.interceptor;
 import com.instagram.be.auth.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -23,6 +24,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -37,12 +39,17 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 if (bearerToken.startsWith("Bearer ")) {
                     String token = bearerToken.substring(7);
                     if (jwtUtil.isTokenValid(token)) {
-                        String username = jwtUtil.extractUsername(token);
-                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                        accessor.setUser(authentication);
-                        log.debug("WebSocket CONNECT: Authenticated user: {}", username);
+                        String jti = jwtUtil.extractJti(token);
+                        if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + jti))) {
+                            log.warn("WebSocket CONNECT: Token has been revoked (logged out)");
+                        } else {
+                            String username = jwtUtil.extractUsername(token);
+                            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                            accessor.setUser(authentication);
+                            log.debug("WebSocket CONNECT: Authenticated user: {}", username);
+                        }
                     } else {
                         log.warn("WebSocket CONNECT: Invalid token provided");
                     }

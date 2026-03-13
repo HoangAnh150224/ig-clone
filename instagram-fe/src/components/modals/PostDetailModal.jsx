@@ -36,7 +36,7 @@ import "../Comment/CommentModal.css";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleMute } from "../../store/slices/uiSlice";
-import { toggleLike, updatePostInStore } from "../../store/slices/postSlice";
+import { updatePostInStore } from "../../store/slices/postSlice";
 import { updatePostInProfile } from "../../store/slices/userSlice";
 import { updatePostInExplore } from "../../store/slices/exploreSlice";
 import commentService from "../../services/commentService";
@@ -70,7 +70,6 @@ const PostDetailModal = ({
     const [localIsLiked, setLocalIsLiked] = useState(post?.isLiked || false);
     const [localLikeCount, setLocalLikeCount] = useState(post?.likeCount || 0);
     const [localIsSaved, setLocalIsSaved] = useState(post?.isSaved || false);
-    const [localCommentCount, setLocalCommentCount] = useState(post?.commentCount || 0);
 
     const inputRef = useRef(null);
 
@@ -79,7 +78,6 @@ const PostDetailModal = ({
             setLocalIsLiked(post.isLiked || false);
             setLocalLikeCount(post.likeCount || 0);
             setLocalIsSaved(post.isSaved || false);
-            setLocalCommentCount(post.commentCount || 0);
             if (post.author) {
                 setLocalIsFollowing(post.author.isFollowing);
             }

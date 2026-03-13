@@ -6,12 +6,15 @@ import com.instagram.be.base.api.ApiResponse;
 import com.instagram.be.highlight.request.*;
 import com.instagram.be.highlight.response.HighlightResponse;
 import com.instagram.be.highlight.service.*;
+import com.instagram.be.storage.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,14 +22,21 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class HighlightController {
 
+    private final CloudinaryService cloudinaryService;
     private final CreateHighlightService createHighlightService;
     private final AddStoryToHighlightService addStoryToHighlightService;
     private final DeleteHighlightService deleteHighlightService;
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<HighlightResponse>> createHighlight(
-            @RequestBody CreateHighlightRequest request) {
+            @RequestPart(value = "cover", required = false) MultipartFile cover,
+            @RequestPart("data") CreateHighlightRequest request) {
+
+        if (cover != null && !cover.isEmpty()) {
+            String coverUrl = cloudinaryService.upload(cover, "highlights").url();
+            request.setCoverUrl(coverUrl);
+        }
         request.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(createHighlightService.execute(request), "Highlight created", 201));

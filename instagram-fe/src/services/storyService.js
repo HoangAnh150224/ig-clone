@@ -7,9 +7,19 @@ const storyService = {
     /**
      * Create a new story.
      * API: POST /stories
+     * @param {File} file - The story media file
+     * @param {boolean} closeFriends - Whether this story is for close friends only
      */
-    createStory: async (storyData) => {
-        return axiosClient.post("/stories", storyData);
+    createStory: async (file, closeFriends = false) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("closeFriends", closeFriends);
+
+        return axiosClient.post("/stories", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
     },
 
     /**

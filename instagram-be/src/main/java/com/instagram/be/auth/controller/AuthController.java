@@ -1,18 +1,24 @@
 package com.instagram.be.auth.controller;
 
+import com.instagram.be.auth.request.ChangePasswordRequest;
+import com.instagram.be.auth.request.ForgotPasswordRequest;
+import com.instagram.be.auth.request.GetMeRequest;
 import com.instagram.be.auth.request.LoginRequest;
 import com.instagram.be.auth.request.LogoutRequest;
 import com.instagram.be.auth.request.RegisterRequest;
+import com.instagram.be.auth.request.ResetPasswordRequest;
 import com.instagram.be.auth.response.AuthResponse;
 import com.instagram.be.auth.response.MeResponse;
+import com.instagram.be.auth.service.ChangePasswordService;
+import com.instagram.be.auth.service.ForgotPasswordService;
 import com.instagram.be.auth.service.GetMeService;
 import com.instagram.be.auth.service.LoginService;
 import com.instagram.be.auth.service.LogoutService;
 import com.instagram.be.auth.service.RegisterService;
+import com.instagram.be.auth.service.ResetPasswordService;
 import com.instagram.be.base.SecurityUtils;
 import com.instagram.be.base.UserContext;
 import com.instagram.be.base.api.ApiResponse;
-import com.instagram.be.auth.request.GetMeRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +36,9 @@ public class AuthController {
     private final LoginService loginService;
     private final LogoutService logoutService;
     private final GetMeService getMeService;
+    private final ChangePasswordService changePasswordService;
+    private final ForgotPasswordService forgotPasswordService;
+    private final ResetPasswordService resetPasswordService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
@@ -70,6 +79,32 @@ public class AuthController {
         GetMeRequest request = GetMeRequest.builder().userContext(ctx).build();
         MeResponse response = getMeService.execute(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile retrieved", HttpStatus.OK.value()));
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        request.setUserContext(ctx);
+        changePasswordService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully", HttpStatus.OK.value()));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        forgotPasswordService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(null,
+                "If the email is registered, an OTP has been sent", HttpStatus.OK.value()));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        resetPasswordService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully", HttpStatus.OK.value()));
     }
 
     private String getClientIp(HttpServletRequest request) {

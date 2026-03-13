@@ -33,6 +33,17 @@ const commentService = {
     },
 
     /**
+     * Update a comment content.
+     * API: PUT /posts/{postId}/comments/{commentId}
+     * @param {String} postId
+     * @param {String} commentId
+     * @param {String} content
+     */
+    updateComment: async (postId, commentId, content) => {
+        return axiosClient.put(`/posts/${postId}/comments/${commentId}`, { content });
+    },
+
+    /**
      * Toggle like on a comment.
      * API: POST /posts/{postId}/comments/{commentId}/like
      */

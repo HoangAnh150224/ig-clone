@@ -4,19 +4,26 @@ import UserAvatar from "../common/UserAvatar";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import UserListModal from "../modals/UserListModal";
+import { useSelector } from "react-redux";
 
 import commentService from "../../services/commentService";
 
 const CommentCard = ({ comment, postId, onClose, onReply }) => {
+    const authUser = useSelector((state) => state.auth.user);
     const [showReplies, setShowReplies] = useState(false);
     const [replies, setReplies] = useState([]);
     const [loadingReplies, setLoadingReplies] = useState(false);
     const [isLiked, setIsLiked] = useState(comment.isLiked || false);
     const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount || 0);
     const [isLikeListOpen, setIsListOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(comment.content || "");
+    const [isUpdating, setIsUpdating] = useState(false);
     const navigate = useNavigate();
 
     if (!comment) return null;
+
+    const isOwner = authUser?.id === comment.author?.id;
 
     const handleNavigate = (username) => {
         if (onClose) onClose();
@@ -33,6 +40,23 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
         } catch {
             setIsLiked(previousState);
             setLocalLikeCount(previousCount);
+        }
+    };
+
+    const handleUpdateComment = async () => {
+        if (!editContent.trim() || editContent === comment.content) {
+            setIsEditing(false);
+            return;
+        }
+        setIsUpdating(true);
+        try {
+            await commentService.updateComment(postId, comment.id, editContent);
+            comment.content = editContent; // Update local object
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Failed to update comment", error);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -69,47 +93,100 @@ const CommentCard = ({ comment, postId, onClose, onReply }) => {
                     <UserAvatar src={comment.author?.avatarUrl} size="32px" />
                 </Box>
                 <Box flex={1}>
-                    <Text fontSize="14px" lineHeight="1.4" color="black">
-                        <Text
-                            as="span"
-                            fontWeight="bold"
-                            mr={2}
-                            cursor="pointer"
-                            onClick={() =>
-                                handleNavigate(comment.author?.username)
-                            }
-                            _hover={{ opacity: 0.7 }}
-                        >
-                            {comment.author?.username}
-                        </Text>
-                        {comment.content}
-                    </Text>
-                    <HStack gap={4} mt={2}>
-                        <Text fontSize="12px" color="gray.500">
-                            {comment.timeAgo || 'just now'}
-                        </Text>
-                        {localLikeCount > 0 && (
-                            <Text
-                                fontSize="12px"
-                                color="gray.500"
-                                fontWeight="bold"
-                                cursor="pointer"
-                                _hover={{ color: "black" }}
-                                onClick={() => setIsListOpen(true)}
-                            >
-                                {localLikeCount.toLocaleString()} likes
+                    {isEditing ? (
+                        <VStack align="stretch" gap={2}>
+                            <Box 
+                                as="textarea"
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    fontSize: "14px",
+                                    border: "1px solid #dbdbdb",
+                                    borderRadius: "4px",
+                                    padding: "8px",
+                                    backgroundColor: "white",
+                                    color: "black",
+                                    minHeight: "60px"
+                                }}
+                            />
+                            <HStack gap={3}>
+                                <Text 
+                                    fontSize="12px" 
+                                    color="#0095f6" 
+                                    fontWeight="bold" 
+                                    cursor="pointer"
+                                    onClick={handleUpdateComment}
+                                >
+                                    {isUpdating ? "Saving..." : "Save"}
+                                </Text>
+                                <Text 
+                                    fontSize="12px" 
+                                    color="gray.500" 
+                                    fontWeight="bold" 
+                                    cursor="pointer"
+                                    onClick={() => setIsEditing(false)}
+                                >
+                                    Cancel
+                                </Text>
+                            </HStack>
+                        </VStack>
+                    ) : (
+                        <>
+                            <Text fontSize="14px" lineHeight="1.4" color="black">
+                                <Text
+                                    as="span"
+                                    fontWeight="bold"
+                                    mr={2}
+                                    cursor="pointer"
+                                    onClick={() =>
+                                        handleNavigate(comment.author?.username)
+                                    }
+                                    _hover={{ opacity: 0.7 }}
+                                >
+                                    {comment.author?.username}
+                                </Text>
+                                {comment.content}
                             </Text>
-                        )}
-                        <Text
-                            fontSize="12px"
-                            color="gray.500"
-                            fontWeight="bold"
-                            cursor="pointer"
-                            onClick={handleReplyClick}
-                        >
-                            Reply
-                        </Text>
-                    </HStack>
+                            <HStack gap={4} mt={2}>
+                                <Text fontSize="12px" color="gray.500">
+                                    {comment.timeAgo || 'just now'}
+                                </Text>
+                                {localLikeCount > 0 && (
+                                    <Text
+                                        fontSize="12px"
+                                        color="gray.500"
+                                        fontWeight="bold"
+                                        cursor="pointer"
+                                        _hover={{ color: "black" }}
+                                        onClick={() => setIsListOpen(true)}
+                                    >
+                                        {localLikeCount.toLocaleString()} likes
+                                    </Text>
+                                )}
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
+                                    cursor="pointer"
+                                    onClick={handleReplyClick}
+                                >
+                                    Reply
+                                </Text>
+                                {isOwner && (
+                                    <Text
+                                        fontSize="12px"
+                                        color="gray.500"
+                                        fontWeight="bold"
+                                        cursor="pointer"
+                                        onClick={() => setIsEditing(true)}
+                                    >
+                                        Edit
+                                    </Text>
+                                )}
+                            </HStack>
+                        </>
+                    )}
                 </Box>
                 <Box
                     pt={1}

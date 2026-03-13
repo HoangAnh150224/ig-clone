@@ -3,6 +3,7 @@ package com.instagram.be.base.request;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,8 +15,9 @@ import org.springframework.data.domain.Sort;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public abstract class PaginatedRequest extends BaseRequest {
+public class PaginatedRequest extends BaseRequest {
 
     @Min(0) @Max(10000)
     private Integer page = 0;

@@ -153,6 +153,17 @@ const Sidebar = () => {
     const isCurrentlyExpanded = isHovered && activePanel === null;
     const isCollapsedMode = activePanel !== null;
 
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+        } catch (error) {
+            console.error("Logout failed on server", error);
+        } finally {
+            dispatch(logout());
+            navigate("/auth");
+        }
+    };
+
     return (
         <>
             <Box width="72px" height="100vh" flexShrink={0} />
@@ -173,8 +184,6 @@ const Sidebar = () => {
                 zIndex={100}
                 transition="width 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 overflow="hidden"
-                borderRight="1px solid"
-                borderColor="gray.200"
             >
                 {/* Logo Section */}
                 <Box
@@ -298,10 +307,7 @@ const Sidebar = () => {
                                     cursor="pointer"
                                     align="center"
                                     gap={3}
-                                    onClick={() => {
-                                        dispatch(logout());
-                                        handleNavigate("/accounts/login");
-                                    }}
+                                    onClick={handleLogout}
                                 >
                                     <Text fontSize="14px">Log out</Text>
                                 </Flex>

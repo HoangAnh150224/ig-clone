@@ -12,7 +12,8 @@ import {
     PopoverContent,
     PopoverBody,
     PopoverPositioner,
-    IconButton
+    IconButton,
+    Center
 } from "@chakra-ui/react";
 import {
     AiOutlineInfoCircle,
@@ -26,9 +27,50 @@ import UserAvatar from "../common/UserAvatar";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+const SharedPostPreview = ({ post, onClick }) => {
+    if (!post) return null;
+    return (
+        <VStack 
+            align="stretch" 
+            bg="gray.50" 
+            borderRadius="12px" 
+            overflow="hidden" 
+            border="1px solid" 
+            borderColor="gray.200"
+            cursor="pointer"
+            onClick={onClick}
+            gap={0}
+            mb={1}
+        >
+            <HStack p={2} gap={2}>
+                <UserAvatar src={post.author?.avatarUrl} size="24px" />
+                <Text fontSize="12px" fontWeight="bold" color="black">{post.author?.username}</Text>
+            </HStack>
+            {post.media?.[0]?.url && (
+                <Box width="100%" height="200px">
+                    <Image 
+                        src={post.media[0].url} 
+                        alt="Shared post" 
+                        width="100%" 
+                        height="100%" 
+                        objectFit="cover" 
+                    />
+                </Box>
+            )}
+            <Box p={3}>
+                <Text fontSize="12px" color="black" noOfLines={2}>
+                    <Text as="span" fontWeight="bold" mr={1}>{post.author?.username}</Text>
+                    {post.caption}
+                </Text>
+            </Box>
+        </VStack>
+    );
+};
+
 const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadAt }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
     const isDeleted = msg.deleted;
 
     const isSeen = isMe && lastReadAt && new Date(msg.createdAt) <= new Date(lastReadAt);
@@ -100,21 +142,33 @@ const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadA
                     </PopoverRoot>
                 )}
                 
-                <Box
-                    maxW="70%"
-                    p={3}
-                    px={4}
-                    borderRadius="22px"
-                    bg={isDeleted ? "transparent" : (isMe ? "#3797f0" : "gray.100")}
-                    color={isDeleted ? "gray.400" : (isMe ? "white" : "black")}
-                    border={isDeleted ? "1px solid" : "none"}
-                    borderColor="gray.200"
-                    fontSize="sm"
-                    fontStyle={isDeleted ? "italic" : "normal"}
-                    title={timeStr}
-                >
-                    {isDeleted ? "Message unsent" : (msg.text || msg.content)}
-                </Box>
+                <VStack align={isMe ? "end" : "start"} maxW="70%" gap={0}>
+                    {msg.sharedPost && !isDeleted && (
+                        <Box width="240px">
+                            <SharedPostPreview 
+                                post={msg.sharedPost} 
+                                onClick={() => navigate(`/p/${msg.sharedPost.id}`)} 
+                            />
+                        </Box>
+                    )}
+                    
+                    {(msg.text || msg.content || isDeleted) && (
+                        <Box
+                            p={3}
+                            px={4}
+                            borderRadius="22px"
+                            bg={isDeleted ? "transparent" : (isMe ? "#3797f0" : "gray.100")}
+                            color={isDeleted ? "gray.400" : (isMe ? "white" : "black")}
+                            border={isDeleted ? "1px solid" : "none"}
+                            borderColor="gray.200"
+                            fontSize="sm"
+                            fontStyle={isDeleted ? "italic" : "normal"}
+                            title={timeStr}
+                        >
+                            {isDeleted ? "Message unsent" : (msg.text || msg.content)}
+                        </Box>
+                    )}
+                </VStack>
             </Flex>
             {isMe && isLastMe && (
                 <Text fontSize="10px" color="gray.500" pr={2}>
@@ -125,6 +179,11 @@ const MessageItem = ({ msg, isMe, authUser, onUnsendMessage, isLastMe, lastReadA
     );
 };
 
+import messageService from "../../services/messageService";
+
+import cloudinaryService from "../../services/cloudinaryService";
+import { Spinner } from "@chakra-ui/react";
+
 const ChatWindow = ({ 
     activeChat, 
     onSendMessage, 
@@ -132,13 +191,16 @@ const ChatWindow = ({
     onUnsendMessage, 
     onOpenNewMessage, 
     onAcceptRequest,
+    onDeleteChat,
     currentView,
     isTyping = false 
 }) => {
     const [message, setMessage] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
     const navigate = useNavigate();
     const authUser = useSelector((state) => state.auth.user);
     const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -160,7 +222,26 @@ const ChatWindow = ({
         setMessage("");
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const uploadResult = await cloudinaryService.upload(file, "messages");
+            // Send message with media info
+            onSendMessage(null, uploadResult.url, uploadResult.mediaType);
+        } catch (error) {
+            console.error("Image upload failed", error);
+            alert("Failed to send image.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
     if (!activeChat) {
+        // ... (existing empty state)
         return (
             <Flex flex={1} bg="white" color="black" direction="column" align="center" justify="center" gap={4}>
                 <Box borderRadius="full" border="2px solid" borderColor="black" p={6} display="flex" align="center" justify="center" bg="white">
@@ -189,6 +270,7 @@ const ChatWindow = ({
     }
 
     const participant = activeChat.participant || activeChat.user;
+    const isBlocked = authUser?.blockedUserIds?.some(id => String(id) === String(participant?.id));
 
     if (!participant) {
         return (
@@ -198,6 +280,17 @@ const ChatWindow = ({
         );
     }
 
+    const handleDeleteChat = async () => {
+        if (window.confirm("Delete conversation? This will permanently remove your copy of the conversation from your inbox.")) {
+            try {
+                await messageService.deleteConversation(activeChat.id);
+                if (onDeleteChat) onDeleteChat(activeChat.id);
+            } catch (error) {
+                console.error("Failed to delete chat", error);
+            }
+        }
+    };
+
     return (
         <Box flex={1} bg="white" color="black" display="flex" flexDirection="column" height="100vh">
             {/* Header */}
@@ -206,34 +299,82 @@ const ChatWindow = ({
                     <UserAvatar src={participant?.avatarUrl || participant?.avatar} size="32px" />
                     <VStack align="start" gap={0}>
                         <Text fontWeight="bold" color="black" fontSize="sm">{participant?.username}</Text>
-                        {activeChat.isOnline && <Text fontSize="xs" color="green.500">Active now</Text>}
+                        {activeChat.isOnline && !isBlocked && <Text fontSize="xs" color="green.500">Active now</Text>}
                     </VStack>
                 </HStack>
-                <AiOutlineInfoCircle size={24} cursor="pointer" color="black" />
+                
+                <PopoverRoot positioning={{ placement: "bottom-end" }}>
+                    <PopoverTrigger asChild>
+                        <Box cursor="pointer" p={1}>
+                            <AiOutlineInfoCircle size={24} color="black" />
+                        </Box>
+                    </PopoverTrigger>
+                    <PopoverPositioner zIndex={1500}>
+                        <PopoverContent width="200px" bg="white" boxShadow="lg" borderRadius="8px">
+                            <PopoverBody p={0}>
+                                <VStack align="stretch" gap={0}>
+                                    <Button 
+                                        variant="ghost" 
+                                        color="#ed4956" 
+                                        fontWeight="bold" 
+                                        onClick={handleDeleteChat}
+                                        borderRadius="0"
+                                        height="45px"
+                                    >
+                                        Delete Chat
+                                    </Button>
+                                    <Box h="1px" bg="gray.100" />
+                                    <Button 
+                                        variant="ghost" 
+                                        color="black" 
+                                        onClick={() => navigate(`/${participant?.username}`)}
+                                        borderRadius="0"
+                                        height="45px"
+                                    >
+                                        View Profile
+                                    </Button>
+                                </VStack>
+                            </PopoverBody>
+                        </PopoverContent>
+                    </PopoverPositioner>
+                </PopoverRoot>
             </Flex>
 
             {/* Messages */}
             <VStack flex={1} p={4} overflowY="auto" align="stretch" gap={4} bg="white" className="no-scrollbar">
-                {activeChat.messages?.map((msg, index) => {
-                    const msgSenderId = msg.senderId || msg.sender?.id;
-                    const isMe = msgSenderId === authUser?.id || msg.sender === "me";
-                    
-                    // Logic to show "Seen" status only for the last message sent by me
-                    const isLastMe = isMe && index === activeChat.messages.length - 1;
+                {(() => {
+                    // Find the index of the last message sent by the current user
+                    let lastMeIdx = -1;
+                    if (activeChat.messages) {
+                        for (let i = activeChat.messages.length - 1; i >= 0; i--) {
+                            const m = activeChat.messages[i];
+                            const mSenderId = m.senderId || m.sender?.id;
+                            if (mSenderId === authUser?.id || m.sender === "me") {
+                                lastMeIdx = i;
+                                break;
+                            }
+                        }
+                    }
 
-                    return (
-                        <MessageItem 
-                            key={msg.id} 
-                            msg={msg} 
-                            isMe={isMe} 
-                            authUser={authUser} 
-                            onUnsendMessage={onUnsendMessage} 
-                            isLastMe={isLastMe}
-                            lastReadAt={activeChat.lastReadAt}
-                        />
-                    );
-                })}
-                {isTyping && (
+                    return activeChat.messages?.map((msg, index) => {
+                        const msgSenderId = msg.senderId || msg.sender?.id;
+                        const isMe = msgSenderId === authUser?.id || msg.sender === "me";
+                        const isLastMe = index === lastMeIdx;
+
+                        return (
+                            <MessageItem 
+                                key={msg.id || index} 
+                                msg={msg} 
+                                isMe={isMe} 
+                                authUser={authUser} 
+                                onUnsendMessage={onUnsendMessage} 
+                                isLastMe={isLastMe}
+                                lastReadAt={activeChat.lastReadAt}
+                            />
+                        );
+                    });
+                })()}
+                {isTyping && !isBlocked && (
                     <Flex justify="flex-start">
                         <Box p={3} px={4} borderRadius="22px" bg="gray.100" color="gray.500" fontSize="xs">
                             Typing...
@@ -245,7 +386,31 @@ const ChatWindow = ({
 
             {/* Input / Request Footer */}
             <Box p={4} px={5} bg="white">
-                {currentView === "requests" ? (
+                <input 
+                    type="file" 
+                    hidden 
+                    ref={fileInputRef} 
+                    accept="image/*,video/*" 
+                    onChange={handleImageUpload} 
+                />
+                
+                {isBlocked ? (
+                    <Center py={4} bg="gray.50" borderRadius="12px" border="1px solid" borderColor="gray.100">
+                        <VStack gap={2}>
+                            <Text fontWeight="bold" color="black">You blocked this user</Text>
+                            <Text fontSize="xs" color="gray.500">You can't message them unless you unblock them.</Text>
+                            <Button 
+                                size="xs" 
+                                color="#0095f6" 
+                                variant="ghost" 
+                                fontWeight="bold"
+                                onClick={() => navigate("/accounts/edit")}
+                            >
+                                Unblock
+                            </Button>
+                        </VStack>
+                    </Center>
+                ) : currentView === "requests" ? (
                     <VStack gap={4} py={2}>
                         <Text fontSize="14px" color="gray.500" textAlign="center">
                             The user wants to send you a message. They won't know you've seen it until you accept.
@@ -312,7 +477,9 @@ const ChatWindow = ({
                         ) : (
                             <HStack gap={4}>
                                 <HiOutlineMicrophone size={24} cursor="pointer" color="black" />
-                                <AiOutlinePicture size={24} cursor="pointer" color="black" />
+                                <Box cursor="pointer" onClick={() => fileInputRef.current?.click()}>
+                                    {isUploading ? <Spinner size="xs" color="black" /> : <AiOutlinePicture size={24} color="black" />}
+                                </Box>
                                 <AiOutlineHeart size={24} cursor="pointer" color="black" />
                             </HStack>
                         )}

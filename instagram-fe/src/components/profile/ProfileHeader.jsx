@@ -11,18 +11,21 @@ import {
 } from "@chakra-ui/react";
 import { BsThreeDots } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { openCreatePostModal } from "../../store/slices/uiSlice";
 import { FiPlus } from "react-icons/fi";
 import StoryModal from "../modals/StoryModal";
 import UserListModal from "../modals/UserListModal";
 import MoreOptionsModal from "../modals/MoreOptionsModal";
 import profileService from "../../services/profileService";
+import userService from "../../services/userService";
 import { toggleFollow } from "../../store/slices/userSlice";
+import { setUser } from "../../store/slices/authSlice";
 
 const ProfileHeader = ({ user, isOwnProfile }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const authUser = useSelector((state) => state.auth.user);
     const [isStoryOpen, setIsStoryOpen] = useState(false);
     const [isListOpen, setIsListOpen] = useState(false);
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
@@ -31,11 +34,26 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
 
     if (!user) return null;
 
+    const isBlocked = authUser?.blockedUserIds?.includes(user.id);
+
     const handleFollowToggle = async () => {
         dispatch(toggleFollow(user.id));
     };
 
+    const handleUnblock = async () => {
+        try {
+            await userService.blockUser(user.id); // blockUser is a toggle
+            if (authUser) {
+                const newBlockedIds = authUser.blockedUserIds.filter(id => id !== user.id);
+                dispatch(setUser({ ...authUser, blockedUserIds: newBlockedIds }));
+            }
+        } catch (error) {
+            console.error("Failed to unblock user", error);
+        }
+    };
+
     const handleAvatarClick = () => {
+        if (isBlocked) return;
         // ONLY OPEN IF THERE ARE NEW STORIES (Active Story)
         if (user.hasStory && user.stories?.length > 0) {
             setIsStoryOpen(true);
@@ -45,6 +63,7 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
     };
 
     const handleOpenList = async (type) => {
+        if (isBlocked) return;
         try {
             if (type === "followers") {
                 setListTitle("Followers");
@@ -63,11 +82,12 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
     };
 
     const handleMessageClick = () => {
+        if (isBlocked) return;
         navigate("/direct/inbox", { state: { selectedUser: user } });
     };
 
     // STORY DATA ONLY CONTAINS NEW STORIES, NO HIGHLIGHTS
-    const activeStoryData = user.hasStory
+    const activeStoryData = user.hasStory && !isBlocked
         ? [
               {
                   id: "active-story",
@@ -91,21 +111,21 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                         alignItems="center"
                         justifyContent="center"
                         position="relative"
-                        cursor={user.hasStory ? "pointer" : "default"}
+                        cursor={user.hasStory && !isBlocked ? "pointer" : "default"}
                         p="4px"
                         onClick={handleAvatarClick}
                         bg={
-                            user.hasStory
+                            user.hasStory && !isBlocked
                                 ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)"
                                 : "transparent"
                         }
-                        border={!user.hasStory ? "1px solid" : "none"}
+                        border={!user.hasStory || isBlocked ? "1px solid" : "none"}
                         borderColor="gray.200"
                     >
                         <Box
                             bg="white"
                             borderRadius="full"
-                            p={user.hasStory ? "3px" : "0"}
+                            p={user.hasStory && !isBlocked ? "3px" : "0"}
                             width="100%"
                             height="100%"
                         >
@@ -121,6 +141,7 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                                     w="100%"
                                     h="100%"
                                     objectFit="cover"
+                                    filter={isBlocked ? "grayscale(100%) opacity(0.5)" : "none"}
                                 />
                             </Box>
                         </Box>
@@ -185,6 +206,28 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                                     onClick={() => setIsMoreOptionsOpen(true)}
                                 />
                             </HStack>
+                        ) : isBlocked ? (
+                            <HStack gap={2}>
+                                <Button
+                                    size="sm"
+                                    bg="#0095f6"
+                                    color="white"
+                                    fontWeight="600"
+                                    px={6}
+                                    borderRadius="8px"
+                                    _hover={{ bg: "#1877f2" }}
+                                    onClick={handleUnblock}
+                                >
+                                    Unblock
+                                </Button>
+                                <Icon
+                                    as={BsThreeDots}
+                                    boxSize={6}
+                                    cursor="pointer"
+                                    color="black"
+                                    onClick={() => setIsMoreOptionsOpen(true)}
+                                />
+                            </HStack>
                         ) : (
                             <HStack gap={2}>
                                 <Button
@@ -225,29 +268,29 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                     <HStack gap={10}>
                         <Text fontSize="16px" color="black">
                             <Text as="span" fontWeight="600">
-                                {user.postsCount || 0}
+                                {isBlocked ? 0 : (user.postsCount || 0)}
                             </Text>{" "}
                             posts
                         </Text>
                         <Text
                             fontSize="16px"
                             color="black"
-                            cursor="pointer"
-                            onClick={() => handleOpenList("followers")}
+                            cursor={isBlocked ? "default" : "pointer"}
+                            onClick={() => !isBlocked && handleOpenList("followers")}
                         >
                             <Text as="span" fontWeight="600">
-                                {user.followersCount?.toLocaleString() || 0}
+                                {isBlocked ? 0 : (user.followersCount?.toLocaleString() || 0)}
                             </Text>{" "}
                             followers
                         </Text>
                         <Text
                             fontSize="16px"
                             color="black"
-                            cursor="pointer"
-                            onClick={() => handleOpenList("following")}
+                            cursor={isBlocked ? "default" : "pointer"}
+                            onClick={() => !isBlocked && handleOpenList("following")}
                         >
                             <Text as="span" fontWeight="600">
-                                {user.followingCount?.toLocaleString() || 0}
+                                {isBlocked ? 0 : (user.followingCount?.toLocaleString() || 0)}
                             </Text>{" "}
                             following
                         </Text>
@@ -257,24 +300,28 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                         <Text fontSize="14px" fontWeight="600" color="black">
                             {user.fullName}
                         </Text>
-                        <Text
-                            fontSize="14px"
-                            whiteSpace="pre-wrap"
-                            color="black"
-                            maxW="100%"
-                        >
-                            {user.bio}
-                        </Text>
-                        {user.website && (
-                            <ChakraLink
-                                href={user.website}
-                                color="#00376b"
-                                fontWeight="600"
-                                fontSize="14px"
-                                isExternal
-                            >
-                                {user.website.replace("https://", "").replace("http://", "")}
-                            </ChakraLink>
+                        {!isBlocked && (
+                            <>
+                                <Text
+                                    fontSize="14px"
+                                    whiteSpace="pre-wrap"
+                                    color="black"
+                                    maxW="100%"
+                                >
+                                    {user.bio}
+                                </Text>
+                                {user.website && (
+                                    <ChakraLink
+                                        href={user.website}
+                                        color="#00376b"
+                                        fontWeight="600"
+                                        fontSize="14px"
+                                        isExternal
+                                    >
+                                        {user.website.replace("https://", "").replace("http://", "")}
+                                    </ChakraLink>
+                                )}
+                            </>
                         )}
                     </VStack>
                 </VStack>
@@ -293,7 +340,7 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                 onClose={() => setIsListOpen(false)}
                 title={listTitle}
                 users={listUsers}
-                isOwnContext={isOwnProfile}
+                listOwnerId={user.id}
             />
 
             {/* More Options Modal */}

@@ -1,44 +1,80 @@
+import axiosClient from "../api/axiosClient";
+
 /**
- * CloudinaryService handles image and video uploads to Cloudinary.
- * You need to set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in .env
+ * CloudinaryService handles image and video uploads via the backend API.
+ * The backend handles the actual Cloudinary interaction securely.
  */
 const cloudinaryService = {
-    upload: async (file) => {
-        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dqmivv1hp"; // Default placeholder if not set
-        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "ig-clone-preset";
-
+    /**
+     * Upload a file to Cloudinary via backend.
+     * API: POST /api/upload
+     * 
+     * @param {File} file - The file to upload
+     * @param {string} folder - Optional folder name
+     * @returns {Promise<{url: string, publicId: string}>}
+     */
+    upload: async (file, folder = "general") => {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", uploadPreset);
-
-        // Determine if it's a video or image
-        const resourceType = file.type.startsWith("video/") ? "video" : "image";
+        formData.append("folder", folder);
 
         try {
-            const response = await fetch(
-                `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
+            // axiosClient handles baseURL and auth headers
+            // It returns the 'data' part of ApiResponse directly
+            const response = await axiosClient.post("/api/upload", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || "Cloudinary upload failed");
-            }
-
-            const data = await response.json();
             return {
-                url: data.secure_url,
-                mediaType: resourceType.toUpperCase(), // IMAGE or VIDEO
-                publicId: data.public_id,
+                url: response.url,
+                publicId: response.publicId,
+                mediaType: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
             };
         } catch (error) {
-            console.error("Cloudinary upload error:", error);
+            console.error("Upload error:", error);
             throw error;
         }
     },
+
+    /**
+     * Upload multiple files.
+     * API: POST /api/upload/multiple
+     */
+    uploadMultiple: async (files, folder = "general") => {
+        const formData = new FormData();
+        Array.from(files).forEach((file) => {
+            formData.append("files", file);
+        });
+        formData.append("folder", folder);
+
+        try {
+            return await axiosClient.post("/api/upload/multiple", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+        } catch (error) {
+            console.error("Multiple upload error:", error);
+            throw error;
+        }
+    },
+    /**
+     * Upload multiple files to Cloudinary.
+     * API: POST /upload/multiple
+     */
+    uploadMultiple: async (files, folder = "posts") => {
+        const formData = new FormData();
+        files.forEach(file => formData.append("files", file));
+        formData.append("folder", folder);
+
+        return axiosClient.post("/upload/multiple", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
 };
 
 export default cloudinaryService;

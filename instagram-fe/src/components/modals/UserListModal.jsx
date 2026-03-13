@@ -22,6 +22,7 @@ const UserListModal = ({
     onClose,
     title,
     users: initialUsers = [],
+    listOwnerId, // ID of the user whose list is being shown
 }) => {
     const navigate = useNavigate();
     const authUser = useSelector((state) => state.auth.user);
@@ -51,6 +52,19 @@ const UserListModal = ({
             ));
         }
     };
+
+    const handleRemoveFollower = async (userId) => {
+        if (window.confirm("Are you sure you want to remove this follower?")) {
+            try {
+                await profileService.removeFollower(userId);
+                setUsers(prev => prev.filter(u => u.id !== userId));
+            } catch (error) {
+                console.error("Failed to remove follower", error);
+            }
+        }
+    };
+
+    const isMyFollowersList = title === "Followers" && (!listOwnerId || listOwnerId === authUser?.id);
 
     return (
         <DialogRoot
@@ -124,16 +138,16 @@ const UserListModal = ({
                                             {!isMe && (
                                                 <Box
                                                     as="button"
-                                                    bg={isFollowing ? "#efefef" : "#0095f6"}
-                                                    color={isFollowing ? "black" : "white"}
+                                                    bg={isMyFollowersList ? "#efefef" : (isFollowing ? "#efefef" : "#0095f6")}
+                                                    color={isMyFollowersList ? "black" : (isFollowing ? "black" : "white")}
                                                     px={4}
                                                     py={1.5}
                                                     borderRadius="8px"
                                                     fontSize="14px"
                                                     fontWeight="bold"
-                                                    onClick={() => handleFollowToggle(user.id)}
+                                                    onClick={() => isMyFollowersList ? handleRemoveFollower(user.id) : handleFollowToggle(user.id)}
                                                 >
-                                                    {isFollowing ? "Following" : "Follow"}
+                                                    {isMyFollowersList ? "Remove" : (isFollowing ? "Following" : "Follow")}
                                                 </Box>
                                             )}
                                         </Flex>

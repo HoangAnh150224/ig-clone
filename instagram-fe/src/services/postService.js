@@ -7,9 +7,29 @@ const postService = {
     /**
      * Create a new post.
      * API: POST /posts
+     * @param {File[]} files - Array of files to upload
+     * @param {Object} postData - Post metadata (caption, type, tags, etc.)
      */
-    createPost: async (postData) => {
-        return axiosClient.post("/posts", postData);
+    createPost: async (files, postData) => {
+        const formData = new FormData();
+        
+        // Append files
+        if (Array.isArray(files)) {
+            files.forEach((file) => formData.append("files", file));
+        } else if (files) {
+            formData.append("files", files);
+        }
+
+        // Append data as JSON string (Backend uses @RequestPart("data"))
+        formData.append("data", new Blob([JSON.stringify(postData)], {
+            type: "application/json"
+        }));
+
+        return axiosClient.post("/posts", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
     },
 
     /**
@@ -22,14 +42,14 @@ const postService = {
 
     /**
      * Get feed posts (cursor-based).
-     * API: GET /feed
+     * API: GET /posts/feed
      */
     getFeedPosts: async (cursor = null, size = 12, type = null) => {
         const params = new URLSearchParams();
         if (cursor) params.append("cursor", cursor);
         if (size) params.append("size", size);
         if (type) params.append("type", type);
-        return axiosClient.get(`/feed?${params.toString()}`);
+        return axiosClient.get(`/posts/feed?${params.toString()}`);
     },
 
     /**
@@ -106,21 +126,21 @@ const postService = {
 
     /**
      * Get archived posts for current user.
-     * API: GET /archive/posts
+     * API: GET /posts/archive
      */
     getArchivedPosts: async (page = 0, size = 12) => {
-        return axiosClient.get(`/archive/posts?page=${page}&size=${size}`);
+        return axiosClient.get(`/posts/archive?page=${page}&size=${size}`);
     },
 
     /**
      * Get explore posts (paginated).
-     * API: GET /explore
+     * API: GET /posts/explore
      */
     getExplorePosts: async (page = 0, size = 18) => {
         const params = new URLSearchParams();
         if (page) params.append("page", page);
         if (size) params.append("size", size);
-        return axiosClient.get(`/explore?${params.toString()}`);
+        return axiosClient.get(`/posts/explore?${params.toString()}`);
     },
 
     /**
@@ -129,6 +149,30 @@ const postService = {
      */
     getTaggedPosts: async (userId, page = 0, size = 12) => {
         return axiosClient.get(`/posts/tagged/${userId}?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Get posts for a specific hashtag.
+     * API: GET /posts/hashtags/{name}
+     */
+    getHashtagPosts: async (name, page = 0, size = 20) => {
+        return axiosClient.get(`/posts/hashtags/${name}?page=${page}&size=${size}`);
+    },
+
+    /**
+     * Toggle favorite status on a post.
+     * API: POST /users/me/favorite/posts/{postId}
+     */
+    togglePostFavorite: async (postId) => {
+        return axiosClient.post(`/users/me/favorite/posts/${postId}`);
+    },
+
+    /**
+     * Get list of favorite posts.
+     * API: GET /users/me/favorites/posts
+     */
+    getFavoritePosts: async (page = 0, size = 12) => {
+        return axiosClient.get(`/users/me/favorites/posts?page=${page}&size=${size}`);
     }
 };
 

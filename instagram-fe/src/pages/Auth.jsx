@@ -15,6 +15,8 @@ import { login, signup, clearError } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import InstagramAlert from "../components/common/InstagramAlert";
 
+import authService from "../services/authService";
+
 const Divider = () => <Box h="1px" bg="gray.200" flex={1} />;
 
 const authImages = [
@@ -25,13 +27,16 @@ const authImages = [
 ];
 
 const Auth = () => {
-    const [isLogin, setIsLogin] = useState(true);
+    const [view, setView] = useState("login"); // login, signup, forgot-password, reset-password
     const [formData, setFormData] = useState({
         username: "",
         password: "",
         email: "",
         fullName: "",
+        otp: "",
+        newPassword: "",
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     const dispatch = useDispatch();
@@ -43,6 +48,7 @@ const Auth = () => {
     // Alert for general system errors
     const [alertConfig, setAlertConfig] = useState({
         isOpen: false,
+        title: "Error",
         message: "",
     });
 
@@ -55,23 +61,65 @@ const Auth = () => {
 
     useEffect(() => {
         dispatch(clearError());
-    }, [isLogin, dispatch]);
+    }, [view, dispatch]);
 
     useEffect(() => {
         if (isAuthenticated) navigate("/");
     }, [isAuthenticated, navigate]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isLogin) {
+        if (view === "login") {
             dispatch(
                 login({
                     identifier: formData.username,
                     password: formData.password,
                 }),
             );
-        } else {
+        } else if (view === "signup") {
             dispatch(signup(formData));
+        } else if (view === "forgot-password") {
+            setIsSubmitting(true);
+            try {
+                await authService.forgotPassword(formData.email);
+                setAlertConfig({
+                    isOpen: true,
+                    title: "Success",
+                    message: "If an account exists for this email, we've sent an OTP to reset your password.",
+                });
+                setView("reset-password");
+            } catch (error) {
+                setAlertConfig({
+                    isOpen: true,
+                    title: "Error",
+                    message: error.apiResponse?.message || "Failed to send reset request.",
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
+        } else if (view === "reset-password") {
+            setIsSubmitting(true);
+            try {
+                await authService.resetPassword({
+                    email: formData.email,
+                    otp: formData.otp,
+                    newPassword: formData.newPassword
+                });
+                setAlertConfig({
+                    isOpen: true,
+                    title: "Success",
+                    message: "Password reset successful. You can now log in with your new password.",
+                });
+                setView("login");
+            } catch (error) {
+                setAlertConfig({
+                    isOpen: true,
+                    title: "Error",
+                    message: error.apiResponse?.message || "Failed to reset password.",
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -125,11 +173,13 @@ const Auth = () => {
                         mb={6}
                         fontFamily="cursive"
                         color="black"
+                        cursor="pointer"
+                        onClick={() => setView("login")}
                     >
                         Instagram
                     </Text>
 
-                    {!isLogin && (
+                    {view === "signup" && (
                         <Text
                             fontSize="sm"
                             fontWeight="bold"
@@ -141,14 +191,36 @@ const Auth = () => {
                         </Text>
                     )}
 
+                    {view === "forgot-password" && (
+                        <VStack mb={4} gap={2}>
+                            <Box border="2px solid black" borderRadius="full" p={4}>
+                                < LuLock size={40} />
+                            </Box>
+                            <Text fontWeight="bold" textAlign="center">Trouble Logging In?</Text>
+                            <Text fontSize="xs" color="gray.500" textAlign="center">
+                                Enter your email and we'll send you an OTP to get back into your account.
+                            </Text>
+                        </VStack>
+                    )}
+
+                    {view === "reset-password" && (
+                        <VStack mb={4} gap={2}>
+                            <Text fontWeight="bold" textAlign="center">Reset Password</Text>
+                            <Text fontSize="xs" color="gray.500" textAlign="center">
+                                Enter the 6-digit OTP sent to your email and your new password.
+                            </Text>
+                        </VStack>
+                    )}
+
                     <form onSubmit={handleSubmit}>
                         <VStack gap={2} align="stretch">
-                            {!isLogin && (
+                            {(view === "signup" || view === "forgot-password" || view === "reset-password") && (
                                 <Box>
                                     <Input
                                         placeholder="Email"
                                         fontSize="xs"
                                         bg="gray.50"
+                                        value={formData.email}
                                         borderColor={
                                             getFieldError("email")
                                                 ? "red.400"
@@ -162,6 +234,7 @@ const Auth = () => {
                                                 email: e.target.value,
                                             })
                                         }
+                                        disabled={view === "reset-password"}
                                     />
                                     {getFieldError("email") && (
                                         <Text
@@ -174,7 +247,28 @@ const Auth = () => {
                                     )}
                                 </Box>
                             )}
-                            {!isLogin && (
+                            
+                            {view === "reset-password" && (
+                                <Box>
+                                    <Input
+                                        placeholder="OTP"
+                                        fontSize="xs"
+                                        bg="gray.50"
+                                        value={formData.otp}
+                                        borderColor="gray.200"
+                                        _placeholder={{ color: "gray.400" }}
+                                        color="black"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                otp: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </Box>
+                            )}
+
+                            {view === "signup" && (
                                 <Box>
                                     <Input
                                         placeholder="Full Name"
@@ -192,52 +286,79 @@ const Auth = () => {
                                     />
                                 </Box>
                             )}
-                            <Box>
-                                <Input
-                                    placeholder="Username"
-                                    fontSize="xs"
-                                    bg="gray.50"
-                                    borderColor={
-                                        getFieldError("username")
-                                            ? "red.400"
-                                            : "gray.200"
-                                    }
-                                    _placeholder={{ color: "gray.400" }}
-                                    color="black"
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            username: e.target.value,
-                                        })
-                                    }
-                                />
-                                {getFieldError("username") && (
-                                    <Text
-                                        fontSize="10px"
-                                        color="red.500"
-                                        mt={1}
-                                    >
-                                        {getFieldError("username")}
-                                    </Text>
-                                )}
-                            </Box>
-                            <Box>
-                                <Input
-                                    placeholder="Password"
-                                    type="password"
-                                    fontSize="xs"
-                                    bg="gray.50"
-                                    borderColor="gray.200"
-                                    _placeholder={{ color: "gray.400" }}
-                                    color="black"
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            password: e.target.value,
-                                        })
-                                    }
-                                />
-                            </Box>
+                            
+                            {(view === "login" || view === "signup") && (
+                                <Box>
+                                    <Input
+                                        placeholder="Username"
+                                        fontSize="xs"
+                                        bg="gray.50"
+                                        borderColor={
+                                            getFieldError("username")
+                                                ? "red.400"
+                                                : "gray.200"
+                                        }
+                                        _placeholder={{ color: "gray.400" }}
+                                        color="black"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                username: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    {getFieldError("username") && (
+                                        <Text
+                                            fontSize="10px"
+                                            color="red.500"
+                                            mt={1}
+                                        >
+                                            {getFieldError("username")}
+                                        </Text>
+                                    )}
+                                </Box>
+                            )}
+                            
+                            {(view === "login" || view === "signup") && (
+                                <Box>
+                                    <Input
+                                        placeholder="Password"
+                                        type="password"
+                                        fontSize="xs"
+                                        bg="gray.50"
+                                        borderColor="gray.200"
+                                        _placeholder={{ color: "gray.400" }}
+                                        color="black"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                password: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </Box>
+                            )}
+
+                            {view === "reset-password" && (
+                                <Box>
+                                    <Input
+                                        placeholder="New Password"
+                                        type="password"
+                                        fontSize="xs"
+                                        bg="gray.50"
+                                        borderColor="gray.200"
+                                        _placeholder={{ color: "gray.400" }}
+                                        color="black"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                newPassword: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </Box>
+                            )}
+
                             <Button
                                 type="submit"
                                 bg="#0095f6"
@@ -247,43 +368,61 @@ const Auth = () => {
                                 size="sm"
                                 fontSize="sm"
                                 fontWeight="bold"
-                                isLoading={loading}
+                                isLoading={loading || isSubmitting}
                                 mt={2}
                             >
-                                {isLogin ? "Log In" : "Sign Up"}
+                                {view === "login" ? "Log In" : 
+                                 view === "signup" ? "Sign Up" : 
+                                 view === "forgot-password" ? "Send Login Link" : 
+                                 "Reset Password"}
                             </Button>
                         </VStack>
                     </form>
 
-                    <HStack width="full" my={4}>
-                        <Divider />
-                        <Text fontSize="xs" fontWeight="bold" color="gray.500">
-                            OR
-                        </Text>
-                        <Divider />
-                    </HStack>
+                    {view === "login" && (
+                        <>
+                            <HStack width="full" my={4}>
+                                <Divider />
+                                <Text fontSize="xs" fontWeight="bold" color="gray.500">
+                                    OR
+                                </Text>
+                                <Divider />
+                            </HStack>
 
-                    <Button
-                        variant="ghost"
-                        color="#385185"
-                        fontSize="sm"
-                        fontWeight="bold"
-                        _hover={{ bg: "transparent" }}
-                    >
-                        {isLogin
-                            ? "Log in with Facebook"
-                            : "Sign up with Facebook"}
-                    </Button>
+                            <Button
+                                variant="ghost"
+                                color="#385185"
+                                fontSize="sm"
+                                fontWeight="bold"
+                                _hover={{ bg: "transparent" }}
+                            >
+                                Log in with Facebook
+                            </Button>
 
-                    {isLogin && (
+                            <Text
+                                fontSize="xs"
+                                textAlign="center"
+                                mt={2}
+                                cursor="pointer"
+                                color="#385185"
+                                onClick={() => setView("forgot-password")}
+                            >
+                                Forgot password?
+                            </Text>
+                        </>
+                    )}
+
+                    {(view === "forgot-password" || view === "reset-password") && (
                         <Text
-                            fontSize="xs"
+                            fontSize="sm"
+                            fontWeight="bold"
                             textAlign="center"
-                            mt={2}
+                            mt={4}
                             cursor="pointer"
-                            color="#385185"
+                            onClick={() => setView("login")}
+                            color="black"
                         >
-                            Forgot password?
+                            Back to Login
                         </Text>
                     )}
 
@@ -310,7 +449,7 @@ const Auth = () => {
                     textAlign="center"
                 >
                     <Text fontSize="sm" color="black">
-                        {isLogin
+                        {view === "login"
                             ? "Don't have an account? "
                             : "Have an account? "}
                         <Text
@@ -318,9 +457,9 @@ const Auth = () => {
                             color="#0095f6"
                             fontWeight="bold"
                             cursor="pointer"
-                            onClick={() => setIsLogin(!isLogin)}
+                            onClick={() => setView(view === "login" ? "signup" : "login")}
                         >
-                            {isLogin ? "Sign up" : "Log in"}
+                            {view === "login" ? "Sign up" : "Log in"}
                         </Text>
                     </Text>
                 </Box>
@@ -347,7 +486,7 @@ const Auth = () => {
                 onClose={() =>
                     setAlertConfig({ ...alertConfig, isOpen: false })
                 }
-                title="Error"
+                title={alertConfig.title}
                 message={alertConfig.message}
             />
         </Flex>
@@ -355,3 +494,4 @@ const Auth = () => {
 };
 
 export default Auth;
+

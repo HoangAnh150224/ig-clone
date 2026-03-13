@@ -7,6 +7,7 @@ import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.comment.request.AddCommentRequest;
 import com.instagram.be.comment.request.CommentActionRequest;
 import com.instagram.be.comment.request.GetCommentsRequest;
+import com.instagram.be.comment.request.UpdateCommentRequest;
 import com.instagram.be.comment.response.CommentResponse;
 import com.instagram.be.comment.service.*;
 import com.instagram.be.post.response.LikeResponse;
@@ -26,6 +27,7 @@ public class CommentController {
     private final AddCommentService addCommentService;
     private final GetCommentsService getCommentsService;
     private final DeleteCommentService deleteCommentService;
+    private final UpdateCommentService updateCommentService;
     private final PinCommentService pinCommentService;
     private final LikeCommentService likeCommentService;
 
@@ -51,6 +53,18 @@ public class CommentController {
         request.setUserContext(currentUser());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(addCommentService.execute(request), "Comment added", 201));
+    }
+
+    @PutMapping("/{commentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
+            @PathVariable UUID postId,
+            @PathVariable UUID commentId,
+            @RequestBody UpdateCommentRequest request) {
+        request.setPostId(postId);
+        request.setCommentId(commentId);
+        request.setUserContext(currentUser());
+        return ResponseEntity.ok(ApiResponse.success(updateCommentService.execute(request), "Comment updated", 200));
     }
 
     @DeleteMapping("/{commentId}")

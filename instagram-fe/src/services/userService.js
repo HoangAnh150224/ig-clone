@@ -26,9 +26,28 @@ const userService = {
     /**
      * Update user profile
      * API: PATCH /users/me
+     * @param {Object} profileData - The fields to update
+     * @param {File} avatar - Optional avatar file
      */
-    updateUserProfile: async (profileData) => {
-        return axiosClient.patch("/users/me", profileData);
+    updateUserProfile: async (profileData, avatar = null) => {
+        const formData = new FormData();
+        
+        if (avatar) {
+            formData.append("avatar", avatar);
+        }
+
+        // Append other fields as request parameters
+        Object.keys(profileData).forEach(key => {
+            if (profileData[key] !== undefined && profileData[key] !== null) {
+                formData.append(key, profileData[key]);
+            }
+        });
+
+        return axiosClient.patch("/users/me", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
     },
 
     /**
@@ -57,26 +76,26 @@ const userService = {
 
     /**
      * Get favorite users
-     * API: GET /users/favorites
+     * API: GET /users/me/favorites/users
      */
     getFavoriteUsers: async () => {
-        return axiosClient.get("/users/favorites");
+        return axiosClient.get("/users/me/favorites/users");
     },
 
     /**
      * Toggle user in favorites
-     * API: POST /users/favorites/{userId}
+     * API: POST /users/{userId}/favorite
      */
     toggleFavoriteUser: async (userId) => {
-        return axiosClient.post(`/users/favorites/${userId}`);
+        return axiosClient.post(`/users/${userId}/favorite`);
     },
 
     /**
      * Get list of blocked users.
-     * API: GET /users/blocked
+     * API: GET /users/me/blocked
      */
     getBlockedUsers: async (page = 0, size = 20) => {
-        return axiosClient.get(`/users/blocked?page=${page}&size=${size}`);
+        return axiosClient.get(`/users/me/blocked?page=${page}&size=${size}`);
     },
 
     /**
@@ -85,6 +104,14 @@ const userService = {
      */
     blockUser: async (userId) => {
         return axiosClient.post(`/users/${userId}/block`);
+    },
+
+    /**
+     * Deactivate current user account
+     * API: DELETE /users/me
+     */
+    deactivateAccount: async () => {
+        return axiosClient.delete("/users/me");
     },
 };
 

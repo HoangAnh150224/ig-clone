@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class FavoriteController {
 
@@ -25,7 +26,7 @@ public class FavoriteController {
     private final GetFavoritePostsService getFavoritePostsService;
     private final GetFavoriteUsersService getFavoriteUsersService;
 
-    @PostMapping("/posts/{postId}/favorite")
+    @PostMapping("/me/favorite/posts/{postId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<FavoriteResponse>> toggleFavoritePost(@PathVariable UUID postId) {
         var request = FavoriteRequest.builder()
@@ -36,7 +37,7 @@ public class FavoriteController {
         return ResponseEntity.ok(ApiResponse.success(toggleFavoritePostService.execute(request), "Favorite toggled", 200));
     }
 
-    @PostMapping("/users/{userId}/favorite")
+    @PostMapping("/{userId}/favorite")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<FavoriteResponse>> toggleFavoriteUser(@PathVariable UUID userId) {
         var request = FavoriteRequest.builder()
@@ -47,7 +48,7 @@ public class FavoriteController {
         return ResponseEntity.ok(ApiResponse.success(toggleFavoriteUserService.execute(request), "Favorite toggled", 200));
     }
 
-    @GetMapping("/favorites/posts")
+    @GetMapping("/me/favorites/posts")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<PostResponse>>> getFavoritePosts() {
         var request = UserOnlyRequest.builder()
@@ -57,7 +58,7 @@ public class FavoriteController {
         return ResponseEntity.ok(ApiResponse.success(getFavoritePostsService.execute(request), "Favorite posts retrieved", 200));
     }
 
-    @GetMapping("/favorites/users")
+    @GetMapping("/me/favorites/users")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFavoriteUsers() {
         var request = UserOnlyRequest.builder()

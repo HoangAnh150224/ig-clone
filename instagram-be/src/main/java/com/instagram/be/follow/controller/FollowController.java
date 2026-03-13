@@ -14,6 +14,7 @@ import com.instagram.be.follow.service.FollowService;
 import com.instagram.be.follow.service.GetFollowersService;
 import com.instagram.be.follow.service.GetFollowingService;
 import com.instagram.be.follow.service.GetFollowRequestsService;
+import com.instagram.be.follow.service.RemoveFollowerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +33,7 @@ public class FollowController {
     private final GetFollowRequestsService getFollowRequestsService;
     private final AcceptFollowRequestService acceptFollowRequestService;
     private final DeclineFollowRequestService declineFollowRequestService;
+    private final RemoveFollowerService removeFollowerService;
 
     @GetMapping("/follow-requests")
     @PreAuthorize("isAuthenticated()")
@@ -124,5 +126,18 @@ public class FollowController {
                 .build();
         PaginatedResponse<FollowUserResponse> response = getFollowingService.execute(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Following retrieved", 200));
+    }
+
+    @DeleteMapping("/followers/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> removeFollower(@PathVariable UUID userId) {
+        UserContext ctx = SecurityUtils.getCurrentUserContext()
+                .orElseThrow(() -> new IllegalStateException("No authenticated user"));
+        FollowRequest request = FollowRequest.builder()
+                .targetUserId(userId)
+                .userContext(ctx)
+                .build();
+        removeFollowerService.execute(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Follower removed", 200));
     }
 }

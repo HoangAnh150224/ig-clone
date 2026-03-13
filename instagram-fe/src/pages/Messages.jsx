@@ -6,11 +6,14 @@ import ChatWindow from "../components/messages/ChatWindow";
 import MessageSkeleton from "../components/skeletons/MessageSkeleton";
 import NewMessageModal from "../components/modals/NewMessageModal";
 import messageService from "../services/messageService";
+import userService from "../services/userService";
 import useStomp from "../hooks/useStomp";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "../store/slices/authSlice";
 
 const Messages = () => {
     const authUser = useSelector((state) => state.auth.user);
+    const dispatch = useDispatch();
     const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [activeChatId, setActiveChatId] = useState(null);
@@ -79,7 +82,36 @@ const Messages = () => {
         } finally {
             setLoading(false);
         }
-    }, [location.state]);
+    }, [location.state]); // Removed authUser and dispatch from dependencies
+
+    // Separate useEffect for fetching blocked users once to avoid loop
+    useEffect(() => {
+        const fetchBlocked = async () => {
+            if (!authUser?.id) return;
+            try {
+                const blockedRes = await userService.getBlockedUsers();
+                const blockedList = Array.isArray(blockedRes) ? blockedRes : (blockedRes.content || []);
+                const blockedUserIds = blockedList.map(u => u.id);
+                
+                // Use string comparison for robustness
+                const currentIds = (authUser.blockedUserIds || []).map(id => String(id));
+                const newIds = blockedUserIds.map(id => String(id));
+                
+                const isDifferent = newIds.length !== currentIds.length || 
+                                  newIds.some(id => !currentIds.includes(id));
+                
+                if (isDifferent) {
+                    dispatch(setUser({
+                        ...authUser,
+                        blockedUserIds: blockedUserIds
+                    }));
+                }
+            } catch (error) {
+                console.error("Failed to fetch blocked users", error);
+            }
+        };
+        fetchBlocked();
+    }, [authUser?.id, dispatch]); // Only runs when user changes or on mount
 
     useEffect(() => {
         fetchChats();
@@ -266,20 +298,31 @@ const Messages = () => {
         const recipientId = activeChat?.participant?.id || activeChat?.user?.id;
         
         if (!recipientId || !connected) return;
+        
+        // Robust block check
+        if (authUser?.blockedUserIds?.some(id => String(id) === String(recipientId))) return;
+        
         send("/app/chat.typing", { recipientId: recipientId, isTyping: true });
     };
 
-    const handleSendMessage = async (text) => {
+    const handleSendMessage = async (text, mediaUrl = null, mediaType = null, sharedPostId = null) => {
         const displayedChats = view === "primary" ? primaryChats : requestChats;
         const activeChat = displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
         
-        if (!activeChat || !text.trim()) return;
+        if (!activeChat || (!text?.trim() && !mediaUrl && !sharedPostId)) return;
 
         // Try all possible locations for recipient ID based on chat structure
-        const recipientId = activeChat.participant?.id || activeChat.user?.id || activeChat.id;
+        const recipientId = activeChat.participant?.id || activeChat.user?.id;
 
-        if (!recipientId || recipientId === "temp") {
+        if (!recipientId) {
             console.error("Cannot send message: Valid Recipient ID not found", activeChat);
+            return;
+        }
+
+        // Robust block check
+        const isBlocked = authUser?.blockedUserIds?.some(id => String(id) === String(recipientId));
+        if (isBlocked) {
+            alert("You have blocked this user. Unblock them in Settings to send a message.");
             return;
         }
 
@@ -290,6 +333,9 @@ const Messages = () => {
             senderId: authUser.id,
             recipientId: recipientId,
             content: text,
+            mediaUrl: mediaUrl,
+            mediaType: mediaType,
+            sharedPost: sharedPostId ? { id: sharedPostId } : null, // Partial object for UI
             createdAt: new Date().toISOString(),
             isOptimistic: true
         };
@@ -300,20 +346,21 @@ const Messages = () => {
             // 2. Send via HTTP POST
             const messageBody = {
                 recipientId: recipientId, 
-                content: text 
+                content: text,
+                mediaUrl: mediaUrl,
+                mediaType: mediaType,
+                sharedPostId: sharedPostId
             };
             
             console.log("Sending message with body:", JSON.stringify(messageBody));
             const sentMessage = await messageService.sendMessage(messageBody);
             
-            // 3. Update active chat messages - BE CAREFUL WITH DUPLICATES
+            // 3. Update active chat messages
             setActiveChatMessages(prev => {
-                // If WebSocket already added this message, just remove the temporary one
                 const alreadyExists = prev.some(m => m.id === sentMessage.id);
                 if (alreadyExists) {
                     return prev.filter(m => m.id !== tempMsgId);
                 }
-                // Otherwise, replace the temporary one with the real one
                 return prev.map(m => m.id === tempMsgId ? sentMessage : m);
             });
 
@@ -331,7 +378,6 @@ const Messages = () => {
             }
         } catch (error) {
             console.error("Failed to send message", error);
-            // Remove optimistic message on failure
             setActiveChatMessages(prev => prev.filter(m => m.id !== tempMsgId));
             alert("Failed to send message. Please try again.");
         }

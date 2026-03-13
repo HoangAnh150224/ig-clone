@@ -22,10 +22,10 @@ const profileService = {
 
     /**
      * Get all posts for a specific user.
-     * API: GET /users/{username}/posts
+     * API: GET /posts/user/{username}
      */
     getUserPosts: async (username, page = 0, size = 12) => {
-        return axiosClient.get(`/users/${username}/posts?page=${page}&size=${size}`);
+        return axiosClient.get(`/posts/user/${username}?page=${page}&size=${size}`);
     },
 
     /**
@@ -85,12 +85,18 @@ const profileService = {
 
     /**
      * Clear all search history.
-     * Backend doesn't have a clear-all DELETE /search/history yet based on controller,
-     * but PLAN-BE says it does. Let's assume it doesn't until verified.
+     * API: DELETE /search/history
      */
     clearSearchHistory: async () => {
-        // Implementation might be needed in backend
-        return Promise.resolve();
+        return axiosClient.delete("/search/history");
+    },
+
+    /**
+     * Remove a follower from current user's followers list.
+     * API: DELETE /users/followers/{userId}
+     */
+    removeFollower: async (userId) => {
+        return axiosClient.delete(`/users/followers/${userId}`);
     },
 
     /**
@@ -128,9 +134,49 @@ const profileService = {
     /**
      * Create a new Highlight.
      * API: POST /highlights
+     * @param {File} cover - Optional cover image file
+     * @param {Object} data - Highlight metadata (name, storyIds)
      */
-    createHighlight: async (data) => {
-        return axiosClient.post("/highlights", data);
+    createHighlight: async (cover, data) => {
+        const formData = new FormData();
+        
+        if (cover) {
+            formData.append("cover", cover);
+        }
+
+        // Append data as JSON string (Backend uses @RequestPart("data"))
+        formData.append("data", new Blob([JSON.stringify(data)], {
+            type: "application/json"
+        }));
+
+        return axiosClient.post("/highlights", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
+    /**
+     * Delete a highlight.
+     * API: DELETE /highlights/{id}
+     */
+    deleteHighlight: async (id) => {
+        return axiosClient.delete(`/highlights/${id}`);
+    },
+
+    /**
+     * Add a story to an existing highlight.
+     * API: POST /highlights/{id}/stories
+     */
+    addStoryToHighlight: async (highlightId, storyId) => {
+        return axiosClient.post(`/highlights/${highlightId}/stories`, { storyId });
+    },
+
+    /**
+     * Search hashtags by name.
+     * API: GET /hashtags/search
+     */
+    searchHashtags: async (query, limit = 10) => {
+        return axiosClient.get(`/hashtags/search?q=${query}&limit=${limit}`);
     }
 };
 

@@ -127,12 +127,22 @@ const Profile = () => {
         : posts;
 
     const isPrivateProfileHidden = userProfile?.privateAccount && !isOwnProfile && !userProfile?.isFollowing;
+    const isBlocked = authUser?.blockedUserIds?.includes(userProfile?.id);
 
     return (
         <Container maxW="935px" p={0} bg="white" color="black" mt={4}>
             <ProfileHeader user={userProfile} isOwnProfile={isOwnProfile} />
 
-            {isPrivateProfileHidden ? (
+            {isBlocked ? (
+                <Flex direction="column" align="center" justify="center" py={16} borderTop="1px solid" borderColor="gray.200" mt={8}>
+                    <Text fontSize="14px" fontWeight="bold" mb={2} color="black">
+                        You blocked {userProfile?.username}
+                    </Text>
+                    <Text fontSize="14px" color="gray.500" textAlign="center" maxW="300px">
+                        Unblock them to see their photos and videos, and to message them.
+                    </Text>
+                </Flex>
+            ) : isPrivateProfileHidden ? (
                 <Flex direction="column" align="center" justify="center" py={16} borderTop="1px solid" borderColor="gray.200" mt={8}>
                     <Box p={6} borderRadius="full" border="2px solid" borderColor="black" mb={6} display="flex" alignItems="center" justifyContent="center">
                         <FiLock size={48} strokeWidth={1.5} />

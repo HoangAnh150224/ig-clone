@@ -19,7 +19,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { closeCreatePostModal } from "../../store/slices/uiSlice";
 import { fetchPosts, resetPosts } from "../../store/slices/postSlice";
 import UserAvatar from "../common/UserAvatar";
-import cloudinaryService from "../../services/cloudinaryService";
 import postService from "../../services/postService";
 import storyService from "../../services/storyService";
 
@@ -60,34 +59,17 @@ const CreatePostModal = () => {
         if (!selectedFile || loading) return;
         setLoading(true);
         try {
-            // 1. Upload to Cloudinary
-            const uploadResult = await cloudinaryService.upload(selectedFile);
-            
             if (postType === "STORY") {
-                // 2a. Create Story
-                const storyData = {
-                    mediaUrl: uploadResult.url,
-                    mediaType: uploadResult.mediaType,
-                    isCloseFriends: isCloseFriends,
-                    caption: caption
-                };
-                await storyService.createStory(storyData);
-                // Refresh stories in Home (if applicable)
-                // window.location.reload(); // Simple refresh for now or dispatch an action
+                // Create Story via Multipart/Form-Data
+                await storyService.createStory(selectedFile, isCloseFriends);
+                // In a real app, we might want to refresh stories here
             } else {
-                // 2b. Create Post/Reel
+                // Create Post/Reel via Multipart/Form-Data
                 const postData = {
                     caption,
-                    type: uploadResult.mediaType === "VIDEO" ? "REEL" : "POST",
-                    media: [
-                        {
-                            url: uploadResult.url,
-                            mediaType: uploadResult.mediaType,
-                            displayOrder: 0
-                        }
-                    ]
+                    type: selectedFile.type.startsWith("video/") ? "REEL" : "POST"
                 };
-                await postService.createPost(postData);
+                await postService.createPost([selectedFile], postData);
                 dispatch(resetPosts());
                 dispatch(fetchPosts({ cursor: null, size: 20 }));
             }
