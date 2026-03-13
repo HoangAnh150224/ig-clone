@@ -37,7 +37,9 @@ const Stories = () => {
             let fetchedStories = response || [];
 
             // Separate own story from others
-            const ownStoryIndex = fetchedStories.findIndex(s => s.isOwn || s.username === authUser?.username);
+            const ownStoryIndex = fetchedStories.findIndex(
+                (s) => s.isOwn || s.username === authUser?.username,
+            );
             let ownStory = null;
             let otherStories = [...fetchedStories];
 
@@ -45,12 +47,12 @@ const Stories = () => {
                 ownStory = otherStories.splice(ownStoryIndex, 1)[0];
             } else {
                 ownStory = {
-                    id: 'own-placeholder',
+                    id: "own-placeholder",
                     username: "Your story",
                     avatar: authUser?.avatarUrl,
                     isOwn: true,
                     hasUnseenStory: false,
-                    stories: []
+                    stories: [],
                 };
             }
 
@@ -235,11 +237,14 @@ const Stories = () => {
                                         story.isCloseFriends
                                             ? "#1ed760"
                                             : story.hasUnseenStory
-                                            ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)"
-                                            : "transparent"
+                                              ? "linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)"
+                                              : "transparent"
                                     }
                                     border={
-                                        !story.hasUnseenStory && !story.isCloseFriends ? "1px solid" : "none"
+                                        !story.hasUnseenStory &&
+                                        !story.isCloseFriends
+                                            ? "1px solid"
+                                            : "none"
                                     }
                                     borderColor="gray.200"
                                     width="74px"
@@ -263,31 +268,39 @@ const Stories = () => {
                                             height="100%"
                                         >
                                             <UserAvatar
-                                                src={story.avatar || story.avatarUrl}
+                                                src={
+                                                    story.avatar ||
+                                                    story.avatarUrl
+                                                }
                                                 size="100%"
                                             />
                                         </Box>
                                     </Box>
-                                    
+
                                     {/* Plus icon for own placeholder */}
-                                    {story.isOwn && (!story.stories || story.stories.length === 0) && (
-                                        <Box
-                                            position="absolute"
-                                            bottom="2px"
-                                            right="2px"
-                                            bg="#0095f6"
-                                            borderRadius="full"
-                                            border="2px solid white"
-                                            width="20px"
-                                            height="20px"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                            color="white"
-                                        >
-                                            <FiPlus size={14} strokeWidth={4} />
-                                        </Box>
-                                    )}
+                                    {story.isOwn &&
+                                        (!story.stories ||
+                                            story.stories.length === 0) && (
+                                            <Box
+                                                position="absolute"
+                                                bottom="2px"
+                                                right="2px"
+                                                bg="#0095f6"
+                                                borderRadius="full"
+                                                border="2px solid white"
+                                                width="20px"
+                                                height="20px"
+                                                display="flex"
+                                                alignItems="center"
+                                                justifyContent="center"
+                                                color="white"
+                                            >
+                                                <FiPlus
+                                                    size={14}
+                                                    strokeWidth={4}
+                                                />
+                                            </Box>
+                                        )}
                                 </Box>
                                 <Text
                                     fontSize="12px"

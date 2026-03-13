@@ -105,7 +105,7 @@ const MoreOptionsModal = ({
                     dispatch(updatePostInStore({ id: post.id, changes }));
                     dispatch(updatePostInProfile({ id: post.id, changes }));
                     dispatch(updatePostInExplore({ id: post.id, changes }));
-                    
+
                     if (onPostAction) onPostAction(post.id, "archive", changes);
                     if (onParentClose) onParentClose();
                     onClose();
@@ -146,14 +146,16 @@ const MoreOptionsModal = ({
                     if (authUser) {
                         const currentFavs = authUser.favoriteUserIds || [];
                         const isFav = currentFavs.includes(targetUserId);
-                        const newFavs = isFav 
-                            ? currentFavs.filter(id => id !== targetUserId)
+                        const newFavs = isFav
+                            ? currentFavs.filter((id) => id !== targetUserId)
                             : [...currentFavs, targetUserId];
-                        
-                        dispatch(setAuthUser({
-                            ...authUser,
-                            favoriteUserIds: newFavs
-                        }));
+
+                        dispatch(
+                            setAuthUser({
+                                ...authUser,
+                                favoriteUserIds: newFavs,
+                            }),
+                        );
                     }
                     break;
                 }
@@ -175,7 +177,8 @@ const MoreOptionsModal = ({
             console.error("Action failed:", error);
         }
 
-        if (action !== "report_submit" && action !== "block_submit") handleClose();
+        if (action !== "report_submit" && action !== "block_submit")
+            handleClose();
     };
 
     const handleClose = () => {
@@ -212,104 +215,368 @@ const MoreOptionsModal = ({
                                         {isProfile ? (
                                             isOwnProfile ? (
                                                 <>
-                                                    <OptionButton label="Settings" onClick={() => handleAction("settings")} />
-                                                    <Box width="100%" height="1px" bg="gray.100" />
-                                                    <OptionButton label="Archive" onClick={() => navigate("/archive")} />
-                                                    <Box width="100%" height="1px" bg="gray.100" />
-                                                    <OptionButton label="QR Code" onClick={() => {}} />
+                                                    <OptionButton
+                                                        label="Settings"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "settings",
+                                                            )
+                                                        }
+                                                    />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="Archive"
+                                                        onClick={() =>
+                                                            navigate("/archive")
+                                                        }
+                                                    />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="QR Code"
+                                                        onClick={() => {}}
+                                                    />
                                                 </>
                                             ) : (
                                                 <>
                                                     <OptionButton
-                                                        label={isBlocked ? "Unblock" : "Block"}
+                                                        label={
+                                                            isBlocked
+                                                                ? "Unblock"
+                                                                : "Block"
+                                                        }
                                                         color="#ed4956"
                                                         fontWeight="bold"
-                                                        onClick={() => isBlocked ? handleAction("unblock") : handleAction("block_init")}
+                                                        onClick={() =>
+                                                            isBlocked
+                                                                ? handleAction(
+                                                                      "unblock",
+                                                                  )
+                                                                : handleAction(
+                                                                      "block_init",
+                                                                  )
+                                                        }
                                                     />
-                                                    <Box width="100%" height="1px" bg="gray.100" />
-                                                    <OptionButton label="Report" color="#ed4956" fontWeight="bold" onClick={() => handleAction("report_init")} />
+                                                    <Box
+                                                        width="100%"
+                                                        height="1px"
+                                                        bg="gray.100"
+                                                    />
+                                                    <OptionButton
+                                                        label="Report"
+                                                        color="#ed4956"
+                                                        fontWeight="bold"
+                                                        onClick={() =>
+                                                            handleAction(
+                                                                "report_init",
+                                                            )
+                                                        }
+                                                    />
                                                 </>
                                             )
                                         ) : isOwnPost ? (
                                             <>
-                                                <OptionButton label="Delete" color="#ed4956" fontWeight="bold" onClick={() => handleAction("delete")} />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label={post?.archived ? "Unarchive" : "Archive"} onClick={() => handleAction("archive")} />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Edit" onClick={() => handleAction("edit")} />
+                                                <OptionButton
+                                                    label="Delete"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction("delete")
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label={
+                                                        post?.archived
+                                                            ? "Unarchive"
+                                                            : "Archive"
+                                                    }
+                                                    onClick={() =>
+                                                        handleAction("archive")
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Edit"
+                                                    onClick={() =>
+                                                        handleAction("edit")
+                                                    }
+                                                />
                                             </>
                                         ) : (
                                             <>
-                                                <OptionButton label="Report" color="#ed4956" fontWeight="bold" onClick={() => handleAction("report_init")} />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Unfollow" color="#ed4956" fontWeight="bold" onClick={() => handleAction("unfollow")} />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton 
-                                                    label={authUser?.favoriteUserIds?.includes(post?.author?.id) ? "Remove from Favorites" : "Add to Favorites"} 
-                                                    color={authUser?.favoriteUserIds?.includes(post?.author?.id) ? "#ed4956" : "black"}
-                                                    onClick={() => handleAction("toggle_favorite_user")} 
+                                                <OptionButton
+                                                    label="Report"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "report_init",
+                                                        )
+                                                    }
                                                 />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton 
-                                                    label={post?.isFavorite ? "Remove from favorite posts" : "Add to favorite posts"} 
-                                                    onClick={() => handleAction("toggle_favorite_post")} 
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Unfollow"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction("unfollow")
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label={
+                                                        authUser?.favoriteUserIds?.includes(
+                                                            post?.author?.id,
+                                                        )
+                                                            ? "Remove from Favorites"
+                                                            : "Add to Favorites"
+                                                    }
+                                                    color={
+                                                        authUser?.favoriteUserIds?.includes(
+                                                            post?.author?.id,
+                                                        )
+                                                            ? "#ed4956"
+                                                            : "black"
+                                                    }
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "toggle_favorite_user",
+                                                        )
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label={
+                                                        post?.isFavorite
+                                                            ? "Remove from favorite posts"
+                                                            : "Add to favorite posts"
+                                                    }
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "toggle_favorite_post",
+                                                        )
+                                                    }
                                                 />
                                             </>
                                         )}
 
                                         {!isProfile && (
                                             <>
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Go to post" onClick={() => handleAction("go_to_post")} />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Go to post"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "go_to_post",
+                                                        )
+                                                    }
+                                                />
                                             </>
                                         )}
 
-                                        <Box width="100%" height="1px" bg="gray.100" />
-                                        <OptionButton label="Copy link" onClick={() => handleAction("copy_link")} />
-                                        <Box width="100%" height="1px" bg="gray.100" />
-                                        <OptionButton label="Cancel" onClick={handleClose} />
+                                        <Box
+                                            width="100%"
+                                            height="1px"
+                                            bg="gray.100"
+                                        />
+                                        <OptionButton
+                                            label="Copy link"
+                                            onClick={() =>
+                                                handleAction("copy_link")
+                                            }
+                                        />
+                                        <Box
+                                            width="100%"
+                                            height="1px"
+                                            bg="gray.100"
+                                        />
+                                        <OptionButton
+                                            label="Cancel"
+                                            onClick={handleClose}
+                                        />
                                     </>
                                 ) : view === "report" ? (
                                     <Box width="100%">
-                                        <Box py={3} borderBottom="1px solid" borderColor="gray.100" textAlign="center">
-                                            <Text fontWeight="600" fontSize="16px">Report</Text>
+                                        <Box
+                                            py={3}
+                                            borderBottom="1px solid"
+                                            borderColor="gray.100"
+                                            textAlign="center"
+                                        >
+                                            <Text
+                                                fontWeight="600"
+                                                fontSize="16px"
+                                            >
+                                                Report
+                                            </Text>
                                         </Box>
                                         {reportSuccess ? (
                                             <Box p={8} textAlign="center">
-                                                <Text fontSize="14px" color="gray.600">Thanks for letting us know. Your report has been submitted.</Text>
+                                                <Text
+                                                    fontSize="14px"
+                                                    color="gray.600"
+                                                >
+                                                    Thanks for letting us know.
+                                                    Your report has been
+                                                    submitted.
+                                                </Text>
                                             </Box>
                                         ) : (
-                                            <VStack gap={0} maxH="400px" overflowY="auto">
+                                            <VStack
+                                                gap={0}
+                                                maxH="400px"
+                                                overflowY="auto"
+                                            >
                                                 <Box p={4} width="100%">
-                                                    <Text fontWeight="600" fontSize="14px" color="gray.600">Why are you reporting this post?</Text>
+                                                    <Text
+                                                        fontWeight="600"
+                                                        fontSize="14px"
+                                                        color="gray.600"
+                                                    >
+                                                        Why are you reporting
+                                                        this post?
+                                                    </Text>
                                                 </Box>
-                                                {reportReasons.map((reason, index) => (
-                                                    <React.Fragment key={reason}>
-                                                        <OptionButton label={reason} onClick={() => handleAction("report_submit", reason)} />
-                                                        {index < reportReasons.length - 1 && <Box width="100%" height="1px" bg="gray.100" />}
-                                                    </React.Fragment>
-                                                ))}
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Cancel" onClick={() => setView("main")} />
+                                                {reportReasons.map(
+                                                    (reason, index) => (
+                                                        <React.Fragment
+                                                            key={reason}
+                                                        >
+                                                            <OptionButton
+                                                                label={reason}
+                                                                onClick={() =>
+                                                                    handleAction(
+                                                                        "report_submit",
+                                                                        reason,
+                                                                    )
+                                                                }
+                                                            />
+                                                            {index <
+                                                                reportReasons.length -
+                                                                    1 && (
+                                                                <Box
+                                                                    width="100%"
+                                                                    height="1px"
+                                                                    bg="gray.100"
+                                                                />
+                                                            )}
+                                                        </React.Fragment>
+                                                    ),
+                                                )}
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Cancel"
+                                                    onClick={() =>
+                                                        setView("main")
+                                                    }
+                                                />
                                             </VStack>
                                         )}
                                     </Box>
                                 ) : (
                                     <Box width="100%">
                                         <Box py={6} px={10} textAlign="center">
-                                            <Text fontWeight="600" fontSize="18px" mb={2}>Block {isProfile ? user?.username : post?.author?.username}?</Text>
-                                            <Text fontSize="14px" color="gray.500">They won't be able to find your profile, posts or story on Instagram. They won't know you blocked them.</Text>
+                                            <Text
+                                                fontWeight="600"
+                                                fontSize="18px"
+                                                mb={2}
+                                            >
+                                                Block{" "}
+                                                {isProfile
+                                                    ? user?.username
+                                                    : post?.author?.username}
+                                                ?
+                                            </Text>
+                                            <Text
+                                                fontSize="14px"
+                                                color="gray.500"
+                                            >
+                                                They won't be able to find your
+                                                profile, posts or story on
+                                                Instagram. They won't know you
+                                                blocked them.
+                                            </Text>
                                         </Box>
                                         {blockSuccess ? (
-                                            <Box p={8} textAlign="center" borderTop="1px solid" borderColor="gray.100">
-                                                <Text fontSize="14px" color="#ed4956" fontWeight="600">User blocked.</Text>
+                                            <Box
+                                                p={8}
+                                                textAlign="center"
+                                                borderTop="1px solid"
+                                                borderColor="gray.100"
+                                            >
+                                                <Text
+                                                    fontSize="14px"
+                                                    color="#ed4956"
+                                                    fontWeight="600"
+                                                >
+                                                    User blocked.
+                                                </Text>
                                             </Box>
                                         ) : (
                                             <VStack gap={0}>
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Block" color="#ed4956" fontWeight="bold" onClick={() => handleAction("block_submit")} />
-                                                <Box width="100%" height="1px" bg="gray.100" />
-                                                <OptionButton label="Cancel" onClick={() => setView("main")} />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Block"
+                                                    color="#ed4956"
+                                                    fontWeight="bold"
+                                                    onClick={() =>
+                                                        handleAction(
+                                                            "block_submit",
+                                                        )
+                                                    }
+                                                />
+                                                <Box
+                                                    width="100%"
+                                                    height="1px"
+                                                    bg="gray.100"
+                                                />
+                                                <OptionButton
+                                                    label="Cancel"
+                                                    onClick={() =>
+                                                        setView("main")
+                                                    }
+                                                />
                                             </VStack>
                                         )}
                                     </Box>
@@ -320,7 +587,14 @@ const MoreOptionsModal = ({
                 </DialogPositioner>
             </DialogRoot>
 
-            <EditPostModal isOpen={isEditOpen} onClose={() => { setIsEditOpen(false); onClose(); }} post={post} />
+            <EditPostModal
+                isOpen={isEditOpen}
+                onClose={() => {
+                    setIsEditOpen(false);
+                    onClose();
+                }}
+                post={post}
+            />
         </>
     );
 };

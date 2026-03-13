@@ -40,7 +40,7 @@ const ReelCard = ({ reel, onOpenComments, onOpenMoreOptions, isActive }) => {
     const authUser = useSelector((state) => state.auth.user);
     const isMuted = useSelector((state) => state.ui.isMuted);
     const videoRef = useRef(null);
-    
+
     const [isLiked, setIsLiked] = useState(reel.isLiked || false);
     const [likeCount, setLikeCount] = useState(reel.likeCount || 0);
     const [isSaved, setIsSaved] = useState(reel.isSaved || false);
@@ -65,7 +65,7 @@ const ReelCard = ({ reel, onOpenComments, onOpenMoreOptions, isActive }) => {
         try {
             const wasLiked = isLiked;
             setIsLiked(!wasLiked);
-            setLikeCount(prev => wasLiked ? prev - 1 : prev + 1);
+            setLikeCount((prev) => (wasLiked ? prev - 1 : prev + 1));
             const response = await postService.likePost(reel.id);
             setIsLiked(response.isLiked);
             setLikeCount(response.likeCount);
@@ -148,63 +148,181 @@ const ReelCard = ({ reel, onOpenComments, onOpenMoreOptions, isActive }) => {
                     dispatch(toggleMute());
                 }}
             >
-                {isMuted ? <BsFillVolumeMuteFill size={18} /> : <BsFillVolumeUpFill size={18} />}
+                {isMuted ? (
+                    <BsFillVolumeMuteFill size={18} />
+                ) : (
+                    <BsFillVolumeUpFill size={18} />
+                )}
             </Box>
 
             {!isPlaying && (
-                <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" color="whiteAlpha.800" pointerEvents="none" zIndex={15}>
+                <Box
+                    position="absolute"
+                    top="50%"
+                    left="50%"
+                    transform="translate(-50%, -50%)"
+                    color="whiteAlpha.800"
+                    pointerEvents="none"
+                    zIndex={15}
+                >
                     <AiFillPlayCircle size={80} />
                 </Box>
             )}
 
             {showHeartAnim && (
-                <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" zIndex={20} pointerEvents="none">
-                    <AiFillHeart size={100} className="heart-animation" color="white" />
+                <Box
+                    position="absolute"
+                    top="50%"
+                    left="50%"
+                    transform="translate(-50%, -50%)"
+                    zIndex={20}
+                    pointerEvents="none"
+                >
+                    <AiFillHeart
+                        size={100}
+                        className="heart-animation"
+                        color="white"
+                    />
                 </Box>
             )}
 
             {/* Right Controls */}
-            <VStack position="absolute" right={3} bottom={20} gap={5} color="white" zIndex={10}>
+            <VStack
+                position="absolute"
+                right={3}
+                bottom={20}
+                gap={5}
+                color="white"
+                zIndex={10}
+            >
                 <VStack gap={1}>
-                    <Box onClick={(e) => { e.stopPropagation(); handleLike(); }} cursor="pointer">
-                        {isLiked ? <AiFillHeart size={32} color="#ff3040" /> : <AiOutlineHeart size={32} />}
+                    <Box
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike();
+                        }}
+                        cursor="pointer"
+                    >
+                        {isLiked ? (
+                            <AiFillHeart size={32} color="#ff3040" />
+                        ) : (
+                            <AiOutlineHeart size={32} />
+                        )}
                     </Box>
-                    <Text fontSize="12px" fontWeight="bold">{likeCount.toLocaleString()}</Text>
+                    <Text fontSize="12px" fontWeight="bold">
+                        {likeCount.toLocaleString()}
+                    </Text>
                 </VStack>
-                <VStack gap={1} onClick={(e) => { e.stopPropagation(); onOpenComments(reel); }} cursor="pointer">
+                <VStack
+                    gap={1}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenComments(reel);
+                    }}
+                    cursor="pointer"
+                >
                     <AiOutlineMessage size={32} />
-                    <Text fontSize="12px" fontWeight="bold">{reel.commentCount}</Text>
+                    <Text fontSize="12px" fontWeight="bold">
+                        {reel.commentCount}
+                    </Text>
                 </VStack>
-                <RiSendPlaneFill size={30} cursor="pointer" onClick={(e) => e.stopPropagation()} />
-                <Box onClick={(e) => { e.stopPropagation(); handleSave(); }} cursor="pointer">
-                    {isSaved ? <BsBookmarkFill size={26} /> : <BsBookmark size={26} />}
+                <RiSendPlaneFill
+                    size={30}
+                    cursor="pointer"
+                    onClick={(e) => e.stopPropagation()}
+                />
+                <Box
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleSave();
+                    }}
+                    cursor="pointer"
+                >
+                    {isSaved ? (
+                        <BsBookmarkFill size={26} />
+                    ) : (
+                        <BsBookmark size={26} />
+                    )}
                 </Box>
-                <BsThreeDots size={28} cursor="pointer" onClick={(e) => { e.stopPropagation(); onOpenMoreOptions(reel); }} />
-                <Box boxSize="32px" borderRadius="4px" border="1.5px solid white" overflow="hidden" cursor="pointer" onClick={(e) => { e.stopPropagation(); navigate(`/${reel.author?.username}`); }}>
-                    <Image src={reel.author?.avatarUrl} w="100%" h="100%" objectFit="cover" />
+                <BsThreeDots
+                    size={28}
+                    cursor="pointer"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenMoreOptions(reel);
+                    }}
+                />
+                <Box
+                    boxSize="32px"
+                    borderRadius="4px"
+                    border="1.5px solid white"
+                    overflow="hidden"
+                    cursor="pointer"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/${reel.author?.username}`);
+                    }}
+                >
+                    <Image
+                        src={reel.author?.avatarUrl}
+                        w="100%"
+                        h="100%"
+                        objectFit="cover"
+                    />
                 </Box>
             </VStack>
 
             {/* Info Section */}
-            <Box position="absolute" bottom={0} left={0} right={0} p={5} bgGradient="linear(to-t, blackAlpha.900, transparent)" color="white" zIndex={5} onClick={(e) => e.stopPropagation()}>
+            <Box
+                position="absolute"
+                bottom={0}
+                left={0}
+                right={0}
+                p={5}
+                bgGradient="linear(to-t, blackAlpha.900, transparent)"
+                color="white"
+                zIndex={5}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <HStack gap={3} mb={3}>
-                    <Box cursor="pointer" onClick={() => navigate(`/${reel.author?.username}`)}>
+                    <Box
+                        cursor="pointer"
+                        onClick={() => navigate(`/${reel.author?.username}`)}
+                    >
                         <UserAvatar src={reel.author?.avatarUrl} size="34px" />
                     </Box>
-                    <Text fontWeight="bold" fontSize="14px" cursor="pointer" onClick={() => navigate(`/${reel.author?.username}`)}>
+                    <Text
+                        fontWeight="bold"
+                        fontSize="14px"
+                        cursor="pointer"
+                        onClick={() => navigate(`/${reel.author?.username}`)}
+                    >
                         {reel.author?.username}
                     </Text>
                     {!isOwnPost && !reel.author?.isFollowing && (
-                        <Box px={3} py={1} border="1px solid white" borderRadius="4px" fontSize="xs" fontWeight="bold" cursor="pointer" onClick={handleFollow}>
+                        <Box
+                            px={3}
+                            py={1}
+                            border="1px solid white"
+                            borderRadius="4px"
+                            fontSize="xs"
+                            fontWeight="bold"
+                            cursor="pointer"
+                            onClick={handleFollow}
+                        >
                             Follow
                         </Box>
                     )}
                 </HStack>
-                <Text fontSize="14px" mb={3} noOfLines={2}>{reel.caption}</Text>
+                <Text fontSize="14px" mb={3} noOfLines={2}>
+                    {reel.caption}
+                </Text>
                 {reel.music && (
                     <HStack gap={2}>
                         <BsMusicNoteBeamed size={12} />
-                        <Text fontSize="13px" isTruncated>{reel.music}</Text>
+                        <Text fontSize="13px" isTruncated>
+                            {reel.music}
+                        </Text>
                     </HStack>
                 )}
             </Box>
@@ -227,10 +345,13 @@ const Reels = () => {
             setLoading(true);
             try {
                 const response = await reelService.getAllReels();
-                
+
                 // Flexible data extraction supporting 'posts', 'content', or direct array
-                const data = response?.posts || response?.content || (Array.isArray(response) ? response : []);
-                
+                const data =
+                    response?.posts ||
+                    response?.content ||
+                    (Array.isArray(response) ? response : []);
+
                 setReels(data);
                 if (data?.[0]) setVisibleReelId(data[0].id);
             } catch (error) {
@@ -250,10 +371,12 @@ const Reels = () => {
                 if (entry.isIntersecting) {
                     const reelId = entry.target.getAttribute("data-id");
                     setVisibleReelId(reelId);
-                    
+
                     // If comments are open, sync the active reel
                     if (isCommentOpen) {
-                        const newActiveReel = reels.find(r => r.id === reelId);
+                        const newActiveReel = reels.find(
+                            (r) => r.id === reelId,
+                        );
                         if (newActiveReel) setActiveReel(newActiveReel);
                     }
                 }
@@ -278,7 +401,14 @@ const Reels = () => {
 
     if (loading) {
         return (
-            <Box height="100vh" width="100%" bg="white" display="flex" alignItems="center" justifyContent="center">
+            <Box
+                height="100vh"
+                width="100%"
+                bg="white"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+            >
                 <ReelSkeleton />
             </Box>
         );
@@ -286,7 +416,14 @@ const Reels = () => {
 
     return (
         <Box height="100vh" width="100%" bg="white" overflow="hidden">
-            <Flex height="100%" width="100%" align="center" justify="center" position="relative" gap="15px">
+            <Flex
+                height="100%"
+                width="100%"
+                align="center"
+                justify="center"
+                position="relative"
+                gap="15px"
+            >
                 <Box
                     ref={containerRef}
                     height="100vh"
@@ -299,20 +436,37 @@ const Reels = () => {
                     css={{
                         scrollSnapType: "y mandatory",
                         scrollbarWidth: "none",
-                        "&::-webkit-scrollbar": { display: "none" }
+                        "&::-webkit-scrollbar": { display: "none" },
                     }}
                 >
-                    <VStack gap={0} py={0} width={isCommentOpen ? "auto" : "full"} align="center">
-                        {Array.isArray(reels) && reels.map((reel) => (
-                            <Box key={reel.id} data-id={reel.id} className="reel-item" width="full" display="flex" justifyContent={isCommentOpen ? "flex-end" : "center"}>
-                                <ReelCard
-                                    reel={reel}
-                                    isActive={visibleReelId === reel.id}
-                                    onOpenComments={handleOpenComments}
-                                    onOpenMoreOptions={handleOpenMoreOptions}
-                                />
-                            </Box>
-                        ))}
+                    <VStack
+                        gap={0}
+                        py={0}
+                        width={isCommentOpen ? "auto" : "full"}
+                        align="center"
+                    >
+                        {Array.isArray(reels) &&
+                            reels.map((reel) => (
+                                <Box
+                                    key={reel.id}
+                                    data-id={reel.id}
+                                    className="reel-item"
+                                    width="full"
+                                    display="flex"
+                                    justifyContent={
+                                        isCommentOpen ? "flex-end" : "center"
+                                    }
+                                >
+                                    <ReelCard
+                                        reel={reel}
+                                        isActive={visibleReelId === reel.id}
+                                        onOpenComments={handleOpenComments}
+                                        onOpenMoreOptions={
+                                            handleOpenMoreOptions
+                                        }
+                                    />
+                                </Box>
+                            ))}
                     </VStack>
                 </Box>
 

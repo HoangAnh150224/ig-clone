@@ -36,7 +36,9 @@ const NewMessageModal = ({ isOpen, onClose, onSelectUser }) => {
             setLoading(true);
             try {
                 const results = await profileService.searchUsers(searchTerm);
-                setSearchResults(results.users || (Array.isArray(results) ? results : []));
+                setSearchResults(
+                    results.users || (Array.isArray(results) ? results : []),
+                );
             } catch (error) {
                 console.error("Search failed:", error);
             } finally {
@@ -70,10 +72,20 @@ const NewMessageModal = ({ isOpen, onClose, onSelectUser }) => {
                     maxW="400px"
                     height="60vh"
                 >
-                    <DialogHeader borderBottom="1px solid" borderColor="gray.100" p={3}>
-                        <Flex justify="space-between" align="center" width="100%">
+                    <DialogHeader
+                        borderBottom="1px solid"
+                        borderColor="gray.100"
+                        p={3}
+                    >
+                        <Flex
+                            justify="space-between"
+                            align="center"
+                            width="100%"
+                        >
                             <Box width="32px" />
-                            <DialogTitle fontSize="16px" fontWeight="bold">New Message</DialogTitle>
+                            <DialogTitle fontSize="16px" fontWeight="bold">
+                                New Message
+                            </DialogTitle>
                             <IconButton
                                 variant="ghost"
                                 size="sm"
@@ -85,8 +97,15 @@ const NewMessageModal = ({ isOpen, onClose, onSelectUser }) => {
                         </Flex>
                     </DialogHeader>
                     <DialogBody p={0} display="flex" flexDirection="column">
-                        <HStack p={4} borderBottom="1px solid" borderColor="gray.100" gap={3}>
-                            <Text fontWeight="bold" fontSize="14px">To:</Text>
+                        <HStack
+                            p={4}
+                            borderBottom="1px solid"
+                            borderColor="gray.100"
+                            gap={3}
+                        >
+                            <Text fontWeight="bold" fontSize="14px">
+                                To:
+                            </Text>
                             <Input
                                 placeholder="Search..."
                                 variant="unstyled"
@@ -116,16 +135,37 @@ const NewMessageModal = ({ isOpen, onClose, onSelectUser }) => {
                                             _hover={{ bg: "gray.50" }}
                                             onClick={() => handleSelect(user)}
                                         >
-                                            <UserAvatar src={user.avatarUrl} size="44px" />
+                                            <UserAvatar
+                                                src={user.avatarUrl}
+                                                size="44px"
+                                            />
                                             <VStack align="start" gap={0}>
-                                                <Text fontWeight="bold" fontSize="14px" color="black">{user.username}</Text>
-                                                <Text color="gray.500" fontSize="14px">{user.fullName}</Text>
+                                                <Text
+                                                    fontWeight="bold"
+                                                    fontSize="14px"
+                                                    color="black"
+                                                >
+                                                    {user.username}
+                                                </Text>
+                                                <Text
+                                                    color="gray.500"
+                                                    fontSize="14px"
+                                                >
+                                                    {user.fullName}
+                                                </Text>
                                             </VStack>
                                         </Flex>
                                     ))}
                                 </VStack>
                             ) : searchTerm ? (
-                                <Text color="gray.400" fontSize="14px" textAlign="center" mt={8}>No account found.</Text>
+                                <Text
+                                    color="gray.400"
+                                    fontSize="14px"
+                                    textAlign="center"
+                                    mt={8}
+                                >
+                                    No account found.
+                                </Text>
                             ) : null}
                         </Box>
                     </DialogBody>

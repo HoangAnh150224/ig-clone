@@ -4,7 +4,12 @@ import { AiOutlinePlus } from "react-icons/ai";
 import CreateHighlightModal from "../modals/CreateHighlightModal";
 import StoryModal from "../modals/StoryModal";
 
-const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) => {
+const ProfileHighlights = ({
+    isOwnProfile,
+    user,
+    highlights = [],
+    onRefresh,
+}) => {
     const [isStoryOpen, setIsStoryOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedHighlightIndex, setSelectedHighlightIndex] = useState(0);
@@ -29,16 +34,21 @@ const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) =
                 px={4}
                 bg="white"
                 overflowX="auto"
-                css={{ 
+                css={{
                     "&::-webkit-scrollbar": { display: "none" },
                     scrollbarWidth: "none",
-                    msOverflowStyle: "none"
+                    msOverflowStyle: "none",
                 }}
             >
                 <HStack gap={10} align="start" px={4}>
                     {/* "New" button - ONLY for owner */}
                     {isOwnProfile && (
-                        <VStack gap={2} cursor="pointer" minW="87px" onClick={handleNewHighlight}>
+                        <VStack
+                            gap={2}
+                            cursor="pointer"
+                            minW="87px"
+                            onClick={handleNewHighlight}
+                        >
                             <Box
                                 width="87px"
                                 height="87px"
@@ -117,8 +127,8 @@ const ProfileHighlights = ({ isOwnProfile, user, highlights = [], onRefresh }) =
             </Box>
 
             {/* Create Highlight Modal */}
-            <CreateHighlightModal 
-                isOpen={isCreateOpen} 
+            <CreateHighlightModal
+                isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 onCreated={onRefresh}
             />

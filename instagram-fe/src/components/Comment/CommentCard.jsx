@@ -16,7 +16,9 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
     const [loadingReplies, setLoadingReplies] = useState(false);
     const [isLiked, setIsLiked] = useState(comment.isLiked || false);
     const [isPinned, setIsPinned] = useState(comment.isPinned || false);
-    const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount || 0);
+    const [localLikeCount, setLocalLikeCount] = useState(
+        comment.likeCount || 0,
+    );
     const [isLikeListOpen, setIsListOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content || "");
@@ -37,7 +39,7 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
         const previousState = isLiked;
         const previousCount = localLikeCount;
         setIsLiked(!isLiked);
-        setLocalLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        setLocalLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
         try {
             await commentService.likeComment(postId, comment.id);
         } catch {
@@ -83,8 +85,15 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
             setLoadingReplies(true);
             try {
                 // Fetch replies from backend - pass 0 for page, 20 for size, and comment.id for parentId
-                const response = await commentService.getComments(postId, 0, 20, comment.id);
-                const replyList = Array.isArray(response) ? response : (response?.content || []);
+                const response = await commentService.getComments(
+                    postId,
+                    0,
+                    20,
+                    comment.id,
+                );
+                const replyList = Array.isArray(response)
+                    ? response
+                    : response?.content || [];
                 setReplies(replyList);
             } catch (error) {
                 console.error("Failed to fetch replies", error);
@@ -95,7 +104,7 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
         setShowReplies(!showReplies);
     };
 
-    const likedUsers = []; 
+    const likedUsers = [];
 
     return (
         <Box mb={4} width="100%">
@@ -109,7 +118,7 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
                 <Box flex={1}>
                     {isEditing ? (
                         <VStack align="stretch" gap={2}>
-                            <Box 
+                            <Box
                                 as="textarea"
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
@@ -121,23 +130,23 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
                                     padding: "8px",
                                     backgroundColor: "white",
                                     color: "black",
-                                    minHeight: "60px"
+                                    minHeight: "60px",
                                 }}
                             />
                             <HStack gap={3}>
-                                <Text 
-                                    fontSize="12px" 
-                                    color="#0095f6" 
-                                    fontWeight="bold" 
+                                <Text
+                                    fontSize="12px"
+                                    color="#0095f6"
+                                    fontWeight="bold"
                                     cursor="pointer"
                                     onClick={handleUpdateComment}
                                 >
                                     {isUpdating ? "Saving..." : "Save"}
                                 </Text>
-                                <Text 
-                                    fontSize="12px" 
-                                    color="gray.500" 
-                                    fontWeight="bold" 
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
                                     cursor="pointer"
                                     onClick={() => setIsEditing(false)}
                                 >
@@ -150,21 +159,41 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
                             <Box>
                                 {isPinned && (
                                     <HStack spacing={1} mb={1}>
-                                        <svg aria-label="Pinned" color="#8e8e8e" fill="#8e8e8e" height="12" role="img" viewBox="0 0 24 24" width="12">
+                                        <svg
+                                            aria-label="Pinned"
+                                            color="#8e8e8e"
+                                            fill="#8e8e8e"
+                                            height="12"
+                                            role="img"
+                                            viewBox="0 0 24 24"
+                                            width="12"
+                                        >
                                             <title>Pinned</title>
                                             <path d="M12 2a.75.75 0 0 1 .75.75V8.5h4.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-1.5v6.5a.75.75 0 0 1-1.5 0V13h-4.5a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 .75-.75h1.5V2.75A.75.75 0 0 1 12 2Z"></path>
                                         </svg>
-                                        <Text fontSize="12px" color="gray.500" fontWeight="bold">Pinned</Text>
+                                        <Text
+                                            fontSize="12px"
+                                            color="gray.500"
+                                            fontWeight="bold"
+                                        >
+                                            Pinned
+                                        </Text>
                                     </HStack>
                                 )}
-                                <Text fontSize="14px" lineHeight="1.4" color="black">
+                                <Text
+                                    fontSize="14px"
+                                    lineHeight="1.4"
+                                    color="black"
+                                >
                                     <Text
                                         as="span"
                                         fontWeight="bold"
                                         mr={2}
                                         cursor="pointer"
                                         onClick={() =>
-                                            handleNavigate(comment.author?.username)
+                                            handleNavigate(
+                                                comment.author?.username,
+                                            )
                                         }
                                         _hover={{ opacity: 0.7 }}
                                     >
@@ -175,7 +204,9 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
                             </Box>
                             <HStack gap={4} mt={2}>
                                 <Text fontSize="12px" color="gray.500">
-                                    {comment.createdAt ? formatRelativeTime(comment.createdAt) : (comment.timeAgo || 'just now')}
+                                    {comment.createdAt
+                                        ? formatRelativeTime(comment.createdAt)
+                                        : comment.timeAgo || "just now"}
                                 </Text>
                                 {localLikeCount > 0 && (
                                     <Text
@@ -242,31 +273,39 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
             {comment.replyCount > 0 && (
                 <Box ml="44px" mt={3}>
                     {!showReplies ? (
-                        <HStack 
-                            cursor="pointer" 
-                            spacing={3} 
+                        <HStack
+                            cursor="pointer"
+                            spacing={3}
                             onClick={toggleReplies}
                             _hover={{ opacity: 0.8 }}
                         >
                             <Box h="1px" w="24px" bg="gray.300" />
-                            <Text fontSize="12px" color="gray.500" fontWeight="bold">
+                            <Text
+                                fontSize="12px"
+                                color="gray.500"
+                                fontWeight="bold"
+                            >
                                 View all {comment.replyCount} replies
                             </Text>
                         </HStack>
                     ) : (
                         <VStack align="stretch" gap={4} mt={2}>
-                            <HStack 
-                                cursor="pointer" 
-                                spacing={3} 
+                            <HStack
+                                cursor="pointer"
+                                spacing={3}
                                 onClick={() => setShowReplies(false)}
                                 _hover={{ opacity: 0.8 }}
                             >
                                 <Box h="1px" w="24px" bg="gray.300" />
-                                <Text fontSize="12px" color="gray.500" fontWeight="bold">
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.500"
+                                    fontWeight="bold"
+                                >
                                     Hide replies
                                 </Text>
                             </HStack>
-                            
+
                             {loadingReplies ? (
                                 <Flex py={2} justify="start" pl={2}>
                                     <Spinner size="xs" color="gray.400" />
@@ -299,7 +338,14 @@ const CommentCard = ({ comment, postId, onClose, onReply, postOwnerId }) => {
     );
 };
 
-const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwnerId }) => {
+const ReplyItem = ({
+    reply,
+    postId,
+    onNavigate,
+    onReply,
+    parentComment,
+    postOwnerId,
+}) => {
     const authUser = useSelector((state) => state.auth.user);
     const [isLiked, setIsLiked] = useState(reply.isLiked || false);
     const [isPinned, setIsPinned] = useState(reply.isPinned || false);
@@ -316,7 +362,7 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwne
         const previousState = isLiked;
         const previousCount = localLikeCount;
         setIsLiked(!isLiked);
-        setLocalLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        setLocalLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
         try {
             await commentService.likeComment(postId, reply.id);
         } catch {
@@ -370,7 +416,7 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwne
             <Box flex={1}>
                 {isEditing ? (
                     <VStack align="stretch" gap={2}>
-                        <Box 
+                        <Box
                             as="textarea"
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
@@ -382,23 +428,23 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwne
                                 padding: "8px",
                                 backgroundColor: "white",
                                 color: "black",
-                                minHeight: "40px"
+                                minHeight: "40px",
                             }}
                         />
                         <HStack gap={3}>
-                            <Text 
-                                fontSize="12px" 
-                                color="#0095f6" 
-                                fontWeight="bold" 
+                            <Text
+                                fontSize="12px"
+                                color="#0095f6"
+                                fontWeight="bold"
                                 cursor="pointer"
                                 onClick={handleUpdateReply}
                             >
                                 {isUpdating ? "Saving..." : "Save"}
                             </Text>
-                            <Text 
-                                fontSize="12px" 
-                                color="gray.500" 
-                                fontWeight="bold" 
+                            <Text
+                                fontSize="12px"
+                                color="gray.500"
+                                fontWeight="bold"
                                 cursor="pointer"
                                 onClick={() => setIsEditing(false)}
                             >
@@ -411,20 +457,40 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwne
                         <Box>
                             {isPinned && (
                                 <HStack spacing={1} mb={1}>
-                                    <svg aria-label="Pinned" color="#8e8e8e" fill="#8e8e8e" height="10" role="img" viewBox="0 0 24 24" width="10">
+                                    <svg
+                                        aria-label="Pinned"
+                                        color="#8e8e8e"
+                                        fill="#8e8e8e"
+                                        height="10"
+                                        role="img"
+                                        viewBox="0 0 24 24"
+                                        width="10"
+                                    >
                                         <title>Pinned</title>
                                         <path d="M12 2a.75.75 0 0 1 .75.75V8.5h4.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-1.5v6.5a.75.75 0 0 1-1.5 0V13h-4.5a.75.75 0 0 1-.75-.75v-3a.75.75 0 0 1 .75-.75h1.5V2.75A.75.75 0 0 1 12 2Z"></path>
                                     </svg>
-                                    <Text fontSize="10px" color="gray.500" fontWeight="bold">Pinned</Text>
+                                    <Text
+                                        fontSize="10px"
+                                        color="gray.500"
+                                        fontWeight="bold"
+                                    >
+                                        Pinned
+                                    </Text>
                                 </HStack>
                             )}
-                            <Text fontSize="14px" color="black" lineHeight="1.4">
+                            <Text
+                                fontSize="14px"
+                                color="black"
+                                lineHeight="1.4"
+                            >
                                 <Text
                                     as="span"
                                     fontWeight="bold"
                                     mr={2}
                                     cursor="pointer"
-                                    onClick={() => onNavigate(reply.author?.username)}
+                                    onClick={() =>
+                                        onNavigate(reply.author?.username)
+                                    }
                                 >
                                     {reply.author?.username}
                                 </Text>
@@ -433,7 +499,9 @@ const ReplyItem = ({ reply, postId, onNavigate, onReply, parentComment, postOwne
                         </Box>
                         <HStack gap={4} mt={1}>
                             <Text fontSize="12px" color="gray.500">
-                                {reply.createdAt ? formatRelativeTime(reply.createdAt) : (reply.timeAgo || 'just now')}
+                                {reply.createdAt
+                                    ? formatRelativeTime(reply.createdAt)
+                                    : reply.timeAgo || "just now"}
                             </Text>
                             {localLikeCount > 0 && (
                                 <Text

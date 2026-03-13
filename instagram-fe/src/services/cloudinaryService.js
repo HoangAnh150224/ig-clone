@@ -8,7 +8,7 @@ const cloudinaryService = {
     /**
      * Upload a file to Cloudinary via backend.
      * API: POST /upload
-     * 
+     *
      * @param {File} file - The file to upload
      * @param {string} folder - Optional folder name
      * @returns {Promise<{url: string, publicId: string}>}

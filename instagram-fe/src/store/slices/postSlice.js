@@ -34,7 +34,10 @@ export const toggleLike = createAsyncThunk(
             const response = await postService.likePost(postId);
             return { postId, ...response }; // response: { isLiked, likeCount }
         } catch (error) {
-            return rejectWithValue({ postId, error: error.apiResponse || error.message });
+            return rejectWithValue({
+                postId,
+                error: error.apiResponse || error.message,
+            });
         }
     },
 );

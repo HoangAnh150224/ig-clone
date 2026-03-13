@@ -20,7 +20,10 @@ import { FaInstagram, FaUserCircle, FaRegUserCircle } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import UserAvatar from "../common/UserAvatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { openCreatePostModal, setUnreadNotificationCount } from "../../store/slices/uiSlice";
+import {
+    openCreatePostModal,
+    setUnreadNotificationCount,
+} from "../../store/slices/uiSlice";
 import { logout } from "../../store/slices/authSlice";
 import SearchPanel from "./panels/SearchPanel";
 import NotificationPanel from "./panels/NotificationPanel";
@@ -45,7 +48,7 @@ const SidebarItem = ({
             alignItems="center"
             justifyContent="flex-start"
             py={3}
-            pl="24px" 
+            pl="24px"
             my={1}
             borderRadius="8px"
             width="full"
@@ -67,26 +70,26 @@ const SidebarItem = ({
                 position="relative"
             >
                 {avatar ? (
-                    <Box 
-                        width="24px" 
-                        height="24px" 
-                        borderRadius="full" 
+                    <Box
+                        width="24px"
+                        height="24px"
+                        borderRadius="full"
                         overflow="hidden"
                         border={active ? "2px solid black" : "none"}
                     >
-                        <Image 
-                            src={avatar} 
-                            alt="Profile" 
-                            width="100%" 
-                            height="100%" 
-                            objectFit="cover" 
+                        <Image
+                            src={avatar}
+                            alt="Profile"
+                            width="100%"
+                            height="100%"
+                            objectFit="cover"
                         />
                     </Box>
                 ) : (
                     <IconComponent size={24} />
                 )}
                 {badgeCount > 0 && (
-                    <Box 
+                    <Box
                         position="absolute"
                         top="-2px"
                         right="-2px"
@@ -121,7 +124,9 @@ const SidebarItem = ({
 
 const Sidebar = () => {
     const { user: authUser } = useSelector((state) => state.auth);
-    const unreadNotificationCount = useSelector((state) => state.ui.unreadNotificationCount);
+    const unreadNotificationCount = useSelector(
+        (state) => state.ui.unreadNotificationCount,
+    );
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
@@ -132,8 +137,9 @@ const Sidebar = () => {
 
     useEffect(() => {
         if (authUser) {
-            notificationService.getUnreadCount()
-                .then(count => {
+            notificationService
+                .getUnreadCount()
+                .then((count) => {
                     dispatch(setUnreadNotificationCount(count));
                 })
                 .catch(console.error);
@@ -168,7 +174,7 @@ const Sidebar = () => {
     return (
         <>
             <Box width="72px" height="100vh" flexShrink={0} />
-            
+
             <Box
                 width={isCurrentlyExpanded ? "245px" : "72px"}
                 onMouseEnter={() => setIsHovered(true)}
@@ -203,7 +209,13 @@ const Sidebar = () => {
                 </Box>
 
                 {/* Navigation Items */}
-                <VStack align="start" gap={0} color="black" width="full" flex={1}>
+                <VStack
+                    align="start"
+                    gap={0}
+                    color="black"
+                    width="full"
+                    flex={1}
+                >
                     <SidebarItem
                         icon={AiOutlineHome}
                         activeIcon={AiFillHome}
@@ -224,7 +236,9 @@ const Sidebar = () => {
                         icon={AiOutlineCompass}
                         activeIcon={AiFillCompass}
                         label="Explore"
-                        active={location.pathname === "/explore" && !activePanel}
+                        active={
+                            location.pathname === "/explore" && !activePanel
+                        }
                         onClick={() => handleNavigate("/explore")}
                         isExpanded={isCurrentlyExpanded}
                     />
@@ -240,7 +254,10 @@ const Sidebar = () => {
                         icon={AiOutlineMessage}
                         activeIcon={AiFillMessage}
                         label="Messages"
-                        active={location.pathname === "/direct/inbox" && !activePanel}
+                        active={
+                            location.pathname === "/direct/inbox" &&
+                            !activePanel
+                        }
                         onClick={() => handleNavigate("/direct/inbox")}
                         isExpanded={isCurrentlyExpanded}
                     />
@@ -265,7 +282,10 @@ const Sidebar = () => {
                         icon={FaRegUserCircle}
                         activeIcon={FaUserCircle}
                         label="Profile"
-                        active={location.pathname === `/${authUser?.username}` && !activePanel}
+                        active={
+                            location.pathname === `/${authUser?.username}` &&
+                            !activePanel
+                        }
                         onClick={() => handleNavigate(`/${authUser?.username}`)}
                         isExpanded={isCurrentlyExpanded}
                     />
@@ -295,7 +315,9 @@ const Sidebar = () => {
                                     cursor="pointer"
                                     align="center"
                                     gap={3}
-                                    onClick={() => handleNavigate("/accounts/edit")}
+                                    onClick={() =>
+                                        handleNavigate("/accounts/edit")
+                                    }
                                 >
                                     <AiOutlineSetting size={20} />
                                     <Text fontSize="14px">Settings</Text>
@@ -328,7 +350,7 @@ const Sidebar = () => {
 
             <SearchPanel isOpen={activePanel === "search"} />
             <NotificationPanel isOpen={activePanel === "notifications"} />
-            
+
             {(isCollapsedMode || showMoreMenu) && (
                 <Box
                     position="fixed"

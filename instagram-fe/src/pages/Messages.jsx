@@ -40,20 +40,32 @@ const Messages = () => {
                 messageService.getRequestChats(),
                 messageService.getRequestCount(),
             ]);
-            
+
             const formatChats = (list) => {
-                const data = Array.isArray(list) ? list : (list.content || []);
+                const data = Array.isArray(list) ? list : list.content || [];
                 return data
-                    .map(chat => {
-                        const isObject = typeof chat.lastMessage === 'object';
+                    .map((chat) => {
+                        const isObject = typeof chat.lastMessage === "object";
                         // Extract time from the message object if available, fallback to conversation times
-                        const lastMsgTime = isObject ? (chat.lastMessage?.createdAt || chat.lastMessage?.timestamp) : null;
-                        
+                        const lastMsgTime = isObject
+                            ? chat.lastMessage?.createdAt ||
+                              chat.lastMessage?.timestamp
+                            : null;
+
                         return {
                             ...chat,
-                            lastMessage: isObject ? chat.lastMessage?.content : chat.lastMessage,
-                            lastMessageSenderId: isObject ? chat.lastMessage?.senderId : null,
-                            sortTime: new Date(lastMsgTime || chat.lastMessageAt || chat.updatedAt || chat.createdAt).getTime()
+                            lastMessage: isObject
+                                ? chat.lastMessage?.content
+                                : chat.lastMessage,
+                            lastMessageSenderId: isObject
+                                ? chat.lastMessage?.senderId
+                                : null,
+                            sortTime: new Date(
+                                lastMsgTime ||
+                                    chat.lastMessageAt ||
+                                    chat.updatedAt ||
+                                    chat.createdAt,
+                            ).getTime(),
                         };
                     })
                     .sort((a, b) => b.sortTime - a.sortTime);
@@ -70,9 +82,9 @@ const Messages = () => {
             if (location.state?.selectedUser) {
                 const user = location.state.selectedUser;
                 const existing = [...pChats, ...rChats].find(
-                    c => (c.participant?.id || c.user?.id) === user.id
+                    (c) => (c.participant?.id || c.user?.id) === user.id,
                 );
-                
+
                 if (existing) {
                     setActiveChatId(existing.id);
                 } else {
@@ -80,7 +92,7 @@ const Messages = () => {
                     setTempChat({
                         id: "temp",
                         participant: user,
-                        messages: []
+                        messages: [],
                     });
                 }
                 // Clear state to prevent re-selection on refresh
@@ -99,21 +111,28 @@ const Messages = () => {
             if (!authUser?.id) return;
             try {
                 const blockedRes = await userService.getBlockedUsers();
-                const blockedList = Array.isArray(blockedRes) ? blockedRes : (blockedRes.content || []);
-                const blockedUserIds = blockedList.map(u => u.id);
-                
+                const blockedList = Array.isArray(blockedRes)
+                    ? blockedRes
+                    : blockedRes.content || [];
+                const blockedUserIds = blockedList.map((u) => u.id);
+
                 // Use string comparison for robustness
-                const currentIds = (authUser.blockedUserIds || []).map(id => String(id));
-                const newIds = blockedUserIds.map(id => String(id));
-                
-                const isDifferent = newIds.length !== currentIds.length || 
-                                  newIds.some(id => !currentIds.includes(id));
-                
+                const currentIds = (authUser.blockedUserIds || []).map((id) =>
+                    String(id),
+                );
+                const newIds = blockedUserIds.map((id) => String(id));
+
+                const isDifferent =
+                    newIds.length !== currentIds.length ||
+                    newIds.some((id) => !currentIds.includes(id));
+
                 if (isDifferent) {
-                    dispatch(setUser({
-                        ...authUser,
-                        blockedUserIds: blockedUserIds
-                    }));
+                    dispatch(
+                        setUser({
+                            ...authUser,
+                            blockedUserIds: blockedUserIds,
+                        }),
+                    );
                 }
             } catch (error) {
                 console.error("Failed to fetch blocked users", error);
@@ -127,14 +146,23 @@ const Messages = () => {
     }, [fetchChats]);
 
     const fetchMessages = useCallback(async (chatId, cursor = null) => {
-        if (!chatId || chatId === "primary" || chatId === "requests" || chatId === "temp") return;
-        
+        if (
+            !chatId ||
+            chatId === "primary" ||
+            chatId === "requests" ||
+            chatId === "temp"
+        )
+            return;
+
         if (cursor) {
             setIsLoadingMoreMessages(true);
         }
 
         try {
-            const response = await messageService.getChatMessages(chatId, cursor);
+            const response = await messageService.getChatMessages(
+                chatId,
+                cursor,
+            );
             const msgs = response.content || [];
             const nextCursor = response.nextCursor;
             const hasMore = response.hasMore;
@@ -144,12 +172,15 @@ const Messages = () => {
                 setActiveChatMessages([...msgs].reverse());
             } else {
                 // Loading more (older): prepend to existing
-                setActiveChatMessages(prev => [...[...msgs].reverse(), ...prev]);
+                setActiveChatMessages((prev) => [
+                    ...[...msgs].reverse(),
+                    ...prev,
+                ]);
             }
-            
+
             setMessagesCursor(nextCursor);
             setHasMoreMessages(hasMore);
-            
+
             // Mark as read only on initial load
             if (!cursor) {
                 await messageService.markAsRead(chatId);
@@ -163,71 +194,95 @@ const Messages = () => {
         }
     }, []);
 
-    const handleNewIncomingMessage = useCallback((message) => {
-        console.log("New message received:", message);
-        
-        const msgConversationId = message.conversationId || message.id;
-        const senderId = message.senderId || message.sender?.id;
-        const recipientId = message.recipientId;
-        const conversationPartnerId = senderId === authUser.id ? recipientId : senderId;
+    const handleNewIncomingMessage = useCallback(
+        (message) => {
+            console.log("New message received:", message);
 
-        // If it's the current active chat, add or update message
-        if (activeChatId === msgConversationId || (activeChatId === "temp" && tempChat?.participant?.id === conversationPartnerId)) {
-            setActiveChatMessages(prev => {
-                const existingIdx = prev.findIndex(m => m.id === message.id);
-                if (existingIdx > -1) {
-                    // Update existing message (e.g. mark as deleted)
-                    const updated = [...prev];
-                    updated[existingIdx] = message;
-                    return updated;
+            const msgConversationId = message.conversationId || message.id;
+            const senderId = message.senderId || message.sender?.id;
+            const recipientId = message.recipientId;
+            const conversationPartnerId =
+                senderId === authUser.id ? recipientId : senderId;
+
+            // If it's the current active chat, add or update message
+            if (
+                activeChatId === msgConversationId ||
+                (activeChatId === "temp" &&
+                    tempChat?.participant?.id === conversationPartnerId)
+            ) {
+                setActiveChatMessages((prev) => {
+                    const existingIdx = prev.findIndex(
+                        (m) => m.id === message.id,
+                    );
+                    if (existingIdx > -1) {
+                        // Update existing message (e.g. mark as deleted)
+                        const updated = [...prev];
+                        updated[existingIdx] = message;
+                        return updated;
+                    }
+                    return [...prev, message];
+                });
+
+                if (activeChatId === "temp") {
+                    setTempChat(null);
+                    setActiveChatId(msgConversationId);
+                    fetchChats();
+                } else {
+                    messageService.markAsRead(msgConversationId);
                 }
-                return [...prev, message];
-            });
-            
-            if (activeChatId === "temp") {
-                setTempChat(null);
-                setActiveChatId(msgConversationId);
-                fetchChats();
-            } else {
-                messageService.markAsRead(msgConversationId);
             }
-        }
 
-        // Update Chat Lists
-        const updateChatInList = (prev) => {
-            const chatIdx = prev.findIndex(c => c.id === msgConversationId || (c.participant?.id || c.user?.id) === conversationPartnerId);
-            
-            const isMe = senderId === authUser.id;
-            const senderPrefix = isMe ? "You: " : "";
-            const lastMsgText = message.deleted ? "Message unsend" : `${senderPrefix}${message.text || message.content}`;
+            // Update Chat Lists
+            const updateChatInList = (prev) => {
+                const chatIdx = prev.findIndex(
+                    (c) =>
+                        c.id === msgConversationId ||
+                        (c.participant?.id || c.user?.id) ===
+                            conversationPartnerId,
+                );
 
-            if (chatIdx > -1) {
-                const updatedList = [...prev];
-                const chat = { ...updatedList[chatIdx] };
-                chat.id = msgConversationId;
-                chat.lastMessage = lastMsgText;
-                chat.time = "Now";
-                chat.unread = (activeChatId !== msgConversationId) && !isMe && !message.deleted;
-                
-                // Move to top
-                updatedList.splice(chatIdx, 1);
-                return [chat, ...updatedList];
-            } else {
-                fetchChats();
-                return prev;
-            }
-        };
+                const isMe = senderId === authUser.id;
+                const senderPrefix = isMe ? "You: " : "";
+                const lastMsgText = message.deleted
+                    ? "Message unsend"
+                    : `${senderPrefix}${message.text || message.content}`;
 
-        setPrimaryChats(prev => updateChatInList(prev));
-    }, [authUser.id, activeChatId, fetchChats, tempChat]);
+                if (chatIdx > -1) {
+                    const updatedList = [...prev];
+                    const chat = { ...updatedList[chatIdx] };
+                    chat.id = msgConversationId;
+                    chat.lastMessage = lastMsgText;
+                    chat.time = "Now";
+                    chat.unread =
+                        activeChatId !== msgConversationId &&
+                        !isMe &&
+                        !message.deleted;
+
+                    // Move to top
+                    updatedList.splice(chatIdx, 1);
+                    return [chat, ...updatedList];
+                } else {
+                    fetchChats();
+                    return prev;
+                }
+            };
+
+            setPrimaryChats((prev) => updateChatInList(prev));
+        },
+        [authUser.id, activeChatId, fetchChats, tempChat],
+    );
 
     const handleUnsendMessage = async (messageId) => {
         if (!activeChatId || activeChatId === "temp") return;
         try {
             await messageService.deleteMessage(activeChatId, messageId);
             // WebSocket will likely send an update, but we can update locally for speed
-            setActiveChatMessages(prev => 
-                prev.map(m => m.id === messageId ? { ...m, deleted: true, content: null } : m)
+            setActiveChatMessages((prev) =>
+                prev.map((m) =>
+                    m.id === messageId
+                        ? { ...m, deleted: true, content: null }
+                        : m,
+                ),
             );
         } catch (error) {
             console.error("Failed to unsend message", error);
@@ -247,21 +302,24 @@ const Messages = () => {
         }
     };
 
-    const handleSeenStatusUpdate = useCallback((data) => {
-        // data: { conversationId, userId, readAt }
-        if (data.userId === authUser.id) return; // Ignore our own seen status broadcast
+    const handleSeenStatusUpdate = useCallback(
+        (data) => {
+            // data: { conversationId, userId, readAt }
+            if (data.userId === authUser.id) return; // Ignore our own seen status broadcast
 
-        const updateList = (prev) => {
-            return prev.map(chat => {
-                if (chat.id === data.conversationId) {
-                    return { ...chat, lastReadAt: data.readAt };
-                }
-                return chat;
-            });
-        };
+            const updateList = (prev) => {
+                return prev.map((chat) => {
+                    if (chat.id === data.conversationId) {
+                        return { ...chat, lastReadAt: data.readAt };
+                    }
+                    return chat;
+                });
+            };
 
-        setPrimaryChats(prev => updateList(prev));
-    }, [authUser.id]);
+            setPrimaryChats((prev) => updateList(prev));
+        },
+        [authUser.id],
+    );
 
     // Topic Subscription for current active chat
     useEffect(() => {
@@ -270,11 +328,15 @@ const Messages = () => {
             if (topicSubRef.current) {
                 topicSubRef.current.unsubscribe();
             }
-            
+
             // Subscribe to the conversation topic to get messages sent by both parties
             const sub = subscribe(`/topic/messages/${activeChatId}`, (data) => {
                 // If it's a message, handle it (check for properties that exist in message but not status)
-                if (data.sender || data.deleted !== undefined || data.content !== undefined) {
+                if (
+                    data.sender ||
+                    data.deleted !== undefined ||
+                    data.content !== undefined
+                ) {
                     handleNewIncomingMessage(data);
                 } else if (data.readAt) {
                     // If it's a read status update
@@ -282,7 +344,7 @@ const Messages = () => {
                 }
             });
             topicSubRef.current = sub;
-            
+
             // Mark as read immediately when joining
             messageService.markAsRead(activeChatId);
 
@@ -291,23 +353,41 @@ const Messages = () => {
                 topicSubRef.current = null;
             };
         }
-    }, [connected, activeChatId, subscribe, handleNewIncomingMessage, handleSeenStatusUpdate]);
+    }, [
+        connected,
+        activeChatId,
+        subscribe,
+        handleNewIncomingMessage,
+        handleSeenStatusUpdate,
+    ]);
 
     // Private queue subscription for background updates and new conversations
     useEffect(() => {
         if (connected && authUser?.id) {
-            const sub = subscribe(`/user/${authUser.id}/queue/messages`, (message) => {
-                handleNewIncomingMessage(message);
-            });
-            
-            const typingSub = subscribe(`/user/${authUser.id}/queue/typing`, (data) => {
-                setTypingUsers(prev => ({ ...prev, [data.senderId]: data.isTyping }));
-                if (data.isTyping) {
-                    setTimeout(() => {
-                        setTypingUsers(prev => ({ ...prev, [data.senderId]: false }));
-                    }, 5000);
-                }
-            });
+            const sub = subscribe(
+                `/user/${authUser.id}/queue/messages`,
+                (message) => {
+                    handleNewIncomingMessage(message);
+                },
+            );
+
+            const typingSub = subscribe(
+                `/user/${authUser.id}/queue/typing`,
+                (data) => {
+                    setTypingUsers((prev) => ({
+                        ...prev,
+                        [data.senderId]: data.isTyping,
+                    }));
+                    if (data.isTyping) {
+                        setTimeout(() => {
+                            setTypingUsers((prev) => ({
+                                ...prev,
+                                [data.senderId]: false,
+                            }));
+                        }, 5000);
+                    }
+                },
+            );
 
             return () => {
                 sub?.unsubscribe();
@@ -326,35 +406,55 @@ const Messages = () => {
 
     const handleTyping = () => {
         const displayedChats = view === "primary" ? primaryChats : requestChats;
-        const activeChat = displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
+        const activeChat =
+            displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
         const recipientId = activeChat?.participant?.id || activeChat?.user?.id;
-        
+
         if (!recipientId || !connected) return;
-        
+
         // Robust block check
-        if (authUser?.blockedUserIds?.some(id => String(id) === String(recipientId))) return;
-        
+        if (
+            authUser?.blockedUserIds?.some(
+                (id) => String(id) === String(recipientId),
+            )
+        )
+            return;
+
         send("/app/chat.typing", { recipientId: recipientId, isTyping: true });
     };
 
-    const handleSendMessage = async (text, mediaUrl = null, mediaType = null, sharedPostId = null) => {
+    const handleSendMessage = async (
+        text,
+        mediaUrl = null,
+        mediaType = null,
+        sharedPostId = null,
+    ) => {
         const displayedChats = view === "primary" ? primaryChats : requestChats;
-        const activeChat = displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
-        
-        if (!activeChat || (!text?.trim() && !mediaUrl && !sharedPostId)) return;
+        const activeChat =
+            displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
+
+        if (!activeChat || (!text?.trim() && !mediaUrl && !sharedPostId))
+            return;
 
         // Try all possible locations for recipient ID based on chat structure
         const recipientId = activeChat.participant?.id || activeChat.user?.id;
 
         if (!recipientId) {
-            console.error("Cannot send message: Valid Recipient ID not found", activeChat);
+            console.error(
+                "Cannot send message: Valid Recipient ID not found",
+                activeChat,
+            );
             return;
         }
 
         // Robust block check
-        const isBlocked = authUser?.blockedUserIds?.some(id => String(id) === String(recipientId));
+        const isBlocked = authUser?.blockedUserIds?.some(
+            (id) => String(id) === String(recipientId),
+        );
         if (isBlocked) {
-            alert("You have blocked this user. Unblock them in Settings to send a message.");
+            alert(
+                "You have blocked this user. Unblock them in Settings to send a message.",
+            );
             return;
         }
 
@@ -369,31 +469,34 @@ const Messages = () => {
             mediaType: mediaType,
             sharedPost: sharedPostId ? { id: sharedPostId } : null, // Partial object for UI
             createdAt: new Date().toISOString(),
-            isOptimistic: true
+            isOptimistic: true,
         };
-        
-        setActiveChatMessages(prev => [...prev, optimisticMsg]);
+
+        setActiveChatMessages((prev) => [...prev, optimisticMsg]);
 
         try {
             // 2. Send via HTTP POST
             const messageBody = {
-                recipientId: recipientId, 
+                recipientId: recipientId,
                 content: text,
                 mediaUrl: mediaUrl,
                 mediaType: mediaType,
-                sharedPostId: sharedPostId
+                sharedPostId: sharedPostId,
             };
-            
-            console.log("Sending message with body:", JSON.stringify(messageBody));
+
+            console.log(
+                "Sending message with body:",
+                JSON.stringify(messageBody),
+            );
             const sentMessage = await messageService.sendMessage(messageBody);
-            
+
             // 3. Update active chat messages
-            setActiveChatMessages(prev => {
-                const alreadyExists = prev.some(m => m.id === sentMessage.id);
+            setActiveChatMessages((prev) => {
+                const alreadyExists = prev.some((m) => m.id === sentMessage.id);
                 if (alreadyExists) {
-                    return prev.filter(m => m.id !== tempMsgId);
+                    return prev.filter((m) => m.id !== tempMsgId);
                 }
-                return prev.map(m => m.id === tempMsgId ? sentMessage : m);
+                return prev.map((m) => (m.id === tempMsgId ? sentMessage : m));
             });
 
             // 4. Handle transition from 'temp' or 'requests' to real conversation
@@ -406,11 +509,16 @@ const Messages = () => {
 
             // Stop typing status
             if (connected) {
-                send("/app/chat.typing", { recipientId: recipientId, isTyping: false });
+                send("/app/chat.typing", {
+                    recipientId: recipientId,
+                    isTyping: false,
+                });
             }
         } catch (error) {
             console.error("Failed to send message", error);
-            setActiveChatMessages(prev => prev.filter(m => m.id !== tempMsgId));
+            setActiveChatMessages((prev) =>
+                prev.filter((m) => m.id !== tempMsgId),
+            );
             alert("Failed to send message. Please try again.");
         }
     };
@@ -420,7 +528,8 @@ const Messages = () => {
     }
 
     const displayedChats = view === "primary" ? primaryChats : requestChats;
-    const activeChat = displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
+    const activeChat =
+        displayedChats.find((chat) => chat.id === activeChatId) || tempChat;
     const participantId = activeChat?.participant?.id || activeChat?.user?.id;
 
     return (
@@ -444,20 +553,28 @@ const Messages = () => {
 
             <Flex flex={1}>
                 <ChatWindow
-                    activeChat={activeChat ? {
-                        ...activeChat,
-                        messages: activeChatMessages
-                    } : null}
+                    activeChat={
+                        activeChat
+                            ? {
+                                  ...activeChat,
+                                  messages: activeChatMessages,
+                              }
+                            : null
+                    }
                     onSendMessage={handleSendMessage}
                     onTyping={handleTyping}
                     onUnsendMessage={handleUnsendMessage}
                     onOpenNewMessage={() => setIsNewMessageOpen(true)}
                     onAcceptRequest={handleAcceptRequest}
-                    onLoadMoreMessages={() => fetchMessages(activeChatId, messagesCursor)}
+                    onLoadMoreMessages={() =>
+                        fetchMessages(activeChatId, messagesCursor)
+                    }
                     hasMoreMessages={hasMoreMessages}
                     isLoadingMoreMessages={isLoadingMoreMessages}
                     currentView={view}
-                    isTyping={participantId ? typingUsers[participantId] : false}
+                    isTyping={
+                        participantId ? typingUsers[participantId] : false
+                    }
                 />
             </Flex>
 
@@ -466,7 +583,7 @@ const Messages = () => {
                 onClose={() => setIsNewMessageOpen(false)}
                 onSelectUser={(user) => {
                     const existing = [...primaryChats, ...requestChats].find(
-                        c => (c.participant?.id || c.user?.id) === user.id
+                        (c) => (c.participant?.id || c.user?.id) === user.id,
                     );
                     if (existing) {
                         setActiveChatId(existing.id);
@@ -476,7 +593,7 @@ const Messages = () => {
                         setTempChat({
                             id: "temp",
                             participant: user,
-                            messages: []
+                            messages: [],
                         });
                         setActiveChatMessages([]);
                     }

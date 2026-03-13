@@ -78,7 +78,8 @@ export const usersDB = {
                                 id: "hrep-1",
                                 user: {
                                     username: "nature_vibes",
-                                    avatarUrl: "https://i.pravatar.cc/150?u=dev",
+                                    avatarUrl:
+                                        "https://i.pravatar.cc/150?u=dev",
                                 },
                                 text: "Love this place!",
                                 time: "1w",

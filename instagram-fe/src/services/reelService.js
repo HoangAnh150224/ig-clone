@@ -22,8 +22,10 @@ const reelService = {
      * API: GET /archive/posts?type=REEL
      */
     getArchivedReels: async (page = 0, size = 12) => {
-        return axiosClient.get(`/archive/posts?type=REEL&page=${page}&size=${size}`);
-    }
+        return axiosClient.get(
+            `/archive/posts?type=REEL&page=${page}&size=${size}`,
+        );
+    },
 };
 
 export default reelService;

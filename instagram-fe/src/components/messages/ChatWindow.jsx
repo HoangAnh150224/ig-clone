@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { 
-    Box, 
-    VStack, 
-    HStack, 
-    Text, 
-    Flex, 
-    Input, 
+import {
+    Box,
+    VStack,
+    HStack,
+    Text,
+    Flex,
+    Input,
     Button,
     PopoverRoot,
     PopoverTrigger,
@@ -32,12 +32,12 @@ import { useSelector } from "react-redux";
 const SharedPostPreview = ({ post, onClick }) => {
     if (!post) return null;
     return (
-        <VStack 
-            align="stretch" 
-            bg="gray.50" 
-            borderRadius="12px" 
-            overflow="hidden" 
-            border="1px solid" 
+        <VStack
+            align="stretch"
+            bg="gray.50"
+            borderRadius="12px"
+            overflow="hidden"
+            border="1px solid"
             borderColor="gray.200"
             cursor="pointer"
             onClick={onClick}
@@ -46,22 +46,26 @@ const SharedPostPreview = ({ post, onClick }) => {
         >
             <HStack p={2} gap={2}>
                 <UserAvatar src={post.author?.avatarUrl} size="24px" />
-                <Text fontSize="12px" fontWeight="bold" color="black">{post.author?.username}</Text>
+                <Text fontSize="12px" fontWeight="bold" color="black">
+                    {post.author?.username}
+                </Text>
             </HStack>
             {post.media?.[0]?.url && (
                 <Box width="100%" height="200px">
-                    <Image 
-                        src={post.media[0].url} 
-                        alt="Shared post" 
-                        width="100%" 
-                        height="100%" 
-                        objectFit="cover" 
+                    <Image
+                        src={post.media[0].url}
+                        alt="Shared post"
+                        width="100%"
+                        height="100%"
+                        objectFit="cover"
                     />
                 </Box>
             )}
             <Box p={3}>
                 <Text fontSize="12px" color="black" noOfLines={2}>
-                    <Text as="span" fontWeight="bold" mr={1}>{post.author?.username}</Text>
+                    <Text as="span" fontWeight="bold" mr={1}>
+                        {post.author?.username}
+                    </Text>
                     {post.caption}
                 </Text>
             </Box>
@@ -75,15 +79,19 @@ const MessageItem = ({ msg, isMe, onUnsendMessage, isLastMe, lastReadAt }) => {
     const navigate = useNavigate();
     const isDeleted = msg.deleted;
 
-    const isSeen = isMe && lastReadAt && new Date(msg.createdAt) <= new Date(lastReadAt);
-    const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isSeen =
+        isMe && lastReadAt && new Date(msg.createdAt) <= new Date(lastReadAt);
+    const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
     return (
         <VStack align={isMe ? "end" : "start"} gap={1} width="full">
-            <Flex 
-                justify={isMe ? "flex-end" : "flex-start"} 
-                align="center" 
-                gap={2} 
+            <Flex
+                justify={isMe ? "flex-end" : "flex-start"}
+                align="center"
+                gap={2}
                 position="relative"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => {
@@ -93,13 +101,13 @@ const MessageItem = ({ msg, isMe, onUnsendMessage, isLastMe, lastReadAt }) => {
                 width="full"
             >
                 {isMe && !isDeleted && (
-                    <PopoverRoot 
-                        open={isOpen} 
+                    <PopoverRoot
+                        open={isOpen}
                         onOpenChange={(e) => setIsOpen(e.open)}
                         positioning={{ placement: "left" }}
                     >
                         <PopoverTrigger asChild>
-                            <Box 
+                            <Box
                                 cursor="pointer"
                                 opacity={isHovered || isOpen ? 1 : 0}
                                 transition="0.2s"
@@ -112,11 +120,11 @@ const MessageItem = ({ msg, isMe, onUnsendMessage, isLastMe, lastReadAt }) => {
                             </Box>
                         </PopoverTrigger>
                         <PopoverPositioner zIndex={1500}>
-                            <PopoverContent 
-                                width="120px" 
-                                bg="white" 
-                                boxShadow="0 4px 12px rgba(0,0,0,0.15)" 
-                                border="1px solid" 
+                            <PopoverContent
+                                width="120px"
+                                bg="white"
+                                boxShadow="0 4px 12px rgba(0,0,0,0.15)"
+                                border="1px solid"
                                 borderColor="gray.200"
                                 borderRadius="8px"
                                 overflow="hidden"
@@ -143,54 +151,81 @@ const MessageItem = ({ msg, isMe, onUnsendMessage, isLastMe, lastReadAt }) => {
                         </PopoverPositioner>
                     </PopoverRoot>
                 )}
-                
+
                 <VStack align={isMe ? "end" : "start"} maxW="70%" gap={0}>
                     {msg.sharedPost && !isDeleted && (
                         <Box width="240px">
-                            <SharedPostPreview 
-                                post={msg.sharedPost} 
-                                onClick={() => navigate(`/p/${msg.sharedPost.id}`)} 
+                            <SharedPostPreview
+                                post={msg.sharedPost}
+                                onClick={() =>
+                                    navigate(`/p/${msg.sharedPost.id}`)
+                                }
                             />
                         </Box>
                     )}
 
                     {msg.mediaUrl && !isDeleted && (
-                        <Box 
-                            mb={1} 
-                            borderRadius="22px" 
-                            overflow="hidden" 
-                            border="1px solid" 
+                        <Box
+                            mb={1}
+                            borderRadius="22px"
+                            overflow="hidden"
+                            border="1px solid"
                             borderColor="gray.100"
                             maxW="300px"
                         >
-                            {msg.mediaType?.startsWith("video") || msg.mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i) ? (
-                                <Box as="video" src={msg.mediaUrl} controls width="100%" borderRadius="18px" />
+                            {msg.mediaType?.startsWith("video") ||
+                            msg.mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                                <Box
+                                    as="video"
+                                    src={msg.mediaUrl}
+                                    controls
+                                    width="100%"
+                                    borderRadius="18px"
+                                />
                             ) : (
-                                <Image 
-                                    src={msg.mediaUrl} 
-                                    alt="Sent media" 
-                                    width="100%" 
-                                    objectFit="cover" 
-                                    fallback={<Center p={4}><Spinner size="sm" /></Center>}
+                                <Image
+                                    src={msg.mediaUrl}
+                                    alt="Sent media"
+                                    width="100%"
+                                    objectFit="cover"
+                                    fallback={
+                                        <Center p={4}>
+                                            <Spinner size="sm" />
+                                        </Center>
+                                    }
                                 />
                             )}
                         </Box>
                     )}
-                    
+
                     {(msg.text || msg.content || isDeleted) && (
                         <Box
                             p={3}
                             px={4}
                             borderRadius="22px"
-                            bg={isDeleted ? "transparent" : (isMe ? "#3797f0" : "gray.100")}
-                            color={isDeleted ? "gray.400" : (isMe ? "white" : "black")}
+                            bg={
+                                isDeleted
+                                    ? "transparent"
+                                    : isMe
+                                      ? "#3797f0"
+                                      : "gray.100"
+                            }
+                            color={
+                                isDeleted
+                                    ? "gray.400"
+                                    : isMe
+                                      ? "white"
+                                      : "black"
+                            }
                             border={isDeleted ? "1px solid" : "none"}
                             borderColor="gray.200"
                             fontSize="sm"
                             fontStyle={isDeleted ? "italic" : "normal"}
                             title={timeStr}
                         >
-                            {isDeleted ? "Message unsent" : (msg.text || msg.content)}
+                            {isDeleted
+                                ? "Message unsent"
+                                : msg.text || msg.content}
                         </Box>
                     )}
                 </VStack>
@@ -208,19 +243,19 @@ import messageService from "../../services/messageService";
 
 import cloudinaryService from "../../services/cloudinaryService";
 
-const ChatWindow = ({ 
-    activeChat, 
-    onSendMessage, 
-    onTyping, 
-    onUnsendMessage, 
-    onOpenNewMessage, 
+const ChatWindow = ({
+    activeChat,
+    onSendMessage,
+    onTyping,
+    onUnsendMessage,
+    onOpenNewMessage,
     onAcceptRequest,
     onDeleteChat,
     onLoadMoreMessages,
     hasMoreMessages,
     isLoadingMoreMessages,
     currentView,
-    isTyping = false 
+    isTyping = false,
 }) => {
     const [message, setMessage] = useState("");
     const [isUploading, setIsUploading] = useState(false);
@@ -241,7 +276,8 @@ const ChatWindow = ({
         if (messagesContainerRef.current && !isLoadingMoreMessages) {
             const currentHeight = messagesContainerRef.current.scrollHeight;
             if (prevScrollHeightRef.current > 0) {
-                messagesContainerRef.current.scrollTop = currentHeight - prevScrollHeightRef.current;
+                messagesContainerRef.current.scrollTop =
+                    currentHeight - prevScrollHeightRef.current;
             }
             prevScrollHeightRef.current = currentHeight;
         }
@@ -249,13 +285,17 @@ const ChatWindow = ({
 
     useEffect(() => {
         if (activeChat?.messages?.length > 0 && !isLoadingMoreMessages) {
-             // Only auto-scroll to bottom on first load or when sending/receiving new message
-             // (Simple heuristic: if scroll is near bottom)
-             const container = messagesContainerRef.current;
-             if (container) {
-                 const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
-                 if (isNearBottom) scrollToBottom();
-             }
+            // Only auto-scroll to bottom on first load or when sending/receiving new message
+            // (Simple heuristic: if scroll is near bottom)
+            const container = messagesContainerRef.current;
+            if (container) {
+                const isNearBottom =
+                    container.scrollHeight -
+                        container.scrollTop -
+                        container.clientHeight <
+                    200;
+                if (isNearBottom) scrollToBottom();
+            }
         }
     }, [activeChat?.messages?.length, isTyping, isLoadingMoreMessages]);
 
@@ -271,23 +311,34 @@ const ChatWindow = ({
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMoreMessages && !isLoadingMoreMessages && activeChat?.id) {
+                if (
+                    entries[0].isIntersecting &&
+                    hasMoreMessages &&
+                    !isLoadingMoreMessages &&
+                    activeChat?.id
+                ) {
                     if (messagesContainerRef.current) {
-                        prevScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
+                        prevScrollHeightRef.current =
+                            messagesContainerRef.current.scrollHeight;
                     }
                     onLoadMoreMessages();
                 }
             },
-            { threshold: 0.5 }
+            { threshold: 0.5 },
         );
 
         const currentTarget = topObserverRef.current;
         if (currentTarget) observer.observe(currentTarget);
-        
+
         return () => {
             if (currentTarget) observer.unobserve(currentTarget);
         };
-    }, [hasMoreMessages, isLoadingMoreMessages, onLoadMoreMessages, activeChat?.id]);
+    }, [
+        hasMoreMessages,
+        isLoadingMoreMessages,
+        onLoadMoreMessages,
+        activeChat?.id,
+    ]);
 
     const handleMessageChange = (e) => {
         const val = e.target.value;
@@ -307,7 +358,10 @@ const ChatWindow = ({
 
         setIsUploading(true);
         try {
-            const uploadResult = await cloudinaryService.upload(file, "messages");
+            const uploadResult = await cloudinaryService.upload(
+                file,
+                "messages",
+            );
             // Send message with media info
             onSendMessage(null, uploadResult.url, uploadResult.mediaType);
         } catch (error) {
@@ -322,21 +376,42 @@ const ChatWindow = ({
     if (!activeChat) {
         // ... (existing empty state)
         return (
-            <Flex flex={1} bg="white" color="black" direction="column" align="center" justify="center" gap={4}>
-                <Box borderRadius="full" border="2px solid" borderColor="black" p={6} display="flex" align="center" justify="center" bg="white">
+            <Flex
+                flex={1}
+                bg="white"
+                color="black"
+                direction="column"
+                align="center"
+                justify="center"
+                gap={4}
+            >
+                <Box
+                    borderRadius="full"
+                    border="2px solid"
+                    borderColor="black"
+                    p={6}
+                    display="flex"
+                    align="center"
+                    justify="center"
+                    bg="white"
+                >
                     <AiOutlinePicture size={60} color="black" />
                 </Box>
-                <Text fontSize="2xl" fontWeight="500" color="black">Your messages</Text>
-                <Text color="gray.500">Send photos and private messages to a friend or group.</Text>
-                <Box 
-                    as="button" 
-                    bg="#0095f6" 
-                    color="white" 
-                    px={5} 
-                    py={2} 
-                    borderRadius="8px" 
-                    fontSize="sm" 
-                    fontWeight="bold" 
+                <Text fontSize="2xl" fontWeight="500" color="black">
+                    Your messages
+                </Text>
+                <Text color="gray.500">
+                    Send photos and private messages to a friend or group.
+                </Text>
+                <Box
+                    as="button"
+                    bg="#0095f6"
+                    color="white"
+                    px={5}
+                    py={2}
+                    borderRadius="8px"
+                    fontSize="sm"
+                    fontWeight="bold"
                     mt={2}
                     onClick={onOpenNewMessage}
                     _hover={{ bg: "#1877f2" }}
@@ -349,19 +424,32 @@ const ChatWindow = ({
     }
 
     const participant = activeChat.participant || activeChat.user;
-    const isBlocked = authUser?.blockedUserIds?.some(id => String(id) === String(participant?.id));
+    const isBlocked = authUser?.blockedUserIds?.some(
+        (id) => String(id) === String(participant?.id),
+    );
     const isDeactivated = participant?.active === false;
 
     if (!participant) {
         return (
-            <Flex flex={1} bg="white" color="black" direction="column" align="center" justify="center">
+            <Flex
+                flex={1}
+                bg="white"
+                color="black"
+                direction="column"
+                align="center"
+                justify="center"
+            >
                 <Text>Conversation data missing</Text>
             </Flex>
         );
     }
 
     const handleDeleteChat = async () => {
-        if (window.confirm("Delete conversation? This will permanently remove your copy of the conversation from your inbox.")) {
+        if (
+            window.confirm(
+                "Delete conversation? This will permanently remove your copy of the conversation from your inbox.",
+            )
+        ) {
             try {
                 await messageService.deleteConversation(activeChat.id);
                 if (onDeleteChat) onDeleteChat(activeChat.id);
@@ -372,17 +460,46 @@ const ChatWindow = ({
     };
 
     return (
-        <Box flex={1} bg="white" color="black" display="flex" flexDirection="column" height="100vh">
+        <Box
+            flex={1}
+            bg="white"
+            color="black"
+            display="flex"
+            flexDirection="column"
+            height="100vh"
+        >
             {/* Header */}
-            <Flex p={4} borderBottom="1px solid" borderColor="gray.100" align="center" justify="space-between" bg="white">
-                <HStack gap={3} cursor="pointer" onClick={() => navigate(`/${participant?.username}`)}>
-                    <UserAvatar src={participant?.avatarUrl || participant?.avatar} size="32px" />
+            <Flex
+                p={4}
+                borderBottom="1px solid"
+                borderColor="gray.100"
+                align="center"
+                justify="space-between"
+                bg="white"
+            >
+                <HStack
+                    gap={3}
+                    cursor="pointer"
+                    onClick={() => navigate(`/${participant?.username}`)}
+                >
+                    <UserAvatar
+                        src={participant?.avatarUrl || participant?.avatar}
+                        size="32px"
+                    />
                     <VStack align="start" gap={0}>
-                        <Text fontWeight="bold" color="black" fontSize="sm">{participant?.username}</Text>
-                        {activeChat.isOnline && !isBlocked && !isDeactivated && <Text fontSize="xs" color="green.500">Active now</Text>}
+                        <Text fontWeight="bold" color="black" fontSize="sm">
+                            {participant?.username}
+                        </Text>
+                        {activeChat.isOnline &&
+                            !isBlocked &&
+                            !isDeactivated && (
+                                <Text fontSize="xs" color="green.500">
+                                    Active now
+                                </Text>
+                            )}
                     </VStack>
                 </HStack>
-                
+
                 <PopoverRoot positioning={{ placement: "bottom-end" }}>
                     <PopoverTrigger asChild>
                         <Box cursor="pointer" p={1}>
@@ -390,13 +507,18 @@ const ChatWindow = ({
                         </Box>
                     </PopoverTrigger>
                     <PopoverPositioner zIndex={1500}>
-                        <PopoverContent width="200px" bg="white" boxShadow="lg" borderRadius="8px">
+                        <PopoverContent
+                            width="200px"
+                            bg="white"
+                            boxShadow="lg"
+                            borderRadius="8px"
+                        >
                             <PopoverBody p={0}>
                                 <VStack align="stretch" gap={0}>
-                                    <Button 
-                                        variant="ghost" 
-                                        color="#ed4956" 
-                                        fontWeight="bold" 
+                                    <Button
+                                        variant="ghost"
+                                        color="#ed4956"
+                                        fontWeight="bold"
                                         onClick={handleDeleteChat}
                                         borderRadius="0"
                                         height="45px"
@@ -404,10 +526,14 @@ const ChatWindow = ({
                                         Delete Chat
                                     </Button>
                                     <Box h="1px" bg="gray.100" />
-                                    <Button 
-                                        variant="ghost" 
-                                        color="black" 
-                                        onClick={() => navigate(`/${participant?.username}`)}
+                                    <Button
+                                        variant="ghost"
+                                        color="black"
+                                        onClick={() =>
+                                            navigate(
+                                                `/${participant?.username}`,
+                                            )
+                                        }
                                         borderRadius="0"
                                         height="45px"
                                     >
@@ -421,14 +547,14 @@ const ChatWindow = ({
             </Flex>
 
             {/* Messages */}
-            <VStack 
+            <VStack
                 ref={messagesContainerRef}
-                flex={1} 
-                p={4} 
-                overflowY="auto" 
-                align="stretch" 
-                gap={4} 
-                bg="white" 
+                flex={1}
+                p={4}
+                overflowY="auto"
+                align="stretch"
+                gap={4}
+                bg="white"
                 className="no-scrollbar"
             >
                 {/* Top observer for infinite scroll */}
@@ -444,10 +570,17 @@ const ChatWindow = ({
                     // Find the index of the last message sent by the current user
                     let lastMeIdx = -1;
                     if (activeChat.messages) {
-                        for (let i = activeChat.messages.length - 1; i >= 0; i--) {
+                        for (
+                            let i = activeChat.messages.length - 1;
+                            i >= 0;
+                            i--
+                        ) {
                             const m = activeChat.messages[i];
                             const mSenderId = m.senderId || m.sender?.id;
-                            if (mSenderId === authUser?.id || m.sender === "me") {
+                            if (
+                                mSenderId === authUser?.id ||
+                                m.sender === "me"
+                            ) {
                                 lastMeIdx = i;
                                 break;
                             }
@@ -456,16 +589,17 @@ const ChatWindow = ({
 
                     return activeChat.messages?.map((msg, index) => {
                         const msgSenderId = msg.senderId || msg.sender?.id;
-                        const isMe = msgSenderId === authUser?.id || msg.sender === "me";
+                        const isMe =
+                            msgSenderId === authUser?.id || msg.sender === "me";
                         const isLastMe = index === lastMeIdx;
 
                         return (
-                            <MessageItem 
-                                key={msg.id || index} 
-                                msg={msg} 
-                                isMe={isMe} 
-                                authUser={authUser} 
-                                onUnsendMessage={onUnsendMessage} 
+                            <MessageItem
+                                key={msg.id || index}
+                                msg={msg}
+                                isMe={isMe}
+                                authUser={authUser}
+                                onUnsendMessage={onUnsendMessage}
                                 isLastMe={isLastMe}
                                 lastReadAt={activeChat.lastReadAt}
                             />
@@ -474,7 +608,14 @@ const ChatWindow = ({
                 })()}
                 {isTyping && !isBlocked && !isDeactivated && (
                     <Flex justify="flex-start">
-                        <Box p={3} px={4} borderRadius="22px" bg="gray.100" color="gray.500" fontSize="xs">
+                        <Box
+                            p={3}
+                            px={4}
+                            borderRadius="22px"
+                            bg="gray.100"
+                            color="gray.500"
+                            fontSize="xs"
+                        >
                             Typing...
                         </Box>
                     </Flex>
@@ -484,30 +625,50 @@ const ChatWindow = ({
 
             {/* Input / Request Footer */}
             <Box p={4} px={5} bg="white">
-                <input 
-                    type="file" 
-                    hidden 
-                    ref={fileInputRef} 
-                    accept="image/*,video/*" 
-                    onChange={handleImageUpload} 
+                <input
+                    type="file"
+                    hidden
+                    ref={fileInputRef}
+                    accept="image/*,video/*"
+                    onChange={handleImageUpload}
                 />
-                
+
                 {isDeactivated ? (
-                    <Center py={4} bg="gray.50" borderRadius="12px" border="1px solid" borderColor="gray.100">
+                    <Center
+                        py={4}
+                        bg="gray.50"
+                        borderRadius="12px"
+                        border="1px solid"
+                        borderColor="gray.100"
+                    >
                         <VStack gap={2}>
-                            <Text fontWeight="bold" color="black">Account deactivated</Text>
-                            <Text fontSize="xs" color="gray.500">You can no longer message this account.</Text>
+                            <Text fontWeight="bold" color="black">
+                                Account deactivated
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                                You can no longer message this account.
+                            </Text>
                         </VStack>
                     </Center>
                 ) : isBlocked ? (
-                    <Center py={4} bg="gray.50" borderRadius="12px" border="1px solid" borderColor="gray.100">
+                    <Center
+                        py={4}
+                        bg="gray.50"
+                        borderRadius="12px"
+                        border="1px solid"
+                        borderColor="gray.100"
+                    >
                         <VStack gap={2}>
-                            <Text fontWeight="bold" color="black">You blocked this user</Text>
-                            <Text fontSize="xs" color="gray.500">You can't message them unless you unblock them.</Text>
-                            <Button 
-                                size="xs" 
-                                color="#0095f6" 
-                                variant="ghost" 
+                            <Text fontWeight="bold" color="black">
+                                You blocked this user
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                                You can't message them unless you unblock them.
+                            </Text>
+                            <Button
+                                size="xs"
+                                color="#0095f6"
+                                variant="ghost"
                                 fontWeight="bold"
                                 onClick={() => navigate("/accounts/edit")}
                             >
@@ -517,23 +678,28 @@ const ChatWindow = ({
                     </Center>
                 ) : currentView === "requests" ? (
                     <VStack gap={4} py={2}>
-                        <Text fontSize="14px" color="gray.500" textAlign="center">
-                            The user wants to send you a message. They won't know you've seen it until you accept.
+                        <Text
+                            fontSize="14px"
+                            color="gray.500"
+                            textAlign="center"
+                        >
+                            The user wants to send you a message. They won't
+                            know you've seen it until you accept.
                         </Text>
                         <HStack width="100%" gap={4} justify="center">
-                            <Button 
-                                variant="ghost" 
-                                color="#ed4956" 
-                                fontWeight="bold" 
+                            <Button
+                                variant="ghost"
+                                color="#ed4956"
+                                fontWeight="bold"
                                 fontSize="14px"
                                 _hover={{ bg: "gray.50" }}
                             >
                                 Delete
                             </Button>
-                            <Button 
-                                variant="ghost" 
-                                color="black" 
-                                fontWeight="bold" 
+                            <Button
+                                variant="ghost"
+                                color="black"
+                                fontWeight="bold"
                                 fontSize="14px"
                                 _hover={{ bg: "gray.50" }}
                                 onClick={onAcceptRequest}
@@ -541,9 +707,27 @@ const ChatWindow = ({
                                 Accept
                             </Button>
                         </HStack>
-                        <Box borderTop="1px solid" borderColor="gray.100" width="100%" pt={4}>
-                             <Flex border="1px solid" borderColor="gray.200" borderRadius="22px" p={1} px={4} align="center" gap={3} bg="white">
-                                <BsEmojiSmile size={24} cursor="pointer" color="black" />
+                        <Box
+                            borderTop="1px solid"
+                            borderColor="gray.100"
+                            width="100%"
+                            pt={4}
+                        >
+                            <Flex
+                                border="1px solid"
+                                borderColor="gray.200"
+                                borderRadius="22px"
+                                p={1}
+                                px={4}
+                                align="center"
+                                gap={3}
+                                bg="white"
+                            >
+                                <BsEmojiSmile
+                                    size={24}
+                                    cursor="pointer"
+                                    color="black"
+                                />
                                 <Input
                                     variant="unstyled"
                                     placeholder="Message..."
@@ -551,20 +735,42 @@ const ChatWindow = ({
                                     py={2}
                                     value={message}
                                     onChange={handleMessageChange}
-                                    onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                                    onKeyPress={(e) =>
+                                        e.key === "Enter" && handleSend()
+                                    }
                                     color="black"
                                     bg="white"
                                     _placeholder={{ color: "gray.500" }}
                                 />
                                 {message.length > 0 && (
-                                    <Text fontWeight="bold" color="#0095f6" cursor="pointer" onClick={handleSend}>Send</Text>
+                                    <Text
+                                        fontWeight="bold"
+                                        color="#0095f6"
+                                        cursor="pointer"
+                                        onClick={handleSend}
+                                    >
+                                        Send
+                                    </Text>
                                 )}
                             </Flex>
                         </Box>
                     </VStack>
                 ) : (
-                    <Flex border="1px solid" borderColor="gray.200" borderRadius="22px" p={1} px={4} align="center" gap={3} bg="white">
-                        <BsEmojiSmile size={24} cursor="pointer" color="black" />
+                    <Flex
+                        border="1px solid"
+                        borderColor="gray.200"
+                        borderRadius="22px"
+                        p={1}
+                        px={4}
+                        align="center"
+                        gap={3}
+                        bg="white"
+                    >
+                        <BsEmojiSmile
+                            size={24}
+                            cursor="pointer"
+                            color="black"
+                        />
                         <Input
                             variant="unstyled"
                             placeholder="Message..."
@@ -572,20 +778,49 @@ const ChatWindow = ({
                             py={2}
                             value={message}
                             onChange={handleMessageChange}
-                            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                            onKeyPress={(e) =>
+                                e.key === "Enter" && handleSend()
+                            }
                             color="black"
                             bg="white"
                             _placeholder={{ color: "gray.500" }}
                         />
                         {message.length > 0 ? (
-                            <Text fontWeight="bold" color="#0095f6" cursor="pointer" onClick={handleSend}>Send</Text>
+                            <Text
+                                fontWeight="bold"
+                                color="#0095f6"
+                                cursor="pointer"
+                                onClick={handleSend}
+                            >
+                                Send
+                            </Text>
                         ) : (
                             <HStack gap={4}>
-                                <HiOutlineMicrophone size={24} cursor="pointer" color="black" />
-                                <Box cursor="pointer" onClick={() => fileInputRef.current?.click()}>
-                                    {isUploading ? <Spinner size="xs" color="black" /> : <AiOutlinePicture size={24} color="black" />}
+                                <HiOutlineMicrophone
+                                    size={24}
+                                    cursor="pointer"
+                                    color="black"
+                                />
+                                <Box
+                                    cursor="pointer"
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
+                                >
+                                    {isUploading ? (
+                                        <Spinner size="xs" color="black" />
+                                    ) : (
+                                        <AiOutlinePicture
+                                            size={24}
+                                            color="black"
+                                        />
+                                    )}
                                 </Box>
-                                <AiOutlineHeart size={24} cursor="pointer" color="black" />
+                                <AiOutlineHeart
+                                    size={24}
+                                    cursor="pointer"
+                                    color="black"
+                                />
                             </HStack>
                         )}
                     </Flex>

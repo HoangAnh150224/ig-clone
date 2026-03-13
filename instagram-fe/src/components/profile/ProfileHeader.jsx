@@ -46,8 +46,12 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
         try {
             await userService.blockUser(user.id); // blockUser is a toggle
             if (authUser) {
-                const newBlockedIds = authUser.blockedUserIds.filter(id => id !== user.id);
-                dispatch(setUser({ ...authUser, blockedUserIds: newBlockedIds }));
+                const newBlockedIds = authUser.blockedUserIds.filter(
+                    (id) => id !== user.id,
+                );
+                dispatch(
+                    setUser({ ...authUser, blockedUserIds: newBlockedIds }),
+                );
             }
         } catch (error) {
             console.error("Failed to unblock user", error);
@@ -56,9 +60,9 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
 
     const handleAvatarClick = () => {
         if (isBlocked) return;
-        
+
         const userStories = user.stories || user.activeStories || [];
-        
+
         // ONLY OPEN IF THERE ARE NEW STORIES (Active Story)
         if (user.hasStory && userStories.length > 0) {
             setIsStoryOpen(true);
@@ -73,11 +77,17 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
             if (type === "followers") {
                 setListTitle("Followers");
                 const response = await profileService.getUserFollowers(user.id);
-                setListUsers(response.content || (Array.isArray(response) ? response : []));
+                setListUsers(
+                    response.content ||
+                        (Array.isArray(response) ? response : []),
+                );
             } else {
                 setListTitle("Following");
                 const response = await profileService.getUserFollowing(user.id);
-                setListUsers(response.content || (Array.isArray(response) ? response : []));
+                setListUsers(
+                    response.content ||
+                        (Array.isArray(response) ? response : []),
+                );
             }
             setIsListOpen(true);
         } catch (error) {
@@ -92,19 +102,20 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
 
     // STORY DATA ONLY CONTAINS NEW STORIES, NO HIGHLIGHTS
     const userStories = user.stories || user.activeStories || [];
-    const hasUnseenStory = userStories.some(s => !s.seen);
+    const hasUnseenStory = userStories.some((s) => !s.seen);
     const hasStory = user.hasStory && userStories.length > 0;
 
-    const activeStoryData = hasStory && !isBlocked
-        ? [
-              {
-                  id: "active-story",
-                  title: "Story",
-                  user: user,
-                  stories: userStories,
-              },
-          ]
-        : [];
+    const activeStoryData =
+        hasStory && !isBlocked
+            ? [
+                  {
+                      id: "active-story",
+                      title: "Story",
+                      user: user,
+                      stories: userStories,
+                  },
+              ]
+            : [];
 
     return (
         <>
@@ -129,7 +140,11 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                                     : "transparent"
                                 : "transparent"
                         }
-                        border={hasStory && !isBlocked && !hasUnseenStory ? "1.5px solid" : "none"}
+                        border={
+                            hasStory && !isBlocked && !hasUnseenStory
+                                ? "1.5px solid"
+                                : "none"
+                        }
                         borderColor="gray.300"
                     >
                         <UserAvatar
@@ -167,22 +182,60 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                 <VStack align="start" gap={4} flex={1} width="100%">
                     <HStack gap={4} wrap="wrap" width="100%">
                         <HStack gap={2}>
-                            <Text fontSize="20px" fontWeight="400" color="black">
+                            <Text
+                                fontSize="20px"
+                                fontWeight="400"
+                                color="black"
+                            >
                                 {user.username}
                             </Text>
                             {authUser?.favoriteUserIds?.includes(user.id) && (
-                                <Box display="flex" alignItems="center" justifyContent="center">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                >
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
                                         <defs>
-                                            <linearGradient id={`profile-star-gradient-${user.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stopColor="#f09433" />
-                                                <stop offset="25%" stopColor="#e6683c" />
-                                                <stop offset="50%" stopColor="#dc2743" />
-                                                <stop offset="75%" stopColor="#cc2366" />
-                                                <stop offset="100%" stopColor="#bc1888" />
+                                            <linearGradient
+                                                id={`profile-star-gradient-${user.id}`}
+                                                x1="0%"
+                                                y1="0%"
+                                                x2="100%"
+                                                y2="100%"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stopColor="#f09433"
+                                                />
+                                                <stop
+                                                    offset="25%"
+                                                    stopColor="#e6683c"
+                                                />
+                                                <stop
+                                                    offset="50%"
+                                                    stopColor="#dc2743"
+                                                />
+                                                <stop
+                                                    offset="75%"
+                                                    stopColor="#cc2366"
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stopColor="#bc1888"
+                                                />
                                             </linearGradient>
                                         </defs>
-                                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={`url(#profile-star-gradient-${user.id})`} />
+                                        <path
+                                            d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                            fill={`url(#profile-star-gradient-${user.id})`}
+                                        />
                                     </svg>
                                 </Box>
                             )}
@@ -247,15 +300,32 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                             <HStack gap={2}>
                                 <Button
                                     size="sm"
-                                    bg={user.isFollowing || user.isPending ? "#efefef" : "#0095f6"}
-                                    color={user.isFollowing || user.isPending ? "black" : "white"}
+                                    bg={
+                                        user.isFollowing || user.isPending
+                                            ? "#efefef"
+                                            : "#0095f6"
+                                    }
+                                    color={
+                                        user.isFollowing || user.isPending
+                                            ? "black"
+                                            : "white"
+                                    }
                                     fontWeight="600"
                                     px={6}
                                     borderRadius="8px"
-                                    _hover={{ bg: user.isFollowing || user.isPending ? "#dbdbdb" : "#1877f2" }}
+                                    _hover={{
+                                        bg:
+                                            user.isFollowing || user.isPending
+                                                ? "#dbdbdb"
+                                                : "#1877f2",
+                                    }}
                                     onClick={handleFollowToggle}
                                 >
-                                    {user.isFollowing ? "Following" : (user.isPending ? "Requested" : "Follow")}
+                                    {user.isFollowing
+                                        ? "Following"
+                                        : user.isPending
+                                          ? "Requested"
+                                          : "Follow"}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -283,7 +353,7 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                     <HStack gap={10}>
                         <Text fontSize="16px" color="black">
                             <Text as="span" fontWeight="600">
-                                {isBlocked ? 0 : (user.postsCount || 0)}
+                                {isBlocked ? 0 : user.postsCount || 0}
                             </Text>{" "}
                             posts
                         </Text>
@@ -291,10 +361,15 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                             fontSize="16px"
                             color="black"
                             cursor={isBlocked ? "default" : "pointer"}
-                            onClick={() => !isBlocked && handleOpenList("followers")}
+                            onClick={() =>
+                                !isBlocked && handleOpenList("followers")
+                            }
                         >
                             <Text as="span" fontWeight="600">
-                                {isBlocked ? 0 : (user.followersCount?.toLocaleString() || 0)}
+                                {isBlocked
+                                    ? 0
+                                    : user.followersCount?.toLocaleString() ||
+                                      0}
                             </Text>{" "}
                             followers
                         </Text>
@@ -302,10 +377,15 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                             fontSize="16px"
                             color="black"
                             cursor={isBlocked ? "default" : "pointer"}
-                            onClick={() => !isBlocked && handleOpenList("following")}
+                            onClick={() =>
+                                !isBlocked && handleOpenList("following")
+                            }
                         >
                             <Text as="span" fontWeight="600">
-                                {isBlocked ? 0 : (user.followingCount?.toLocaleString() || 0)}
+                                {isBlocked
+                                    ? 0
+                                    : user.followingCount?.toLocaleString() ||
+                                      0}
                             </Text>{" "}
                             following
                         </Text>
@@ -333,7 +413,9 @@ const ProfileHeader = ({ user, isOwnProfile }) => {
                                         fontSize="14px"
                                         isExternal
                                     >
-                                        {user.website.replace("https://", "").replace("http://", "")}
+                                        {user.website
+                                            .replace("https://", "")
+                                            .replace("http://", "")}
                                     </ChakraLink>
                                 )}
                             </>

@@ -30,12 +30,14 @@ const RightSidebar = () => {
             setLoading(true);
             try {
                 const response = await profileService.getSuggestions();
-                const data = Array.isArray(response) ? response : (response.content || []);
+                const data = Array.isArray(response)
+                    ? response
+                    : response.content || [];
                 setSuggestions(data);
-                
+
                 // Initialize following status map
                 const initialMap = {};
-                data.forEach(user => {
+                data.forEach((user) => {
                     initialMap[user.id] = user.isFollowing || false;
                 });
                 setFollowingMap(initialMap);
@@ -59,9 +61,9 @@ const RightSidebar = () => {
         e.stopPropagation();
         try {
             await profileService.toggleFollow(userId);
-            setFollowingMap(prev => ({
+            setFollowingMap((prev) => ({
                 ...prev,
-                [userId]: !prev[userId]
+                [userId]: !prev[userId],
             }));
         } catch (error) {
             console.error("Failed to follow/unfollow user", error);
@@ -89,13 +91,7 @@ const RightSidebar = () => {
     if (!authUser) return null;
 
     return (
-        <Box
-            width="320px"
-            display="block"
-            pt={6}
-            px={4}
-            bg="white"
-        >
+        <Box width="320px" display="block" pt={6} px={4} bg="white">
             {/* Current User Section */}
             <HStack justify="space-between" mb={6} align="center">
                 <HStack
@@ -122,7 +118,11 @@ const RightSidebar = () => {
                     height="auto"
                     border="none"
                     outline="none"
-                    _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                    _focus={{
+                        boxShadow: "none",
+                        border: "none",
+                        outline: "none",
+                    }}
                     _active={{ bg: "transparent" }}
                     _hover={{ bg: "transparent", color: "blue.800" }}
                 >
@@ -144,7 +144,11 @@ const RightSidebar = () => {
                     height="auto"
                     border="none"
                     outline="none"
-                    _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                    _focus={{
+                        boxShadow: "none",
+                        border: "none",
+                        outline: "none",
+                    }}
                     _active={{ bg: "transparent" }}
                     _hover={{ bg: "transparent", color: "gray.500" }}
                 >
@@ -189,26 +193,34 @@ const RightSidebar = () => {
                                         {user.mutualCount > 0
                                             ? `Followed by ${user.mutualCount} mutual`
                                             : user.verified
-                                            ? "Verified Account"
-                                            : "Suggested for you"}
+                                              ? "Verified Account"
+                                              : "Suggested for you"}
                                     </Text>
                                 </VStack>
                             </HStack>
                             <Button
                                 variant="ghost"
-                                color={followingMap[user.id] ? "black" : "#0095f6"}
+                                color={
+                                    followingMap[user.id] ? "black" : "#0095f6"
+                                }
                                 fontSize="12px"
                                 fontWeight="600"
                                 p={0}
                                 height="auto"
                                 border="none"
                                 outline="none"
-                                _focus={{ boxShadow: "none", border: "none", outline: "none" }}
+                                _focus={{
+                                    boxShadow: "none",
+                                    border: "none",
+                                    outline: "none",
+                                }}
                                 _active={{ bg: "transparent" }}
                                 onClick={(e) => handleFollow(e, user.id)}
                                 _hover={{
                                     bg: "transparent",
-                                    color: followingMap[user.id] ? "gray.500" : "blue.800",
+                                    color: followingMap[user.id]
+                                        ? "gray.500"
+                                        : "blue.800",
                                 }}
                             >
                                 {followingMap[user.id] ? "Following" : "Follow"}

@@ -37,7 +37,9 @@ const SearchPanel = ({ isOpen }) => {
             try {
                 const results = await profileService.searchUsers(searchTerm);
                 // Extract users list from SearchResultResponse or fallback to array
-                setSearchResults(results.users || (Array.isArray(results) ? results : []));
+                setSearchResults(
+                    results.users || (Array.isArray(results) ? results : []),
+                );
             } catch (error) {
                 console.error("Search failed:", error);
             } finally {
@@ -63,7 +65,7 @@ const SearchPanel = ({ isOpen }) => {
         e.stopPropagation();
         try {
             await profileService.deleteSearchHistory(id);
-            setSearchHistory(searchHistory.filter(item => item.id !== id));
+            setSearchHistory(searchHistory.filter((item) => item.id !== id));
         } catch (error) {
             console.error("Failed to delete history:", error);
         }
@@ -100,7 +102,12 @@ const SearchPanel = ({ isOpen }) => {
             overflow="hidden"
         >
             <Box pt={6} px={6} mb={8}>
-                <Text fontSize="24px" fontWeight="bold" tracking="tight" color="black">
+                <Text
+                    fontSize="24px"
+                    fontWeight="bold"
+                    tracking="tight"
+                    color="black"
+                >
                     Search
                 </Text>
             </Box>
@@ -108,7 +115,13 @@ const SearchPanel = ({ isOpen }) => {
             <Box px={4} mb={6}>
                 <Box position="relative" display="flex" alignItems="center">
                     {!searchTerm && (
-                        <Box position="absolute" left="12px" color="gray.400" pointerEvents="none" zIndex={1}>
+                        <Box
+                            position="absolute"
+                            left="12px"
+                            color="gray.400"
+                            pointerEvents="none"
+                            zIndex={1}
+                        >
                             <AiOutlineSearch size={18} />
                         </Box>
                     )}
@@ -172,10 +185,28 @@ const SearchPanel = ({ isOpen }) => {
                         <VStack px={6} mt={2} gap={4} align="stretch">
                             {[1, 2, 3, 4, 5].map((i) => (
                                 <Flex key={i} align="center" gap={3}>
-                                    <Box w="44px" h="44px" borderRadius="full" bg="gray.100" className="animate-pulse" />
+                                    <Box
+                                        w="44px"
+                                        h="44px"
+                                        borderRadius="full"
+                                        bg="gray.100"
+                                        className="animate-pulse"
+                                    />
                                     <VStack align="start" gap={1} flex={1}>
-                                        <Box h="12px" w="100px" bg="gray.100" borderRadius="4px" className="animate-pulse" />
-                                        <Box h="10px" w="150px" bg="gray.50" borderRadius="4px" className="animate-pulse" />
+                                        <Box
+                                            h="12px"
+                                            w="100px"
+                                            bg="gray.100"
+                                            borderRadius="4px"
+                                            className="animate-pulse"
+                                        />
+                                        <Box
+                                            h="10px"
+                                            w="150px"
+                                            bg="gray.50"
+                                            borderRadius="4px"
+                                            className="animate-pulse"
+                                        />
                                     </VStack>
                                 </Flex>
                             ))}
@@ -193,15 +224,37 @@ const SearchPanel = ({ isOpen }) => {
                                     _hover={{ bg: "blackAlpha.50" }}
                                     onClick={() => handleNavigate(user)}
                                 >
-                                    <UserAvatar src={user.avatarUrl} size="44px" />
+                                    <UserAvatar
+                                        src={user.avatarUrl}
+                                        size="44px"
+                                    />
                                     <VStack align="start" gap={0} minW={0}>
-                                        <Text fontWeight="bold" fontSize="14px" color="black" truncate>{user.username}</Text>
-                                        <Text color="gray.500" fontSize="14px" truncate>{user.fullName}</Text>
+                                        <Text
+                                            fontWeight="bold"
+                                            fontSize="14px"
+                                            color="black"
+                                            truncate
+                                        >
+                                            {user.username}
+                                        </Text>
+                                        <Text
+                                            color="gray.500"
+                                            fontSize="14px"
+                                            truncate
+                                        >
+                                            {user.fullName}
+                                        </Text>
                                     </VStack>
                                 </Flex>
                             ))
                         ) : (
-                            <Text color="gray.400" fontSize="14px" textAlign="center" mt={12} px={6}>
+                            <Text
+                                color="gray.400"
+                                fontSize="14px"
+                                textAlign="center"
+                                mt={12}
+                                px={6}
+                            >
                                 No results found.
                             </Text>
                         )
@@ -215,28 +268,61 @@ const SearchPanel = ({ isOpen }) => {
                                 py={2}
                                 cursor="pointer"
                                 _hover={{ bg: "blackAlpha.50" }}
-                                onClick={() => handleNavigate(item.searchedUser)}
+                                onClick={() =>
+                                    handleNavigate(item.searchedUser)
+                                }
                             >
                                 <Flex align="center" gap={3}>
-                                    <UserAvatar src={item.searchedUser?.avatarUrl} size="44px" />
+                                    <UserAvatar
+                                        src={item.searchedUser?.avatarUrl}
+                                        size="44px"
+                                    />
                                     <VStack align="start" gap={0} minW={0}>
-                                        <Text fontWeight="bold" fontSize="14px" color="black" truncate>{item.searchedUser?.username}</Text>
-                                        <Text color="gray.500" fontSize="14px" truncate>{item.searchedUser?.fullName}</Text>
+                                        <Text
+                                            fontWeight="bold"
+                                            fontSize="14px"
+                                            color="black"
+                                            truncate
+                                        >
+                                            {item.searchedUser?.username}
+                                        </Text>
+                                        <Text
+                                            color="gray.500"
+                                            fontSize="14px"
+                                            truncate
+                                        >
+                                            {item.searchedUser?.fullName}
+                                        </Text>
                                     </VStack>
                                 </Flex>
                                 <Box
                                     p={2}
                                     color="gray.400"
                                     _hover={{ color: "black" }}
-                                    onClick={(e) => handleDeleteHistory(e, item.id)}
+                                    onClick={(e) =>
+                                        handleDeleteHistory(e, item.id)
+                                    }
                                 >
                                     <AiOutlineClose size={18} />
                                 </Box>
                             </Flex>
                         ))
                     ) : (
-                        <Flex direction="column" align="center" justify="center" h="200px" px={10} textAlign="center">
-                            <Text color="black" fontSize="14px" fontWeight="bold">No recent searches.</Text>
+                        <Flex
+                            direction="column"
+                            align="center"
+                            justify="center"
+                            h="200px"
+                            px={10}
+                            textAlign="center"
+                        >
+                            <Text
+                                color="black"
+                                fontSize="14px"
+                                fontWeight="bold"
+                            >
+                                No recent searches.
+                            </Text>
                         </Flex>
                     )}
                 </VStack>

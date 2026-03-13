@@ -10,19 +10,23 @@ export const fetchExplorePosts = createAsyncThunk(
         } catch (error) {
             return rejectWithValue(error.apiResponse || error.message);
         }
-    }
+    },
 );
 
 export const fetchHashtagPosts = createAsyncThunk(
     "explore/fetchHashtagPosts",
     async ({ name, cursor, size }, { rejectWithValue }) => {
         try {
-            const response = await postService.getHashtagPosts(name, cursor, size);
+            const response = await postService.getHashtagPosts(
+                name,
+                cursor,
+                size,
+            );
             return response;
         } catch (error) {
             return rejectWithValue(error.apiResponse || error.message);
         }
-    }
+    },
 );
 
 const initialState = {
@@ -40,7 +44,7 @@ const exploreSlice = createSlice({
     reducers: {
         updatePostInExplore: (state, action) => {
             const { id, changes } = action.payload;
-            const index = state.posts.findIndex(p => p.id === id);
+            const index = state.posts.findIndex((p) => p.id === id);
             if (index !== -1) {
                 state.posts[index] = { ...state.posts[index], ...changes };
             }
@@ -51,7 +55,7 @@ const exploreSlice = createSlice({
             state.nextCursor = null;
             state.hasMore = true;
             state.loading = false;
-        }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -59,15 +63,18 @@ const exploreSlice = createSlice({
                 state.loading = state.page === 0;
             })
             .addCase(fetchExplorePosts.fulfilled, (state, action) => {
-                const newPosts = action.payload.content || action.payload.posts || (Array.isArray(action.payload) ? action.payload : []);
+                const newPosts =
+                    action.payload.content ||
+                    action.payload.posts ||
+                    (Array.isArray(action.payload) ? action.payload : []);
                 const isLast = action.payload.last === true;
-                
+
                 if (state.page === 0) {
                     state.posts = newPosts;
                 } else {
                     state.posts = [...state.posts, ...newPosts];
                 }
-                
+
                 state.hasMore = !isLast && newPosts.length > 0;
                 state.page += 1;
                 state.loading = false;
@@ -85,13 +92,13 @@ const exploreSlice = createSlice({
                 const newPosts = action.payload.content || [];
                 const nextCursor = action.payload.nextCursor;
                 const hasMore = action.payload.hasMore;
-                
+
                 if (!state.nextCursor) {
                     state.posts = newPosts;
                 } else {
                     state.posts = [...state.posts, ...newPosts];
                 }
-                
+
                 state.hasMore = hasMore;
                 state.nextCursor = nextCursor;
                 state.loading = false;

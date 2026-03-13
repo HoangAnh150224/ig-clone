@@ -85,14 +85,17 @@ const Auth = () => {
                 setAlertConfig({
                     isOpen: true,
                     title: "Success",
-                    message: "If an account exists for this email, we've sent an OTP to reset your password.",
+                    message:
+                        "If an account exists for this email, we've sent an OTP to reset your password.",
                 });
                 setView("reset-password");
             } catch (error) {
                 setAlertConfig({
                     isOpen: true,
                     title: "Error",
-                    message: error.apiResponse?.message || "Failed to send reset request.",
+                    message:
+                        error.apiResponse?.message ||
+                        "Failed to send reset request.",
                 });
             } finally {
                 setIsSubmitting(false);
@@ -103,19 +106,22 @@ const Auth = () => {
                 await authService.resetPassword({
                     email: formData.email,
                     otp: formData.otp,
-                    newPassword: formData.newPassword
+                    newPassword: formData.newPassword,
                 });
                 setAlertConfig({
                     isOpen: true,
                     title: "Success",
-                    message: "Password reset successful. You can now log in with your new password.",
+                    message:
+                        "Password reset successful. You can now log in with your new password.",
                 });
                 setView("login");
             } catch (error) {
                 setAlertConfig({
                     isOpen: true,
                     title: "Error",
-                    message: error.apiResponse?.message || "Failed to reset password.",
+                    message:
+                        error.apiResponse?.message ||
+                        "Failed to reset password.",
                 });
             } finally {
                 setIsSubmitting(false);
@@ -193,28 +199,48 @@ const Auth = () => {
 
                     {view === "forgot-password" && (
                         <VStack mb={4} gap={2}>
-                            <Box border="2px solid black" borderRadius="full" p={4}>
-                                < LuLock size={40} />
+                            <Box
+                                border="2px solid black"
+                                borderRadius="full"
+                                p={4}
+                            >
+                                <LuLock size={40} />
                             </Box>
-                            <Text fontWeight="bold" textAlign="center">Trouble Logging In?</Text>
-                            <Text fontSize="xs" color="gray.500" textAlign="center">
-                                Enter your email and we'll send you an OTP to get back into your account.
+                            <Text fontWeight="bold" textAlign="center">
+                                Trouble Logging In?
+                            </Text>
+                            <Text
+                                fontSize="xs"
+                                color="gray.500"
+                                textAlign="center"
+                            >
+                                Enter your email and we'll send you an OTP to
+                                get back into your account.
                             </Text>
                         </VStack>
                     )}
 
                     {view === "reset-password" && (
                         <VStack mb={4} gap={2}>
-                            <Text fontWeight="bold" textAlign="center">Reset Password</Text>
-                            <Text fontSize="xs" color="gray.500" textAlign="center">
-                                Enter the 6-digit OTP sent to your email and your new password.
+                            <Text fontWeight="bold" textAlign="center">
+                                Reset Password
+                            </Text>
+                            <Text
+                                fontSize="xs"
+                                color="gray.500"
+                                textAlign="center"
+                            >
+                                Enter the 6-digit OTP sent to your email and
+                                your new password.
                             </Text>
                         </VStack>
                     )}
 
                     <form onSubmit={handleSubmit}>
                         <VStack gap={2} align="stretch">
-                            {(view === "signup" || view === "forgot-password" || view === "reset-password") && (
+                            {(view === "signup" ||
+                                view === "forgot-password" ||
+                                view === "reset-password") && (
                                 <Box>
                                     <Input
                                         placeholder="Email"
@@ -247,7 +273,7 @@ const Auth = () => {
                                     )}
                                 </Box>
                             )}
-                            
+
                             {view === "reset-password" && (
                                 <Box>
                                     <Input
@@ -286,7 +312,7 @@ const Auth = () => {
                                     />
                                 </Box>
                             )}
-                            
+
                             {(view === "login" || view === "signup") && (
                                 <Box>
                                     <Input
@@ -318,7 +344,7 @@ const Auth = () => {
                                     )}
                                 </Box>
                             )}
-                            
+
                             {(view === "login" || view === "signup") && (
                                 <Box>
                                     <Input
@@ -371,10 +397,13 @@ const Auth = () => {
                                 isLoading={loading || isSubmitting}
                                 mt={2}
                             >
-                                {view === "login" ? "Log In" : 
-                                 view === "signup" ? "Sign Up" : 
-                                 view === "forgot-password" ? "Send Login Link" : 
-                                 "Reset Password"}
+                                {view === "login"
+                                    ? "Log In"
+                                    : view === "signup"
+                                      ? "Sign Up"
+                                      : view === "forgot-password"
+                                        ? "Send Login Link"
+                                        : "Reset Password"}
                             </Button>
                         </VStack>
                     </form>
@@ -383,7 +412,11 @@ const Auth = () => {
                         <>
                             <HStack width="full" my={4}>
                                 <Divider />
-                                <Text fontSize="xs" fontWeight="bold" color="gray.500">
+                                <Text
+                                    fontSize="xs"
+                                    fontWeight="bold"
+                                    color="gray.500"
+                                >
                                     OR
                                 </Text>
                                 <Divider />
@@ -412,7 +445,8 @@ const Auth = () => {
                         </>
                     )}
 
-                    {(view === "forgot-password" || view === "reset-password") && (
+                    {(view === "forgot-password" ||
+                        view === "reset-password") && (
                         <Text
                             fontSize="sm"
                             fontWeight="bold"
@@ -457,7 +491,9 @@ const Auth = () => {
                             color="#0095f6"
                             fontWeight="bold"
                             cursor="pointer"
-                            onClick={() => setView(view === "login" ? "signup" : "login")}
+                            onClick={() =>
+                                setView(view === "login" ? "signup" : "login")
+                            }
                         >
                             {view === "login" ? "Sign up" : "Log in"}
                         </Text>
@@ -494,4 +530,3 @@ const Auth = () => {
 };
 
 export default Auth;
-

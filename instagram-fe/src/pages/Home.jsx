@@ -12,9 +12,12 @@ const Home = () => {
     const { status, hasMore, nextCursor } = useSelector((state) => state.posts);
     const { user: authUser } = useSelector((state) => state.auth);
 
-    const loadPosts = useCallback((cursor = null) => {
-        dispatch(fetchPosts({ cursor, size: 20 }));
-    }, [dispatch]);
+    const loadPosts = useCallback(
+        (cursor = null) => {
+            dispatch(fetchPosts({ cursor, size: 20 }));
+        },
+        [dispatch],
+    );
 
     useEffect(() => {
         if (authUser && status === "idle") {
@@ -55,12 +58,14 @@ const Home = () => {
                         [1, 2, 3].map((i) => <PostCardSkeleton key={i} />)
                     ) : (
                         <>
-                            {Array.from(new Map(posts.map(p => [p.id, p])).values()).map((post) => (
+                            {Array.from(
+                                new Map(posts.map((p) => [p.id, p])).values(),
+                            ).map((post) => (
                                 <div key={post.id} className="w-full">
                                     <PostCard post={post} />
                                 </div>
                             ))}
-                            
+
                             {status === "loading" && (
                                 <div className="py-4 w-full flex justify-center">
                                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-500"></div>
@@ -72,10 +77,11 @@ const Home = () => {
                                     You've seen all new posts.
                                 </div>
                             )}
-                            
+
                             {posts.length === 0 && status === "succeeded" && (
                                 <div className="py-20 text-gray-500 text-center w-full">
-                                    No posts available. Follow some people to see their posts!
+                                    No posts available. Follow some people to
+                                    see their posts!
                                 </div>
                             )}
                         </>

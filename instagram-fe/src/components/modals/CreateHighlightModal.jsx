@@ -13,7 +13,12 @@ import {
     Spinner,
     Portal,
 } from "@chakra-ui/react";
-import { IoClose, IoChevronBack, IoCheckmarkCircle, IoCheckmarkCircleOutline } from "react-icons/io5";
+import {
+    IoClose,
+    IoChevronBack,
+    IoCheckmarkCircle,
+    IoCheckmarkCircleOutline,
+} from "react-icons/io5";
 import storyService from "../../services/storyService";
 import profileService from "../../services/profileService";
 
@@ -39,7 +44,8 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
         try {
             const response = await storyService.getArchivedStories();
             // Handle different API response structures
-            const stories = response?.content || (Array.isArray(response) ? response : []);
+            const stories =
+                response?.content || (Array.isArray(response) ? response : []);
             setArchivedStories(stories);
         } catch (error) {
             console.error("Failed to fetch archived stories", error);
@@ -49,8 +55,10 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
     };
 
     const toggleStorySelection = (id) => {
-        setSelectedStoryIds(prev => 
-            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+        setSelectedStoryIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((sid) => sid !== id)
+                : [...prev, id],
         );
     };
 
@@ -58,15 +66,18 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
         if (!title.trim() || selectedStoryIds.length === 0) return;
         setSaving(true);
         try {
-            const firstSelectedStory = archivedStories.find(s => s.id === selectedStoryIds[0]);
-            const coverUrl = firstSelectedStory?.mediaUrl || firstSelectedStory?.url;
-            
+            const firstSelectedStory = archivedStories.find(
+                (s) => s.id === selectedStoryIds[0],
+            );
+            const coverUrl =
+                firstSelectedStory?.mediaUrl || firstSelectedStory?.url;
+
             const data = {
                 title: title,
                 coverUrl: coverUrl,
-                storyIds: selectedStoryIds
+                storyIds: selectedStoryIds,
             };
-            
+
             // First argument is null because we are using an existing story URL as cover, not a new file
             await profileService.createHighlight(null, data);
             if (onCreated) onCreated();
@@ -132,7 +143,12 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                                 <IconButton
                                     variant="ghost"
                                     onClick={() => setStep(1)}
-                                    icon={<IoChevronBack size={28} color="black" />}
+                                    icon={
+                                        <IoChevronBack
+                                            size={28}
+                                            color="black"
+                                        />
+                                    }
                                     aria-label="Back"
                                     _hover={{ bg: "transparent" }}
                                     p={0}
@@ -140,8 +156,14 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                                 />
                             )}
                         </Box>
-                        
-                        <Text fontWeight="700" color="black" fontSize="16px" flex={2} textAlign="center">
+
+                        <Text
+                            fontWeight="700"
+                            color="black"
+                            fontSize="16px"
+                            flex={2}
+                            textAlign="center"
+                        >
                             {step === 1 ? "Stories" : "New Highlight"}
                         </Text>
 
@@ -149,7 +171,11 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                             {step === 1 ? (
                                 <Button
                                     variant="ghost"
-                                    color={selectedStoryIds.length > 0 ? "#0095f6" : "gray.300"}
+                                    color={
+                                        selectedStoryIds.length > 0
+                                            ? "#0095f6"
+                                            : "gray.300"
+                                    }
                                     fontWeight="700"
                                     isDisabled={selectedStoryIds.length === 0}
                                     onClick={() => setStep(2)}
@@ -161,7 +187,11 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                             ) : (
                                 <Button
                                     variant="ghost"
-                                    color={title.trim() && !saving ? "#0095f6" : "gray.300"}
+                                    color={
+                                        title.trim() && !saving
+                                            ? "#0095f6"
+                                            : "gray.300"
+                                    }
                                     fontWeight="700"
                                     isDisabled={!title.trim() || saving}
                                     onClick={handleCreate}
@@ -180,27 +210,49 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                         {step === 1 ? (
                             loading ? (
                                 <Center h="100%">
-                                    <Spinner color="gray.300" size="lg" thickness="2px" />
+                                    <Spinner
+                                        color="gray.300"
+                                        size="lg"
+                                        thickness="2px"
+                                    />
                                 </Center>
                             ) : archivedStories.length === 0 ? (
-                                <Center h="100%" flexDirection="column" gap={4} px={8} textAlign="center">
-                                    <Text fontWeight="700" fontSize="18px">No stories found</Text>
+                                <Center
+                                    h="100%"
+                                    flexDirection="column"
+                                    gap={4}
+                                    px={8}
+                                    textAlign="center"
+                                >
+                                    <Text fontWeight="700" fontSize="18px">
+                                        No stories found
+                                    </Text>
                                     <Text color="gray.500" fontSize="14px">
-                                        You need to have archived stories to create a highlight.
+                                        You need to have archived stories to
+                                        create a highlight.
                                     </Text>
                                 </Center>
                             ) : (
-                                <Grid templateColumns="repeat(3, 1fr)" gap="1px">
+                                <Grid
+                                    templateColumns="repeat(3, 1fr)"
+                                    gap="1px"
+                                >
                                     {archivedStories.map((story) => {
-                                        const isSelected = selectedStoryIds.includes(story.id);
-                                        const mediaUrl = story.mediaUrl || story.url;
+                                        const isSelected =
+                                            selectedStoryIds.includes(story.id);
+                                        const mediaUrl =
+                                            story.mediaUrl || story.url;
                                         return (
                                             <Box
                                                 key={story.id}
                                                 position="relative"
                                                 paddingBottom="177%"
                                                 cursor="pointer"
-                                                onClick={() => toggleStorySelection(story.id)}
+                                                onClick={() =>
+                                                    toggleStorySelection(
+                                                        story.id,
+                                                    )
+                                                }
                                             >
                                                 <Image
                                                     src={mediaUrl}
@@ -210,14 +262,26 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                                                     w="100%"
                                                     h="100%"
                                                     objectFit="cover"
-                                                    opacity={isSelected ? 0.7 : 1}
+                                                    opacity={
+                                                        isSelected ? 0.7 : 1
+                                                    }
                                                     transition="opacity 0.2s"
                                                 />
-                                                <Box position="absolute" bottom={2} right={2}>
+                                                <Box
+                                                    position="absolute"
+                                                    bottom={2}
+                                                    right={2}
+                                                >
                                                     {isSelected ? (
-                                                        <IoCheckmarkCircle size={24} color="#0095f6" />
+                                                        <IoCheckmarkCircle
+                                                            size={24}
+                                                            color="#0095f6"
+                                                        />
                                                     ) : (
-                                                        <IoCheckmarkCircleOutline size={24} color="white" />
+                                                        <IoCheckmarkCircleOutline
+                                                            size={24}
+                                                            color="white"
+                                                        />
                                                     )}
                                                 </Box>
                                             </Box>
@@ -238,11 +302,19 @@ const CreateHighlightModal = ({ isOpen, onClose, onCreated }) => {
                                         bg="gray.50"
                                         position="relative"
                                     >
-                                        <Image 
+                                        <Image
                                             src={
-                                                archivedStories.find(s => s.id === selectedStoryIds[0])?.mediaUrl ||
-                                                archivedStories.find(s => s.id === selectedStoryIds[0])?.url
-                                            } 
+                                                archivedStories.find(
+                                                    (s) =>
+                                                        s.id ===
+                                                        selectedStoryIds[0],
+                                                )?.mediaUrl ||
+                                                archivedStories.find(
+                                                    (s) =>
+                                                        s.id ===
+                                                        selectedStoryIds[0],
+                                                )?.url
+                                            }
                                             objectFit="cover"
                                             w="100%"
                                             h="100%"

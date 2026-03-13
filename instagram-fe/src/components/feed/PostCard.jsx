@@ -1,5 +1,14 @@
 import React, { useState, useRef } from "react";
-import { Box, HStack, VStack, Text, Input, Flex, Icon, Center } from "@chakra-ui/react";
+import {
+    Box,
+    HStack,
+    VStack,
+    Text,
+    Input,
+    Flex,
+    Icon,
+    Center,
+} from "@chakra-ui/react";
 import {
     AiOutlineHeart,
     AiFillHeart,
@@ -72,7 +81,12 @@ const PostCard = ({ post }) => {
     const handleSave = async () => {
         try {
             const response = await postService.savePost(post.id);
-            dispatch(updatePostInStore({ id: post.id, changes: { isSaved: response.saved } }));
+            dispatch(
+                updatePostInStore({
+                    id: post.id,
+                    changes: { isSaved: response.saved },
+                }),
+            );
         } catch (error) {
             console.error("Failed to save post", error);
         }
@@ -85,7 +99,12 @@ const PostCard = ({ post }) => {
             await commentService.addComment(post.id, comment);
             setComment("");
             // Optionally update local comment count
-            dispatch(updatePostInStore({ id: post.id, changes: { commentCount: (post.commentCount || 0) + 1 } }));
+            dispatch(
+                updatePostInStore({
+                    id: post.id,
+                    changes: { commentCount: (post.commentCount || 0) + 1 },
+                }),
+            );
         } catch (error) {
             console.error("Failed to post comment", error);
         } finally {
@@ -170,7 +189,11 @@ const PostCard = ({ post }) => {
                                 {post.author?.username || "user"}
                             </Text>
                             {post.locationName && (
-                                <Text fontSize="12px" color="gray.600" mt="-1px">
+                                <Text
+                                    fontSize="12px"
+                                    color="gray.600"
+                                    mt="-1px"
+                                >
                                     {post.locationName}
                                 </Text>
                             )}
@@ -179,18 +202,52 @@ const PostCard = ({ post }) => {
 
                     <HStack gap={3}>
                         {isFavoriteUser && (
-                            <Box display="flex" alignItems="center" justifyContent="center">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
                                     <defs>
-                                        <linearGradient id={`star-gradient-${post.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stopColor="#f09433" />
-                                            <stop offset="25%" stopColor="#e6683c" />
-                                            <stop offset="50%" stopColor="#dc2743" />
-                                            <stop offset="75%" stopColor="#cc2366" />
-                                            <stop offset="100%" stopColor="#bc1888" />
+                                        <linearGradient
+                                            id={`star-gradient-${post.id}`}
+                                            x1="0%"
+                                            y1="0%"
+                                            x2="100%"
+                                            y2="100%"
+                                        >
+                                            <stop
+                                                offset="0%"
+                                                stopColor="#f09433"
+                                            />
+                                            <stop
+                                                offset="25%"
+                                                stopColor="#e6683c"
+                                            />
+                                            <stop
+                                                offset="50%"
+                                                stopColor="#dc2743"
+                                            />
+                                            <stop
+                                                offset="75%"
+                                                stopColor="#cc2366"
+                                            />
+                                            <stop
+                                                offset="100%"
+                                                stopColor="#bc1888"
+                                            />
                                         </linearGradient>
                                     </defs>
-                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={`url(#star-gradient-${post.id})`} />
+                                    <path
+                                        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                        fill={`url(#star-gradient-${post.id})`}
+                                    />
                                 </svg>
                             </Box>
                         )}
@@ -230,7 +287,10 @@ const PostCard = ({ post }) => {
                             <>
                                 {(() => {
                                     const firstMedia = post.media?.[0];
-                                    const mediaUrl = firstMedia?.url || firstMedia?.mediaUrl || firstMedia?.contentUrl;
+                                    const mediaUrl =
+                                        firstMedia?.url ||
+                                        firstMedia?.mediaUrl ||
+                                        firstMedia?.contentUrl;
                                     return (
                                         <Box
                                             as="video"
@@ -279,7 +339,12 @@ const PostCard = ({ post }) => {
                             </>
                         ) : (
                             <ImageCarousel
-                                images={post.media?.map(m => m.url || m.mediaUrl || m.contentUrl) || []}
+                                images={
+                                    post.media?.map(
+                                        (m) =>
+                                            m.url || m.mediaUrl || m.contentUrl,
+                                    ) || []
+                                }
                                 height="100%"
                             />
                         )}
@@ -414,13 +479,21 @@ const PostCard = ({ post }) => {
                 >
                     {post.commentsDisabled ? (
                         <Center py={1}>
-                            <Text fontSize="13px" color="gray.500" fontWeight="400">
+                            <Text
+                                fontSize="13px"
+                                color="gray.500"
+                                fontWeight="400"
+                            >
                                 Comments are disabled.
                             </Text>
                         </Center>
                     ) : (
                         <HStack gap={3} bg="white">
-                            <FaRegSmile size={20} cursor="pointer" color="black" />
+                            <FaRegSmile
+                                size={20}
+                                cursor="pointer"
+                                color="black"
+                            />
                             <Input
                                 placeholder="Add a comment..."
                                 variant="unstyled"
@@ -436,8 +509,16 @@ const PostCard = ({ post }) => {
                                 color="#0095f6"
                                 fontSize="14px"
                                 fontWeight="600"
-                                opacity={comment.trim() && !isSubmittingComment ? 1 : 0.3}
-                                cursor={comment.trim() && !isSubmittingComment ? "pointer" : "default"}
+                                opacity={
+                                    comment.trim() && !isSubmittingComment
+                                        ? 1
+                                        : 0.3
+                                }
+                                cursor={
+                                    comment.trim() && !isSubmittingComment
+                                        ? "pointer"
+                                        : "default"
+                                }
                                 onClick={handlePostComment}
                             >
                                 Post
@@ -465,9 +546,9 @@ const PostCard = ({ post }) => {
                 post={post}
                 isFavoriteUser={isFavoriteUser}
             />
-            <ShareModal 
-                isOpen={isShareModalOpen} 
-                onClose={() => setIsShareModalOpen(false)} 
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
                 post={post}
             />
         </>

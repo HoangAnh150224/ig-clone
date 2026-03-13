@@ -61,10 +61,10 @@ const ChatList = ({
                         <LuChevronDown />
                     </HStack>
                 )}
-                <PiNotePencilLight 
-                    size={24} 
-                    cursor="pointer" 
-                    onClick={onOpenNewMessage} 
+                <PiNotePencilLight
+                    size={24}
+                    cursor="pointer"
+                    onClick={onOpenNewMessage}
                 />
             </Flex>
 
@@ -101,13 +101,21 @@ const ChatList = ({
                             gap={3}
                             cursor="pointer"
                             bg={
-                                activeChatId === chat.id ? "gray.50" : "transparent"
+                                activeChatId === chat.id
+                                    ? "gray.50"
+                                    : "transparent"
                             }
                             _hover={{ bg: "gray.50" }}
                             onClick={() => onSelectChat(chat.id)}
                             transition="0.2s"
                         >
-                            <UserAvatar src={participant?.avatarUrl || participant?.avatar} size="56px" />
+                            <UserAvatar
+                                src={
+                                    participant?.avatarUrl ||
+                                    participant?.avatar
+                                }
+                                size="56px"
+                            />
                             <Box overflow="hidden">
                                 <Text
                                     fontWeight={chat.unread ? "bold" : "normal"}
@@ -122,7 +130,8 @@ const ChatList = ({
                                     isTruncated
                                     fontWeight={chat.unread ? "600" : "400"}
                                 >
-                                    {chat.lastMessage || "No messages yet"} • {chat.time || ""}
+                                    {chat.lastMessage || "No messages yet"} •{" "}
+                                    {chat.time || ""}
                                 </Text>
                             </Box>
                             {chat.unread && (

@@ -91,7 +91,7 @@ const storyService = {
      */
     getStoryReplies: async (id) => {
         return axiosClient.get(`/stories/${id}/replies`);
-    }
+    },
 };
 
 export default storyService;

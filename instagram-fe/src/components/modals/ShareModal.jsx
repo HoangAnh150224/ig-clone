@@ -42,7 +42,9 @@ const ShareModal = ({ isOpen, onClose, post }) => {
         try {
             // Get followings as initial suggestions
             const response = await profileService.getUserFollowing(authUser.id);
-            setSearchResults(response.content || (Array.isArray(response) ? response : []));
+            setSearchResults(
+                response.content || (Array.isArray(response) ? response : []),
+            );
         } catch (error) {
             console.error("Failed to fetch suggestions", error);
         } finally {
@@ -56,7 +58,10 @@ const ShareModal = ({ isOpen, onClose, post }) => {
             setLoading(true);
             try {
                 const response = await profileService.searchUsers(val);
-                setSearchResults(response.content || (Array.isArray(response) ? response : []));
+                setSearchResults(
+                    response.content ||
+                        (Array.isArray(response) ? response : []),
+                );
             } catch {
                 setSearchResults([]);
             } finally {
@@ -68,8 +73,8 @@ const ShareModal = ({ isOpen, onClose, post }) => {
     };
 
     const toggleSelectUser = (user) => {
-        if (selectedUsers.some(u => u.id === user.id)) {
-            setSelectedUsers(selectedUsers.filter(u => u.id !== user.id));
+        if (selectedUsers.some((u) => u.id === user.id)) {
+            setSelectedUsers(selectedUsers.filter((u) => u.id !== user.id));
         } else {
             setSelectedUsers([...selectedUsers, user]);
         }
@@ -80,14 +85,16 @@ const ShareModal = ({ isOpen, onClose, post }) => {
         setIsSending(true);
         try {
             // Send sharedPostId instead of link text
-            await Promise.all(selectedUsers.map(user => 
-                messageService.sendMessage({
-                    recipientId: user.id,
-                    sharedPostId: post.id,
-                    content: searchQuery.trim() || null // If user typed something in search, use it as caption
-                })
-            ));
-            
+            await Promise.all(
+                selectedUsers.map((user) =>
+                    messageService.sendMessage({
+                        recipientId: user.id,
+                        sharedPostId: post.id,
+                        content: searchQuery.trim() || null, // If user typed something in search, use it as caption
+                    }),
+                ),
+            );
+
             onClose();
         } catch (error) {
             console.error("Failed to share post", error);
@@ -125,7 +132,9 @@ const ShareModal = ({ isOpen, onClose, post }) => {
                         borderColor="gray.100"
                     >
                         <Box width="32px" />
-                        <Text fontWeight="bold" fontSize="16px">Share</Text>
+                        <Text fontWeight="bold" fontSize="16px">
+                            Share
+                        </Text>
                         <Box cursor="pointer" onClick={onClose} p={1}>
                             <AiOutlineClose size={20} />
                         </Box>
@@ -134,7 +143,9 @@ const ShareModal = ({ isOpen, onClose, post }) => {
                     {/* Search Section */}
                     <Box p={4} borderBottom="1px solid" borderColor="gray.100">
                         <HStack gap={3}>
-                            <Text fontWeight="600" fontSize="14px">To:</Text>
+                            <Text fontWeight="600" fontSize="14px">
+                                To:
+                            </Text>
                             <Input
                                 placeholder="Search..."
                                 variant="unstyled"
@@ -146,20 +157,25 @@ const ShareModal = ({ isOpen, onClose, post }) => {
                         </HStack>
                         {selectedUsers.length > 0 && (
                             <HStack wrap="wrap" gap={2} mt={3}>
-                                {selectedUsers.map(u => (
-                                    <Flex 
-                                        key={u.id} 
-                                        bg="#e0f1ff" 
-                                        color="#0095f6" 
-                                        px={3} 
-                                        py={1} 
-                                        borderRadius="full" 
-                                        fontSize="12px" 
-                                        align="center" 
+                                {selectedUsers.map((u) => (
+                                    <Flex
+                                        key={u.id}
+                                        bg="#e0f1ff"
+                                        color="#0095f6"
+                                        px={3}
+                                        py={1}
+                                        borderRadius="full"
+                                        fontSize="12px"
+                                        align="center"
                                         gap={2}
                                     >
-                                        <Text fontWeight="600">{u.username}</Text>
-                                        <AiOutlineClose cursor="pointer" onClick={() => toggleSelectUser(u)} />
+                                        <Text fontWeight="600">
+                                            {u.username}
+                                        </Text>
+                                        <AiOutlineClose
+                                            cursor="pointer"
+                                            onClick={() => toggleSelectUser(u)}
+                                        />
                                     </Flex>
                                 ))}
                             </HStack>
@@ -186,24 +202,55 @@ const ShareModal = ({ isOpen, onClose, post }) => {
                                         onClick={() => toggleSelectUser(user)}
                                     >
                                         <HStack gap={3}>
-                                            <UserAvatar src={user.avatarUrl} size="44px" />
+                                            <UserAvatar
+                                                src={user.avatarUrl}
+                                                size="44px"
+                                            />
                                             <VStack align="start" gap={0}>
-                                                <Text fontSize="14px" fontWeight="bold">{user.username}</Text>
-                                                <Text fontSize="14px" color="gray.500">{user.fullName}</Text>
+                                                <Text
+                                                    fontSize="14px"
+                                                    fontWeight="bold"
+                                                >
+                                                    {user.username}
+                                                </Text>
+                                                <Text
+                                                    fontSize="14px"
+                                                    color="gray.500"
+                                                >
+                                                    {user.fullName}
+                                                </Text>
                                             </VStack>
                                         </HStack>
-                                        <Box 
-                                            boxSize="24px" 
-                                            borderRadius="full" 
-                                            border="1px solid" 
-                                            borderColor={selectedUsers.some(u => u.id === user.id) ? "transparent" : "gray.300"}
-                                            bg={selectedUsers.some(u => u.id === user.id) ? "#0095f6" : "transparent"}
+                                        <Box
+                                            boxSize="24px"
+                                            borderRadius="full"
+                                            border="1px solid"
+                                            borderColor={
+                                                selectedUsers.some(
+                                                    (u) => u.id === user.id,
+                                                )
+                                                    ? "transparent"
+                                                    : "gray.300"
+                                            }
+                                            bg={
+                                                selectedUsers.some(
+                                                    (u) => u.id === user.id,
+                                                )
+                                                    ? "#0095f6"
+                                                    : "transparent"
+                                            }
                                             display="flex"
                                             alignItems="center"
                                             justifyContent="center"
                                         >
-                                            {selectedUsers.some(u => u.id === user.id) && (
-                                                <Box boxSize="8px" bg="white" borderRadius="full" />
+                                            {selectedUsers.some(
+                                                (u) => u.id === user.id,
+                                            ) && (
+                                                <Box
+                                                    boxSize="8px"
+                                                    bg="white"
+                                                    borderRadius="full"
+                                                />
                                             )}
                                         </Box>
                                     </Flex>

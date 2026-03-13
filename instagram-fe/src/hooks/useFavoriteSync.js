@@ -9,16 +9,23 @@ const useFavoriteSync = () => {
 
     useEffect(() => {
         if (isAuthenticated && user?.id && !user.favoriteUserIds) {
-            userService.getFavoriteUsers().then(res => {
-                const data = res?.data || res;
-                const list = Array.isArray(data) ? data : (data?.content || []);
-                const favoriteUserIds = list.map(u => u.id);
-                
-                dispatch(setUser({
-                    ...user,
-                    favoriteUserIds: favoriteUserIds
-                }));
-            }).catch(console.error);
+            userService
+                .getFavoriteUsers()
+                .then((res) => {
+                    const data = res?.data || res;
+                    const list = Array.isArray(data)
+                        ? data
+                        : data?.content || [];
+                    const favoriteUserIds = list.map((u) => u.id);
+
+                    dispatch(
+                        setUser({
+                            ...user,
+                            favoriteUserIds: favoriteUserIds,
+                        }),
+                    );
+                })
+                .catch(console.error);
         }
     }, [dispatch, isAuthenticated, user?.id, user?.favoriteUserIds]);
 };

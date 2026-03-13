@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, VStack, Flex, Spinner, Image, Button, HStack } from "@chakra-ui/react";
+import {
+    Box,
+    Text,
+    VStack,
+    Flex,
+    Spinner,
+    Image,
+    Button,
+    HStack,
+} from "@chakra-ui/react";
 import { AiOutlineHeart } from "react-icons/ai";
 import UserAvatar from "../../common/UserAvatar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { clearUnreadNotificationCount, setUnreadNotificationCount } from "../../../store/slices/uiSlice";
+import {
+    clearUnreadNotificationCount,
+    setUnreadNotificationCount,
+} from "../../../store/slices/uiSlice";
 import { updateUserProfile } from "../../../store/slices/userSlice";
 import notificationService from "../../../services/notificationService";
 import profileService from "../../../services/profileService";
@@ -25,7 +37,7 @@ const getSection = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
+
     if (diffInDays === 0) return "Today";
     if (diffInDays === 1) return "Yesterday";
     if (diffInDays <= 7) return "This Week";
@@ -34,15 +46,24 @@ const getSection = (dateString) => {
 
 const getNotificationText = (type) => {
     switch (type) {
-        case "LIKE": return "liked your post.";
-        case "FOLLOW": return "started following you.";
-        case "COMMENT": return "commented on your post.";
-        case "MENTION": return "mentioned you in a comment.";
-        case "FOLLOW_REQUEST": return "requested to follow you.";
-        case "FOLLOW_ACCEPTED": return "accepted your follow request.";
-        case "TAG": return "tagged you in a post.";
-        case "STORY_REPLY": return "replied to your story.";
-        default: return "interacted with you.";
+        case "LIKE":
+            return "liked your post.";
+        case "FOLLOW":
+            return "started following you.";
+        case "COMMENT":
+            return "commented on your post.";
+        case "MENTION":
+            return "mentioned you in a comment.";
+        case "FOLLOW_REQUEST":
+            return "requested to follow you.";
+        case "FOLLOW_ACCEPTED":
+            return "accepted your follow request.";
+        case "TAG":
+            return "tagged you in a post.";
+        case "STORY_REPLY":
+            return "replied to your story.";
+        default:
+            return "interacted with you.";
     }
 };
 
@@ -58,41 +79,46 @@ const NotificationPanel = ({ isOpen }) => {
     const [followingMap, setFollowingMap] = useState({});
     const loadMoreRef = React.useRef(null);
 
-    const fetchNotifications = React.useCallback(async (cursor = null) => {
-        if (cursor) setIsFetchingMore(true);
-        else setLoading(true);
+    const fetchNotifications = React.useCallback(
+        async (cursor = null) => {
+            if (cursor) setIsFetchingMore(true);
+            else setLoading(true);
 
-        try {
-            const res = await notificationService.getNotifications(cursor);
-            const data = res.content || [];
-            const newCursor = res.nextCursor;
-            const moreAvailable = res.hasMore;
+            try {
+                const res = await notificationService.getNotifications(cursor);
+                const data = res.content || [];
+                const newCursor = res.nextCursor;
+                const moreAvailable = res.hasMore;
 
-            setNotifications(prev => cursor ? [...prev, ...data] : data);
-            setNextCursor(newCursor);
-            setHasMore(moreAvailable);
+                setNotifications((prev) =>
+                    cursor ? [...prev, ...data] : data,
+                );
+                setNextCursor(newCursor);
+                setHasMore(moreAvailable);
 
-            // Initialize following status map
-            const initialMap = { ...followingMap };
-            data.forEach(n => {
-                if (n.actor) {
-                    initialMap[n.actor.id] = n.actor.isFollowing || false;
+                // Initialize following status map
+                const initialMap = { ...followingMap };
+                data.forEach((n) => {
+                    if (n.actor) {
+                        initialMap[n.actor.id] = n.actor.isFollowing || false;
+                    }
+                });
+                setFollowingMap(initialMap);
+
+                if (!cursor) {
+                    // Mark all as read and clear badge on initial open
+                    notificationService.markAllRead().catch(console.error);
+                    dispatch(clearUnreadNotificationCount());
                 }
-            });
-            setFollowingMap(initialMap);
-
-            if (!cursor) {
-                // Mark all as read and clear badge on initial open
-                notificationService.markAllRead().catch(console.error);
-                dispatch(clearUnreadNotificationCount());
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+                setIsFetchingMore(false);
             }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            setIsFetchingMore(false);
-        }
-    }, [dispatch, followingMap]);
+        },
+        [dispatch, followingMap],
+    );
 
     useEffect(() => {
         if (isOpen) {
@@ -104,16 +130,29 @@ const NotificationPanel = ({ isOpen }) => {
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore && notifications.length > 0) {
+                if (
+                    entries[0].isIntersecting &&
+                    hasMore &&
+                    !loading &&
+                    !isFetchingMore &&
+                    notifications.length > 0
+                ) {
                     fetchNotifications(nextCursor);
                 }
             },
-            { threshold: 0.1 }
+            { threshold: 0.1 },
         );
 
         if (loadMoreRef.current) observer.observe(loadMoreRef.current);
         return () => observer.disconnect();
-    }, [hasMore, loading, isFetchingMore, nextCursor, fetchNotifications, notifications.length]);
+    }, [
+        hasMore,
+        loading,
+        isFetchingMore,
+        nextCursor,
+        fetchNotifications,
+        notifications.length,
+    ]);
 
     const handleNotificationClick = async (notif) => {
         // 1. Mark as read in Backend
@@ -121,8 +160,12 @@ const NotificationPanel = ({ isOpen }) => {
             try {
                 await notificationService.markAsRead(notif.id);
                 // Update local state to remove blue dot
-                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
-                
+                setNotifications((prev) =>
+                    prev.map((n) =>
+                        n.id === notif.id ? { ...n, read: true } : n,
+                    ),
+                );
+
                 // Refresh unread count globally to be safe
                 const count = await notificationService.getUnreadCount();
                 dispatch(setUnreadNotificationCount(count));
@@ -143,9 +186,9 @@ const NotificationPanel = ({ isOpen }) => {
         e.stopPropagation();
         try {
             await profileService.toggleFollow(userId);
-            setFollowingMap(prev => ({
+            setFollowingMap((prev) => ({
                 ...prev,
-                [userId]: !prev[userId]
+                [userId]: !prev[userId],
             }));
         } catch (error) {
             console.error("Failed to toggle follow", error);
@@ -156,20 +199,22 @@ const NotificationPanel = ({ isOpen }) => {
         e.stopPropagation();
         try {
             await profileService.acceptFollowRequest(userId);
-            
+
             // Mark as read and remove from UI or update type
-            setNotifications(prev => prev.filter(n => n.id !== notifId));
+            setNotifications((prev) => prev.filter((n) => n.id !== notifId));
             const count = await notificationService.getUnreadCount();
             dispatch(setUnreadNotificationCount(count));
 
             // SYNC: If we are currently viewing this user's profile, update it
             if (userProfile && userProfile.id === userId) {
-                dispatch(updateUserProfile({ 
-                    isFollowing: true, 
-                    isPending: false,
-                    followersCount: (userProfile.followersCount || 0) + 1,
-                    canViewContent: true
-                }));
+                dispatch(
+                    updateUserProfile({
+                        isFollowing: true,
+                        isPending: false,
+                        followersCount: (userProfile.followersCount || 0) + 1,
+                        canViewContent: true,
+                    }),
+                );
             }
         } catch (error) {
             console.error("Failed to accept follow request", error);
@@ -180,16 +225,18 @@ const NotificationPanel = ({ isOpen }) => {
         e.stopPropagation();
         try {
             await profileService.declineFollowRequest(userId);
-            setNotifications(prev => prev.filter(n => n.id !== notifId));
+            setNotifications((prev) => prev.filter((n) => n.id !== notifId));
             const count = await notificationService.getUnreadCount();
             dispatch(setUnreadNotificationCount(count));
 
             // SYNC: If we are currently viewing this user's profile, update it
             if (userProfile && userProfile.id === userId) {
-                dispatch(updateUserProfile({ 
-                    isFollowing: false, 
-                    isPending: false 
-                }));
+                dispatch(
+                    updateUserProfile({
+                        isFollowing: false,
+                        isPending: false,
+                    }),
+                );
             }
         } catch (error) {
             console.error("Failed to decline follow request", error);
@@ -198,7 +245,9 @@ const NotificationPanel = ({ isOpen }) => {
 
     const sections = ["Today", "Yesterday", "This Week", "Earlier"];
     const groupedNotifications = sections.reduce((acc, section) => {
-        acc[section] = notifications.filter((n) => getSection(n.createdAt) === section);
+        acc[section] = notifications.filter(
+            (n) => getSection(n.createdAt) === section,
+        );
         return acc;
     }, {});
 
@@ -224,7 +273,12 @@ const NotificationPanel = ({ isOpen }) => {
             overflow="hidden"
         >
             <Box pt={6} px={6} mb={4}>
-                <Text fontSize="24px" fontWeight="bold" tracking="tight" color="black">
+                <Text
+                    fontSize="24px"
+                    fontWeight="bold"
+                    tracking="tight"
+                    color="black"
+                >
                     Notifications
                 </Text>
             </Box>
@@ -234,22 +288,63 @@ const NotificationPanel = ({ isOpen }) => {
                     <VStack px={6} mt={4} gap={6} align="stretch">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
                             <Flex key={i} align="center" gap={3}>
-                                <Box w="44px" h="44px" borderRadius="full" bg="gray.100" flexShrink={0} className="animate-pulse" />
+                                <Box
+                                    w="44px"
+                                    h="44px"
+                                    borderRadius="full"
+                                    bg="gray.100"
+                                    flexShrink={0}
+                                    className="animate-pulse"
+                                />
                                 <VStack align="start" gap={2} flex={1}>
-                                    <Box h="14px" w="full" bg="gray.100" borderRadius="4px" className="animate-pulse" />
-                                    <Box h="10px" w="100px" bg="gray.50" borderRadius="4px" className="animate-pulse" />
+                                    <Box
+                                        h="14px"
+                                        w="full"
+                                        bg="gray.100"
+                                        borderRadius="4px"
+                                        className="animate-pulse"
+                                    />
+                                    <Box
+                                        h="10px"
+                                        w="100px"
+                                        bg="gray.50"
+                                        borderRadius="4px"
+                                        className="animate-pulse"
+                                    />
                                 </VStack>
                             </Flex>
                         ))}
                     </VStack>
                 ) : notifications.length === 0 ? (
-                    <Flex direction="column" align="center" justify="center" h="60vh" px={10} textAlign="center" gap={4}>
-                        <Box p={5} borderRadius="full" border="2px solid" borderColor="blackAlpha.100">
+                    <Flex
+                        direction="column"
+                        align="center"
+                        justify="center"
+                        h="60vh"
+                        px={10}
+                        textAlign="center"
+                        gap={4}
+                    >
+                        <Box
+                            p={5}
+                            borderRadius="full"
+                            border="2px solid"
+                            borderColor="blackAlpha.100"
+                        >
                             <AiOutlineHeart size={40} color="gray" />
                         </Box>
                         <VStack gap={1}>
-                            <Text fontSize="14px" fontWeight="bold" color="black">Activity on your posts</Text>
-                            <Text fontSize="14px" color="gray.500">When someone likes or comments on one of your posts, you'll see it here.</Text>
+                            <Text
+                                fontSize="14px"
+                                fontWeight="bold"
+                                color="black"
+                            >
+                                Activity on your posts
+                            </Text>
+                            <Text fontSize="14px" color="gray.500">
+                                When someone likes or comments on one of your
+                                posts, you'll see it here.
+                            </Text>
                         </VStack>
                     </Flex>
                 ) : (
@@ -257,7 +352,13 @@ const NotificationPanel = ({ isOpen }) => {
                         (section) =>
                             groupedNotifications[section].length > 0 && (
                                 <Box key={section} mb={4}>
-                                    <Text fontWeight="bold" color="black" px={6} py={4} fontSize="16px">
+                                    <Text
+                                        fontWeight="bold"
+                                        color="black"
+                                        px={6}
+                                        py={4}
+                                        fontSize="16px"
+                                    >
                                         {section}
                                     </Text>
                                     <VStack align="stretch" gap={0}>
@@ -270,51 +371,123 @@ const NotificationPanel = ({ isOpen }) => {
                                                     px={6}
                                                     py={3}
                                                     cursor="pointer"
-                                                    _hover={{ bg: "blackAlpha.50" }}
-                                                    onClick={() => handleNotificationClick(notif)}
+                                                    _hover={{
+                                                        bg: "blackAlpha.50",
+                                                    }}
+                                                    onClick={() =>
+                                                        handleNotificationClick(
+                                                            notif,
+                                                        )
+                                                    }
                                                 >
                                                     <Box flexShrink={0}>
-                                                        <UserAvatar src={notif.actor.avatarUrl} size="44px" />
+                                                        <UserAvatar
+                                                            src={
+                                                                notif.actor
+                                                                    .avatarUrl
+                                                            }
+                                                            size="44px"
+                                                        />
                                                     </Box>
-                                                    
+
                                                     <Box flex={1} minW={0}>
-                                                        <Text fontSize="14px" color="black" lineHeight="tight">
-                                                            <Text as="span" fontWeight="bold">{notif.actor.username}</Text>
-                                                            {" "}{getNotificationText(notif.type)}
-                                                            <Text as="span" color="gray.500" ml={1}>{getTimeAgo(notif.createdAt)}</Text>
+                                                        <Text
+                                                            fontSize="14px"
+                                                            color="black"
+                                                            lineHeight="tight"
+                                                        >
+                                                            <Text
+                                                                as="span"
+                                                                fontWeight="bold"
+                                                            >
+                                                                {
+                                                                    notif.actor
+                                                                        .username
+                                                                }
+                                                            </Text>{" "}
+                                                            {getNotificationText(
+                                                                notif.type,
+                                                            )}
+                                                            <Text
+                                                                as="span"
+                                                                color="gray.500"
+                                                                ml={1}
+                                                            >
+                                                                {getTimeAgo(
+                                                                    notif.createdAt,
+                                                                )}
+                                                            </Text>
                                                         </Text>
                                                     </Box>
 
                                                     {/* New Notification Indicator (Blue Dot) */}
                                                     {!notif.read && (
-                                                        <Box 
-                                                            w="8px" h="8px" 
-                                                            bg="#0095f6" 
-                                                            borderRadius="full" 
+                                                        <Box
+                                                            w="8px"
+                                                            h="8px"
+                                                            bg="#0095f6"
+                                                            borderRadius="full"
                                                             mr={2}
                                                             flexShrink={0}
                                                         />
                                                     )}
 
-                                                    {notif.type === "FOLLOW" || notif.type === "FOLLOW_ACCEPTED" ? (
+                                                    {notif.type === "FOLLOW" ||
+                                                    notif.type ===
+                                                        "FOLLOW_ACCEPTED" ? (
                                                         <Button
                                                             size="sm"
-                                                            bg={followingMap[notif.actor.id] ? "#efefef" : "#0095f6"}
-                                                            color={followingMap[notif.actor.id] ? "black" : "white"}
+                                                            bg={
+                                                                followingMap[
+                                                                    notif.actor
+                                                                        .id
+                                                                ]
+                                                                    ? "#efefef"
+                                                                    : "#0095f6"
+                                                            }
+                                                            color={
+                                                                followingMap[
+                                                                    notif.actor
+                                                                        .id
+                                                                ]
+                                                                    ? "black"
+                                                                    : "white"
+                                                            }
                                                             px={4}
                                                             py={1.5}
                                                             borderRadius="8px"
                                                             fontSize="14px"
                                                             fontWeight="bold"
                                                             cursor="pointer"
-                                                            _hover={{ bg: followingMap[notif.actor.id] ? "#dbdbdb" : "#1877f2" }}
+                                                            _hover={{
+                                                                bg: followingMap[
+                                                                    notif.actor
+                                                                        .id
+                                                                ]
+                                                                    ? "#dbdbdb"
+                                                                    : "#1877f2",
+                                                            }}
                                                             flexShrink={0}
-                                                            onClick={(e) => handleFollowToggle(e, notif.actor.id)}
+                                                            onClick={(e) =>
+                                                                handleFollowToggle(
+                                                                    e,
+                                                                    notif.actor
+                                                                        .id,
+                                                                )
+                                                            }
                                                         >
-                                                            {followingMap[notif.actor.id] ? "Following" : "Follow"}
+                                                            {followingMap[
+                                                                notif.actor.id
+                                                            ]
+                                                                ? "Following"
+                                                                : "Follow"}
                                                         </Button>
-                                                    ) : notif.type === "FOLLOW_REQUEST" ? (
-                                                        <HStack gap={2} flexShrink={0}>
+                                                    ) : notif.type ===
+                                                      "FOLLOW_REQUEST" ? (
+                                                        <HStack
+                                                            gap={2}
+                                                            flexShrink={0}
+                                                        >
                                                             <Button
                                                                 size="sm"
                                                                 bg="#0095f6"
@@ -324,8 +497,18 @@ const NotificationPanel = ({ isOpen }) => {
                                                                 borderRadius="8px"
                                                                 fontSize="14px"
                                                                 fontWeight="bold"
-                                                                _hover={{ bg: "#1877f2" }}
-                                                                onClick={(e) => handleAcceptRequest(e, notif.actor.id, notif.id)}
+                                                                _hover={{
+                                                                    bg: "#1877f2",
+                                                                }}
+                                                                onClick={(e) =>
+                                                                    handleAcceptRequest(
+                                                                        e,
+                                                                        notif
+                                                                            .actor
+                                                                            .id,
+                                                                        notif.id,
+                                                                    )
+                                                                }
                                                             >
                                                                 Confirm
                                                             </Button>
@@ -338,31 +521,57 @@ const NotificationPanel = ({ isOpen }) => {
                                                                 borderRadius="8px"
                                                                 fontSize="14px"
                                                                 fontWeight="bold"
-                                                                _hover={{ bg: "#dbdbdb" }}
-                                                                onClick={(e) => handleDeclineRequest(e, notif.actor.id, notif.id)}
+                                                                _hover={{
+                                                                    bg: "#dbdbdb",
+                                                                }}
+                                                                onClick={(e) =>
+                                                                    handleDeclineRequest(
+                                                                        e,
+                                                                        notif
+                                                                            .actor
+                                                                            .id,
+                                                                        notif.id,
+                                                                    )
+                                                                }
                                                             >
                                                                 Delete
                                                             </Button>
                                                         </HStack>
                                                     ) : (
                                                         notif.postId && (
-                                                            <Box 
-                                                                w="40px" h="40px" 
-                                                                flexShrink={0} 
-                                                                overflow="hidden" 
-                                                                borderRadius="2px" 
-                                                                border="1px solid" 
+                                                            <Box
+                                                                w="40px"
+                                                                h="40px"
+                                                                flexShrink={0}
+                                                                overflow="hidden"
+                                                                borderRadius="2px"
+                                                                border="1px solid"
                                                                 borderColor="gray.100"
                                                                 cursor="pointer"
-                                                                onClick={(e) => {
+                                                                onClick={(
+                                                                    e,
+                                                                ) => {
                                                                     e.stopPropagation();
-                                                                    handleNotificationClick(notif);
+                                                                    handleNotificationClick(
+                                                                        notif,
+                                                                    );
                                                                 }}
                                                             >
                                                                 {notif.postThumbnailUrl ? (
-                                                                    <Image src={notif.postThumbnailUrl} w="full" h="full" objectFit="cover" />
+                                                                    <Image
+                                                                        src={
+                                                                            notif.postThumbnailUrl
+                                                                        }
+                                                                        w="full"
+                                                                        h="full"
+                                                                        objectFit="cover"
+                                                                    />
                                                                 ) : (
-                                                                    <Box w="full" h="full" bg="gray.100" />
+                                                                    <Box
+                                                                        w="full"
+                                                                        h="full"
+                                                                        bg="gray.100"
+                                                                    />
                                                                 )}
                                                             </Box>
                                                         )
@@ -372,7 +581,12 @@ const NotificationPanel = ({ isOpen }) => {
                                         )}
                                     </VStack>
                                     {section !== "Earlier" && (
-                                        <Box h="1px" bg="gray.100" mx={6} mt={4} />
+                                        <Box
+                                            h="1px"
+                                            bg="gray.100"
+                                            mx={6}
+                                            mt={4}
+                                        />
                                     )}
                                 </Box>
                             ),
@@ -381,8 +595,17 @@ const NotificationPanel = ({ isOpen }) => {
 
                 {/* Infinite scroll trigger */}
                 {hasMore && notifications.length > 0 && (
-                    <Box ref={loadMoreRef} h="60px" display="flex" alignItems="center" justifyContent="center" py={4}>
-                        {isFetchingMore && <Spinner size="sm" color="gray.400" />}
+                    <Box
+                        ref={loadMoreRef}
+                        h="60px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        py={4}
+                    >
+                        {isFetchingMore && (
+                            <Spinner size="sm" color="gray.400" />
+                        )}
                     </Box>
                 )}
             </Box>

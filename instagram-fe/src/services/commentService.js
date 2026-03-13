@@ -9,7 +9,10 @@ const commentService = {
      * API: POST /posts/{postId}/comments
      */
     addComment: async (postId, content, parentId = null) => {
-        return axiosClient.post(`/posts/${postId}/comments`, { content, parentCommentId: parentId });
+        return axiosClient.post(`/posts/${postId}/comments`, {
+            content,
+            parentCommentId: parentId,
+        });
     },
 
     /**
@@ -21,7 +24,9 @@ const commentService = {
         if (page) params.append("page", page);
         if (size) params.append("size", size);
         if (parentId) params.append("parentId", parentId);
-        return axiosClient.get(`/posts/${postId}/comments?${params.toString()}`);
+        return axiosClient.get(
+            `/posts/${postId}/comments?${params.toString()}`,
+        );
     },
 
     /**
@@ -40,7 +45,9 @@ const commentService = {
      * @param {String} content
      */
     updateComment: async (postId, commentId, content) => {
-        return axiosClient.put(`/posts/${postId}/comments/${commentId}`, { content });
+        return axiosClient.put(`/posts/${postId}/comments/${commentId}`, {
+            content,
+        });
     },
 
     /**
@@ -57,7 +64,7 @@ const commentService = {
      */
     pinComment: async (postId, commentId) => {
         return axiosClient.post(`/posts/${postId}/comments/${commentId}/pin`);
-    }
+    },
 };
 
 export default commentService;

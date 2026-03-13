@@ -33,7 +33,7 @@ const ProfileTabs = ({ activeTab, setActiveTab, isOwnProfile }) => {
         },
     ];
 
-    const visibleTabs = tabs.filter(tab => !tab.isOwnOnly || isOwnProfile);
+    const visibleTabs = tabs.filter((tab) => !tab.isOwnOnly || isOwnProfile);
 
     return (
         <Flex

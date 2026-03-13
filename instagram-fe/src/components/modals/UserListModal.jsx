@@ -40,16 +40,20 @@ const UserListModal = ({
     const handleFollowToggle = async (userId) => {
         try {
             // Optimistic update
-            setUsers(prev => prev.map(u => 
-                u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u
-            ));
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u,
+                ),
+            );
             await profileService.toggleFollow(userId);
         } catch (error) {
             console.error("Failed to toggle follow", error);
             // Rollback on error
-            setUsers(prev => prev.map(u => 
-                u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u
-            ));
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === userId ? { ...u, isFollowing: !u.isFollowing } : u,
+                ),
+            );
         }
     };
 
@@ -57,14 +61,15 @@ const UserListModal = ({
         if (window.confirm("Are you sure you want to remove this follower?")) {
             try {
                 await profileService.removeFollower(userId);
-                setUsers(prev => prev.filter(u => u.id !== userId));
+                setUsers((prev) => prev.filter((u) => u.id !== userId));
             } catch (error) {
                 console.error("Failed to remove follower", error);
             }
         }
     };
 
-    const isMyFollowersList = title === "Followers" && (!listOwnerId || listOwnerId === authUser?.id);
+    const isMyFollowersList =
+        title === "Followers" && (!listOwnerId || listOwnerId === authUser?.id);
 
     return (
         <DialogRoot
@@ -122,14 +127,35 @@ const UserListModal = ({
                                             <HStack
                                                 gap={3}
                                                 cursor="pointer"
-                                                onClick={() => handleUserClick(user.username)}
+                                                onClick={() =>
+                                                    handleUserClick(
+                                                        user.username,
+                                                    )
+                                                }
                                             >
-                                                <UserAvatar src={user.avatarUrl} size="44px" />
-                                                <VStack align="start" gap={0} minW={0}>
-                                                    <Text fontSize="14px" fontWeight="bold" isTruncated maxW="180px">
+                                                <UserAvatar
+                                                    src={user.avatarUrl}
+                                                    size="44px"
+                                                />
+                                                <VStack
+                                                    align="start"
+                                                    gap={0}
+                                                    minW={0}
+                                                >
+                                                    <Text
+                                                        fontSize="14px"
+                                                        fontWeight="bold"
+                                                        isTruncated
+                                                        maxW="180px"
+                                                    >
                                                         {user.username}
                                                     </Text>
-                                                    <Text fontSize="14px" color="gray.500" isTruncated maxW="180px">
+                                                    <Text
+                                                        fontSize="14px"
+                                                        color="gray.500"
+                                                        isTruncated
+                                                        maxW="180px"
+                                                    >
                                                         {user.fullName}
                                                     </Text>
                                                 </VStack>
@@ -138,16 +164,40 @@ const UserListModal = ({
                                             {!isMe && (
                                                 <Box
                                                     as="button"
-                                                    bg={isMyFollowersList ? "#efefef" : (isFollowing ? "#efefef" : "#0095f6")}
-                                                    color={isMyFollowersList ? "black" : (isFollowing ? "black" : "white")}
+                                                    bg={
+                                                        isMyFollowersList
+                                                            ? "#efefef"
+                                                            : isFollowing
+                                                              ? "#efefef"
+                                                              : "#0095f6"
+                                                    }
+                                                    color={
+                                                        isMyFollowersList
+                                                            ? "black"
+                                                            : isFollowing
+                                                              ? "black"
+                                                              : "white"
+                                                    }
                                                     px={4}
                                                     py={1.5}
                                                     borderRadius="8px"
                                                     fontSize="14px"
                                                     fontWeight="bold"
-                                                    onClick={() => isMyFollowersList ? handleRemoveFollower(user.id) : handleFollowToggle(user.id)}
+                                                    onClick={() =>
+                                                        isMyFollowersList
+                                                            ? handleRemoveFollower(
+                                                                  user.id,
+                                                              )
+                                                            : handleFollowToggle(
+                                                                  user.id,
+                                                              )
+                                                    }
                                                 >
-                                                    {isMyFollowersList ? "Remove" : (isFollowing ? "Following" : "Follow")}
+                                                    {isMyFollowersList
+                                                        ? "Remove"
+                                                        : isFollowing
+                                                          ? "Following"
+                                                          : "Follow"}
                                                 </Box>
                                             )}
                                         </Flex>
@@ -155,7 +205,9 @@ const UserListModal = ({
                                 })
                             ) : (
                                 <Flex h="100px" align="center" justify="center">
-                                    <Text color="gray.500">No users found.</Text>
+                                    <Text color="gray.500">
+                                        No users found.
+                                    </Text>
                                 </Flex>
                             )}
                         </VStack>

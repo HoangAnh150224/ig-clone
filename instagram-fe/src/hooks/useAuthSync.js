@@ -7,7 +7,7 @@ const useAuthSync = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        // Trigger fetch if user is locally known or authenticated 
+        // Trigger fetch if user is locally known or authenticated
         // to sync with backend httpOnly cookie session
         if (isAuthenticated || user) {
             dispatch(fetchCurrentUser());

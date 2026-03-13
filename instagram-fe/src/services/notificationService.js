@@ -21,7 +21,7 @@ const notificationService = {
      */
     getUnreadCount: async () => {
         const response = await axiosClient.get("/notifications/unread-count");
-        return typeof response === 'number' ? response : (response.count || 0);
+        return typeof response === "number" ? response : response.count || 0;
     },
 
     /**
@@ -38,7 +38,7 @@ const notificationService = {
      */
     markAsRead: async (id) => {
         return axiosClient.patch(`/notifications/${id}/read`);
-    }
+    },
 };
 
 export default notificationService;

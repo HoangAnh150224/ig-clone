@@ -28,7 +28,7 @@ const Archive = () => {
     const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
     const [selectedPost, setSelectedPost] = useState(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-    
+
     const [archivedStories, setArchivedStories] = useState([]);
     const [archivedPosts, setArchivedPosts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -127,12 +127,22 @@ const Archive = () => {
                     >
                         <HStack>
                             <Icon as={BsClockHistory} boxSize={5} />
-                            <Text fontWeight="700" fontSize="12px" letterSpacing="1px">
+                            <Text
+                                fontWeight="700"
+                                fontSize="12px"
+                                letterSpacing="1px"
+                            >
                                 STORIES
                             </Text>
                         </HStack>
                         {activeTab === "stories" && (
-                            <Box h="1px" w="100%" bg="black" position="absolute" bottom="0" />
+                            <Box
+                                h="1px"
+                                w="100%"
+                                bg="black"
+                                position="absolute"
+                                bottom="0"
+                            />
                         )}
                     </VStack>
 
@@ -146,12 +156,22 @@ const Archive = () => {
                     >
                         <HStack>
                             <Icon as={BsGrid3X3} boxSize={5} />
-                            <Text fontWeight="700" fontSize="12px" letterSpacing="1px">
+                            <Text
+                                fontWeight="700"
+                                fontSize="12px"
+                                letterSpacing="1px"
+                            >
                                 POSTS
                             </Text>
                         </HStack>
                         {activeTab === "posts" && (
-                            <Box h="1px" w="100%" bg="black" position="absolute" bottom="0" />
+                            <Box
+                                h="1px"
+                                w="100%"
+                                bg="black"
+                                position="absolute"
+                                bottom="0"
+                            />
                         )}
                     </VStack>
                 </HStack>
@@ -168,7 +188,9 @@ const Archive = () => {
                 </Box>
 
                 {loading ? (
-                    <Box textAlign="center" py={10}>Loading...</Box>
+                    <Box textAlign="center" py={10}>
+                        Loading...
+                    </Box>
                 ) : activeTab === "stories" ? (
                     <Grid templateColumns="repeat(4, 1fr)" gap={1} px={1}>
                         {archivedStories.map((story, index) => (

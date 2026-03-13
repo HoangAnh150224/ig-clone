@@ -37,27 +37,33 @@ const Profile = () => {
 
     const isOwnProfile = authUser?.username === username;
 
-    const fetchTabData = useCallback(async (tab) => {
-        setTabLoading(true);
-        try {
-            let results = [];
-            if (tab === "posts" || tab === "reels") {
-                const response = await profileService.getUserPosts(username);
-                results = response.content || response;
-            } else if (tab === "saved") {
-                const response = await postService.getSavedPosts();
-                results = response.content || response;
-            } else if (tab === "tagged") {
-                const response = await postService.getTaggedPosts(userProfile?.id);
-                results = response.content || response;
+    const fetchTabData = useCallback(
+        async (tab) => {
+            setTabLoading(true);
+            try {
+                let results = [];
+                if (tab === "posts" || tab === "reels") {
+                    const response =
+                        await profileService.getUserPosts(username);
+                    results = response.content || response;
+                } else if (tab === "saved") {
+                    const response = await postService.getSavedPosts();
+                    results = response.content || response;
+                } else if (tab === "tagged") {
+                    const response = await postService.getTaggedPosts(
+                        userProfile?.id,
+                    );
+                    results = response.content || response;
+                }
+                dispatch(setProfilePosts(results));
+            } catch (error) {
+                console.error(`Failed to fetch ${tab} data`, error);
+            } finally {
+                setTabLoading(false);
             }
-            dispatch(setProfilePosts(results));
-        } catch (error) {
-            console.error(`Failed to fetch ${tab} data`, error);
-        } finally {
-            setTabLoading(false);
-        }
-    }, [username, userProfile?.id, dispatch]);
+        },
+        [username, userProfile?.id, dispatch],
+    );
 
     const fetchInitialData = useCallback(async () => {
         dispatch(resetProfile());
@@ -68,14 +74,16 @@ const Profile = () => {
                 profileService.getUserProfile(username),
                 profileService.getUserHighlights(username),
             ]);
-            
+
             const profileData = profileRes?.data || profileRes;
-            
+
             // Fetch stories for this user by username
             let activeStories = [];
             try {
                 const storiesRes = await storyService.getUserStories(username);
-                activeStories = storiesRes?.data || (Array.isArray(storiesRes) ? storiesRes : []);
+                activeStories =
+                    storiesRes?.data ||
+                    (Array.isArray(storiesRes) ? storiesRes : []);
             } catch (err) {
                 // 404 or 403 handled by backend, we just show no story circle
                 console.warn("Could not fetch user stories", err.message);
@@ -84,12 +92,12 @@ const Profile = () => {
             const updatedProfile = {
                 ...profileData,
                 hasStory: activeStories.length > 0,
-                stories: activeStories
+                stories: activeStories,
             };
 
             dispatch(setUserProfile(updatedProfile));
             setHighlights(highlightsRes?.data || highlightsRes || []);
-            
+
             // Fetch posts for the initial active tab
             const postsRes = await profileService.getUserPosts(username);
             dispatch(setProfilePosts(postsRes.content || postsRes));
@@ -108,7 +116,8 @@ const Profile = () => {
 
     const handleRefreshHighlights = async () => {
         try {
-            const highlightsRes = await profileService.getUserHighlights(username);
+            const highlightsRes =
+                await profileService.getUserHighlights(username);
             setHighlights(highlightsRes?.data || highlightsRes || []);
         } catch (error) {
             console.error("Failed to refresh highlights", error);
@@ -129,14 +138,18 @@ const Profile = () => {
         );
     }
 
-    if ((errorState || !userProfile || userProfile.isActive === false) && !loading) {
+    if (
+        (errorState || !userProfile || userProfile.isActive === false) &&
+        !loading
+    ) {
         return (
             <VStack h="50vh" justify="center" gap={4}>
                 <Text fontSize="2xl" fontWeight="bold">
                     Sorry, this page isn't available.
                 </Text>
                 <Text color="gray.500">
-                    The link you followed may be broken, or the page may have been removed.
+                    The link you followed may be broken, or the page may have
+                    been removed.
                 </Text>
                 <ChakraLink href="/" color="blue.900" fontWeight="bold">
                     Go back to Instagram.
@@ -145,11 +158,13 @@ const Profile = () => {
         );
     }
 
-    const filteredPosts = activeTab === "reels" 
-        ? posts.filter(p => p.type === "REEL") 
-        : posts;
+    const filteredPosts =
+        activeTab === "reels" ? posts.filter((p) => p.type === "REEL") : posts;
 
-    const isPrivateProfileHidden = userProfile?.privateAccount && !isOwnProfile && !userProfile?.isFollowing;
+    const isPrivateProfileHidden =
+        userProfile?.privateAccount &&
+        !isOwnProfile &&
+        !userProfile?.isFollowing;
     const isBlocked = authUser?.blockedUserIds?.includes(userProfile?.id);
 
     return (
@@ -157,17 +172,53 @@ const Profile = () => {
             <ProfileHeader user={userProfile} isOwnProfile={isOwnProfile} />
 
             {isBlocked ? (
-                <Flex direction="column" align="center" justify="center" py={16} borderTop="1px solid" borderColor="gray.200" mt={8}>
-                    <Text fontSize="14px" fontWeight="bold" mb={2} color="black">
+                <Flex
+                    direction="column"
+                    align="center"
+                    justify="center"
+                    py={16}
+                    borderTop="1px solid"
+                    borderColor="gray.200"
+                    mt={8}
+                >
+                    <Text
+                        fontSize="14px"
+                        fontWeight="bold"
+                        mb={2}
+                        color="black"
+                    >
                         You blocked {userProfile?.username}
                     </Text>
-                    <Text fontSize="14px" color="gray.500" textAlign="center" maxW="300px">
-                        Unblock them to see their photos and videos, and to message them.
+                    <Text
+                        fontSize="14px"
+                        color="gray.500"
+                        textAlign="center"
+                        maxW="300px"
+                    >
+                        Unblock them to see their photos and videos, and to
+                        message them.
                     </Text>
                 </Flex>
             ) : isPrivateProfileHidden ? (
-                <Flex direction="column" align="center" justify="center" py={16} borderTop="1px solid" borderColor="gray.200" mt={8}>
-                    <Box p={6} borderRadius="full" border="2px solid" borderColor="black" mb={6} display="flex" alignItems="center" justifyContent="center">
+                <Flex
+                    direction="column"
+                    align="center"
+                    justify="center"
+                    py={16}
+                    borderTop="1px solid"
+                    borderColor="gray.200"
+                    mt={8}
+                >
+                    <Box
+                        p={6}
+                        borderRadius="full"
+                        border="2px solid"
+                        borderColor="black"
+                        mb={6}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
                         <FiLock size={48} strokeWidth={1.5} />
                     </Box>
                     <Text fontSize="14px" fontWeight="bold" mb={2}>
@@ -179,17 +230,17 @@ const Profile = () => {
                 </Flex>
             ) : (
                 <>
-                    <ProfileHighlights 
-                        isOwnProfile={isOwnProfile} 
-                        user={userProfile} 
-                        highlights={highlights} 
+                    <ProfileHighlights
+                        isOwnProfile={isOwnProfile}
+                        user={userProfile}
+                        highlights={highlights}
                         onRefresh={handleRefreshHighlights}
                     />
 
-                    <ProfileTabs 
-                        activeTab={activeTab} 
-                        setActiveTab={setActiveTab} 
-                        isOwnProfile={isOwnProfile} 
+                    <ProfileTabs
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        isOwnProfile={isOwnProfile}
                     />
 
                     <Box py={4}>

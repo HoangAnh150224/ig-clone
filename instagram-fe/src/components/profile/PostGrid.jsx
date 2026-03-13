@@ -117,7 +117,7 @@ const PostGrid = ({ posts, loading }) => {
         );
 
     // Backend returns PaginatedResponse, so posts might be an object with a content array
-    const postList = Array.isArray(posts) ? posts : (posts?.content || []);
+    const postList = Array.isArray(posts) ? posts : posts?.content || [];
 
     if (postList.length === 0)
         return (

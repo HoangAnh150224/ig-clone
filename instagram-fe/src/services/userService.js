@@ -6,7 +6,7 @@ import axiosClient from "../api/axiosClient";
 const userService = {
     /**
      * Search users by query
-     * Note: Current backend implementation might not have a direct user search yet, 
+     * Note: Current backend implementation might not have a direct user search yet,
      * but we'll prepare the service.
      */
     searchUsers: async (query) => {
@@ -31,13 +31,13 @@ const userService = {
      */
     updateUserProfile: async (profileData, avatar = null) => {
         const formData = new FormData();
-        
+
         if (avatar) {
             formData.append("avatar", avatar);
         }
 
         // Append other fields as request parameters
-        Object.keys(profileData).forEach(key => {
+        Object.keys(profileData).forEach((key) => {
             if (profileData[key] !== undefined && profileData[key] !== null) {
                 formData.append(key, profileData[key]);
             }
@@ -63,7 +63,9 @@ const userService = {
      * API: GET /users/{userId}/followers
      */
     getFollowersList: async (userId, page = 0, size = 20) => {
-        return axiosClient.get(`/users/${userId}/followers?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/users/${userId}/followers?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -71,7 +73,9 @@ const userService = {
      * API: GET /users/{userId}/following
      */
     getFollowingList: async (userId, page = 0, size = 20) => {
-        return axiosClient.get(`/users/${userId}/following?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/users/${userId}/following?page=${page}&size=${size}`,
+        );
     },
 
     /**

@@ -90,7 +90,9 @@ const PostDetail = () => {
             const fetchComments = async () => {
                 try {
                     const response = await commentService.getComments(post.id);
-                    const commentList = Array.isArray(response) ? response : (response?.content || []);
+                    const commentList = Array.isArray(response)
+                        ? response
+                        : response?.content || [];
                     setComments(commentList);
                 } catch (e) {
                     console.error("Failed to fetch comments", e);
@@ -119,7 +121,11 @@ const PostDetail = () => {
                 .replace(`@${replyingTo.username}`, "")
                 .trim();
             // addComment(postId, content, parentId)
-            response = await commentService.addComment(post.id, content, replyingTo.id);
+            response = await commentService.addComment(
+                post.id,
+                content,
+                replyingTo.id,
+            );
         } else {
             // Send new Comment
             response = await commentService.addComment(post.id, commentValue);
@@ -130,7 +136,11 @@ const PostDetail = () => {
             setReplyingTo(null);
             // Refresh comments to show the new one
             const updatedComments = await commentService.getComments(post.id);
-            setComments(Array.isArray(updatedComments) ? updatedComments : (updatedComments?.content || []));
+            setComments(
+                Array.isArray(updatedComments)
+                    ? updatedComments
+                    : updatedComments?.content || [],
+            );
         }
     };
 
@@ -247,7 +257,7 @@ const PostDetail = () => {
                     ) : (
                         <Box width="100%" height="100%">
                             <ImageCarousel
-                                images={post.media?.map(m => m.url) || []}
+                                images={post.media?.map((m) => m.url) || []}
                                 height="100%"
                                 objectFit="contain"
                             />
@@ -310,7 +320,11 @@ const PostDetail = () => {
                                 Following
                             </Text>
                         </HStack>
-                        <Box cursor="pointer" color="black" onClick={() => setIsMoreOptionsOpen(true)}>
+                        <Box
+                            cursor="pointer"
+                            color="black"
+                            onClick={() => setIsMoreOptionsOpen(true)}
+                        >
                             <BsThreeDots size={20} />
                         </Box>
                     </Flex>
@@ -342,7 +356,9 @@ const PostDetail = () => {
                                         mr={2}
                                         cursor="pointer"
                                         onClick={() =>
-                                            navigate(`/${post.author?.username}`)
+                                            navigate(
+                                                `/${post.author?.username}`,
+                                            )
                                         }
                                     >
                                         {post.author?.username}
@@ -376,7 +392,8 @@ const PostDetail = () => {
                                         postOwnerId={post?.author?.id}
                                     />
                                 ))
-                            ) : (                                <Center h="100px">
+                            ) : (
+                                <Center h="100px">
                                     <Text color="gray.400" fontSize="sm">
                                         No comments yet.
                                     </Text>
@@ -513,7 +530,7 @@ const PostDetail = () => {
                     </Box>
                 </Box>
             </Flex>
-            
+
             <ShareModal
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}

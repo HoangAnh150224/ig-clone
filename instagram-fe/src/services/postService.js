@@ -130,7 +130,9 @@ const postService = {
      * API: GET /posts/tagged/{userId}
      */
     getTaggedPosts: async (userId, page = 0, size = 12) => {
-        return axiosClient.get(`/posts/tagged/${userId}?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/posts/tagged/${userId}?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -157,8 +159,10 @@ const postService = {
      * API: GET /users/me/favorites/posts
      */
     getFavoritePosts: async (page = 0, size = 12) => {
-        return axiosClient.get(`/users/me/favorites/posts?page=${page}&size=${size}`);
-    }
+        return axiosClient.get(
+            `/users/me/favorites/posts?page=${page}&size=${size}`,
+        );
+    },
 };
 
 export default postService;

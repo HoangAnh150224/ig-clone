@@ -90,10 +90,7 @@ const authSlice = createSlice({
                 const { accessToken, ...userData } = action.payload;
                 state.user = userData;
                 state.token = accessToken;
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(userData),
-                );
+                localStorage.setItem("user", JSON.stringify(userData));
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -109,10 +106,7 @@ const authSlice = createSlice({
                 const { accessToken, ...userData } = action.payload;
                 state.user = userData;
                 state.token = accessToken;
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(userData),
-                );
+                localStorage.setItem("user", JSON.stringify(userData));
             })
             .addCase(signup.rejected, (state, action) => {
                 state.loading = false;

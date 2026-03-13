@@ -25,7 +25,9 @@ const profileService = {
      * API: GET /posts/user/{username}
      */
     getUserPosts: async (username, page = 0, size = 12) => {
-        return axiosClient.get(`/posts/user/${username}?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/posts/user/${username}?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -41,7 +43,9 @@ const profileService = {
      * API: GET /users/{userId}/followers
      */
     getUserFollowers: async (userId, page = 0, size = 20) => {
-        return axiosClient.get(`/users/${userId}/followers?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/users/${userId}/followers?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -49,7 +53,9 @@ const profileService = {
      * API: GET /users/{userId}/following
      */
     getUserFollowing: async (userId, page = 0, size = 20) => {
-        return axiosClient.get(`/users/${userId}/following?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/users/${userId}/following?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -104,7 +110,9 @@ const profileService = {
      * API: GET /users/follow-requests
      */
     getFollowRequests: async (page = 0, size = 20) => {
-        return axiosClient.get(`/users/follow-requests?page=${page}&size=${size}`);
+        return axiosClient.get(
+            `/users/follow-requests?page=${page}&size=${size}`,
+        );
     },
 
     /**
@@ -147,15 +155,18 @@ const profileService = {
      */
     createHighlight: async (cover, data) => {
         const formData = new FormData();
-        
+
         if (cover) {
             formData.append("cover", cover);
         }
 
         // Append data as JSON string (Backend uses @RequestPart("data"))
-        formData.append("data", new Blob([JSON.stringify(data)], {
-            type: "application/json"
-        }));
+        formData.append(
+            "data",
+            new Blob([JSON.stringify(data)], {
+                type: "application/json",
+            }),
+        );
 
         return axiosClient.post("/highlights", formData, {
             headers: {
@@ -176,7 +187,9 @@ const profileService = {
      * API: POST /highlights/{id}/stories
      */
     addStoryToHighlight: async (highlightId, storyId) => {
-        return axiosClient.post(`/highlights/${highlightId}/stories`, { storyId });
+        return axiosClient.post(`/highlights/${highlightId}/stories`, {
+            storyId,
+        });
     },
 
     /**
@@ -185,7 +198,7 @@ const profileService = {
      */
     searchHashtags: async (query, limit = 10) => {
         return axiosClient.get(`/hashtags/search?q=${query}&limit=${limit}`);
-    }
+    },
 };
 
 export default profileService;

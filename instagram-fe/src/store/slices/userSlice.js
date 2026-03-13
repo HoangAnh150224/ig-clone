@@ -6,9 +6,9 @@ export const toggleFollow = createAsyncThunk(
     async (userId, { rejectWithValue }) => {
         try {
             const response = await profileService.toggleFollow(userId);
-            // Response format: { followerId, followingId, status } 
+            // Response format: { followerId, followingId, status }
             // status is 'PENDING', 'ACCEPTED', or null (unfollowed)
-            return response; 
+            return response;
         } catch (error) {
             return rejectWithValue(error.apiResponse || error.message);
         }
@@ -45,17 +45,20 @@ const userSlice = createSlice({
         },
         updatePostInProfile: (state, action) => {
             const { id, changes } = action.payload;
-            
+
             // If post is archived, remove it from the profile view
             if (changes.archived === true) {
-                state.posts = state.posts.filter(p => p.id !== id);
+                state.posts = state.posts.filter((p) => p.id !== id);
                 if (state.userProfile) {
-                    state.userProfile.postsCount = Math.max(0, (state.userProfile.postsCount || 0) - 1);
+                    state.userProfile.postsCount = Math.max(
+                        0,
+                        (state.userProfile.postsCount || 0) - 1,
+                    );
                 }
                 return;
             }
 
-            const index = state.posts.findIndex(p => p.id === id);
+            const index = state.posts.findIndex((p) => p.id === id);
             if (index !== -1) {
                 state.posts[index] = { ...state.posts[index], ...changes };
             }
@@ -73,7 +76,10 @@ const userSlice = createSlice({
                     if (isFollowing) {
                         // Unfollow
                         state.userProfile.isFollowing = false;
-                        state.userProfile.followersCount = Math.max(0, (state.userProfile.followersCount || 0) - 1);
+                        state.userProfile.followersCount = Math.max(
+                            0,
+                            (state.userProfile.followersCount || 0) - 1,
+                        );
                     } else if (isPending) {
                         // Cancel request
                         state.userProfile.isPending = false;
@@ -83,7 +89,8 @@ const userSlice = createSlice({
                             state.userProfile.isPending = true;
                         } else {
                             state.userProfile.isFollowing = true;
-                            state.userProfile.followersCount = (state.userProfile.followersCount || 0) + 1;
+                            state.userProfile.followersCount =
+                                (state.userProfile.followersCount || 0) + 1;
                         }
                     }
                 }
@@ -92,13 +99,13 @@ const userSlice = createSlice({
                 // Sync with server response
                 if (state.userProfile) {
                     const { status } = action.payload;
-                    state.userProfile.isFollowing = (status === "ACCEPTED");
-                    state.userProfile.isPending = (status === "PENDING");
+                    state.userProfile.isFollowing = status === "ACCEPTED";
+                    state.userProfile.isPending = status === "PENDING";
                 }
             })
             .addCase(toggleFollow.rejected, () => {
                 // Simple rollback for now - usually we'd need old state
-                // This is a bit tricky with multiple toggle modes, 
+                // This is a bit tricky with multiple toggle modes,
                 // but for now let's just force a refresh or accept the glitch.
             });
     },

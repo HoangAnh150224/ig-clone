@@ -29,12 +29,15 @@ axiosClient.interceptors.response.use(
                 apiResponse.message || "An unexpected error occurred",
             );
             error.apiResponse = apiResponse;
-            
+
             // Dispatch error to UI except for Auth errors which are handled by components
-            if (!response.config.url.includes("/auth/login") && !response.config.url.includes("/auth/signup")) {
+            if (
+                !response.config.url.includes("/auth/login") &&
+                !response.config.url.includes("/auth/signup")
+            ) {
                 store.dispatch(setGlobalError(apiResponse.message));
             }
-            
+
             return Promise.reject(error);
         }
 
@@ -49,7 +52,7 @@ axiosClient.interceptors.response.use(
             // Handle 401 (Unauthorized) errors centrally
             if (error.response.status === 401) {
                 localStorage.removeItem("user");
-                
+
                 // Do not redirect forcefully if we are already in Auth
                 if (!window.location.pathname.includes("/accounts/login")) {
                     window.location.href = "/accounts/login";
@@ -61,17 +64,27 @@ axiosClient.interceptors.response.use(
                 return Promise.reject(new Error(message));
             } else {
                 // Dispatch global error for non-auth errors
-                store.dispatch(setGlobalError(apiResponse.message || "Server error occurred"));
+                store.dispatch(
+                    setGlobalError(
+                        apiResponse.message || "Server error occurred",
+                    ),
+                );
             }
 
-            const err = new Error(apiResponse.message || "Server error occurred");
+            const err = new Error(
+                apiResponse.message || "Server error occurred",
+            );
             err.apiResponse = apiResponse;
             return Promise.reject(err);
         }
 
         // Network connection error
-        const networkErr = new Error("Network error. Please check your connection.");
-        store.dispatch(setGlobalError("Network error. Please check your connection."));
+        const networkErr = new Error(
+            "Network error. Please check your connection.",
+        );
+        store.dispatch(
+            setGlobalError("Network error. Please check your connection."),
+        );
         return Promise.reject(networkErr);
     },
 );

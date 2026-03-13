@@ -16,7 +16,8 @@ const useStomp = (endpoint = "/ws") => {
     const connect = useCallback(() => {
         if (!token || clientRef.current) return;
 
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+        const apiBaseUrl =
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
         const wsUrl = apiBaseUrl + endpoint;
 
         const client = new Client({
@@ -59,42 +60,58 @@ const useStomp = (endpoint = "/ws") => {
         return () => disconnect();
     }, [connect, disconnect]);
 
-    const subscribe = useCallback((topic, callback) => {
-        if (!clientRef.current || !connected) {
-            console.warn(`STOMP: Cannot subscribe to ${topic} (not connected)`);
-            return null;
-        }
-
-        if (subscriptions.current[topic]) {
-            subscriptions.current[topic].unsubscribe();
-        }
-
-        const subscription = clientRef.current.subscribe(topic, (message) => {
-            try {
-                const data = JSON.parse(message.body);
-                callback(data);
-            } catch (error) {
-                console.error(`STOMP: Error parsing message from ${topic}`, error);
-                callback(message.body);
+    const subscribe = useCallback(
+        (topic, callback) => {
+            if (!clientRef.current || !connected) {
+                console.warn(
+                    `STOMP: Cannot subscribe to ${topic} (not connected)`,
+                );
+                return null;
             }
-        });
 
-        subscriptions.current[topic] = subscription;
-        return subscription;
-    }, [connected]);
+            if (subscriptions.current[topic]) {
+                subscriptions.current[topic].unsubscribe();
+            }
 
-    const send = useCallback((destination, body) => {
-        if (!clientRef.current || !connected) {
-            console.warn(`STOMP: Cannot send to ${destination} (not connected)`);
-            return;
-        }
+            const subscription = clientRef.current.subscribe(
+                topic,
+                (message) => {
+                    try {
+                        const data = JSON.parse(message.body);
+                        callback(data);
+                    } catch (error) {
+                        console.error(
+                            `STOMP: Error parsing message from ${topic}`,
+                            error,
+                        );
+                        callback(message.body);
+                    }
+                },
+            );
 
-        clientRef.current.publish({
-            destination,
-            body: typeof body === "string" ? body : JSON.stringify(body),
-            headers: { Authorization: `Bearer ${token}` },
-        });
-    }, [connected, token]);
+            subscriptions.current[topic] = subscription;
+            return subscription;
+        },
+        [connected],
+    );
+
+    const send = useCallback(
+        (destination, body) => {
+            if (!clientRef.current || !connected) {
+                console.warn(
+                    `STOMP: Cannot send to ${destination} (not connected)`,
+                );
+                return;
+            }
+
+            clientRef.current.publish({
+                destination,
+                body: typeof body === "string" ? body : JSON.stringify(body),
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        },
+        [connected, token],
+    );
 
     return { connected, subscribe, send };
 };

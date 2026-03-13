@@ -46,7 +46,9 @@ const messageService = {
     getRequestCount: async () => {
         try {
             const response = await axiosClient.get("/messages/requests");
-            return Array.isArray(response) ? response.length : (response.content?.length || 0);
+            return Array.isArray(response)
+                ? response.length
+                : response.content?.length || 0;
         } catch {
             return 0;
         }
@@ -82,7 +84,7 @@ const messageService = {
      */
     deleteConversation: async (chatId) => {
         return axiosClient.delete(`/messages/${chatId}`);
-    }
+    },
 };
 
 export default messageService;

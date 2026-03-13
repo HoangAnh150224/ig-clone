@@ -34,7 +34,7 @@ const uiSlice = createSlice({
         },
         clearUnreadNotificationCount: (state) => {
             state.unreadNotificationCount = 0;
-        }
+        },
     },
 });
 
@@ -46,6 +46,6 @@ export const {
     clearGlobalError,
     setUnreadNotificationCount,
     incrementUnreadNotificationCount,
-    clearUnreadNotificationCount
+    clearUnreadNotificationCount,
 } = uiSlice.actions;
 export default uiSlice.reducer;

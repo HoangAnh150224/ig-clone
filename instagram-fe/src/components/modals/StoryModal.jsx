@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Image, Flex, HStack, Text, VStack, Spinner, Center, Input } from "@chakra-ui/react";
+import {
+    Box,
+    Image,
+    Flex,
+    HStack,
+    Text,
+    VStack,
+    Spinner,
+    Center,
+    Input,
+} from "@chakra-ui/react";
 import {
     AiOutlineClose,
     AiOutlineLeft,
@@ -53,7 +63,7 @@ const StoryModal = ({
         const fetchHighlightStories = async () => {
             if (isOpen && highlights?.[highlightIndex]) {
                 const h = highlights[highlightIndex];
-                
+
                 // If stories/items are already present, use them
                 const existingStories = h.stories || h.items || [];
                 if (existingStories.length > 0) {
@@ -65,12 +75,20 @@ const StoryModal = ({
                 if (h.id) {
                     setIsLoadingStories(true);
                     try {
-                        const response = await profileService.getHighlightStories(h.id);
+                        const response =
+                            await profileService.getHighlightStories(h.id);
                         // Extract from ApiResponse wrapper (.data)
-                        const stories = response?.data || (Array.isArray(response) ? response : (response?.content || []));
+                        const stories =
+                            response?.data ||
+                            (Array.isArray(response)
+                                ? response
+                                : response?.content || []);
                         setActiveStories(stories);
                     } catch (error) {
-                        console.error("Failed to fetch highlight stories", error);
+                        console.error(
+                            "Failed to fetch highlight stories",
+                            error,
+                        );
                         setActiveStories([]);
                     } finally {
                         setIsLoadingStories(false);
@@ -89,17 +107,20 @@ const StoryModal = ({
     const currentStory = currentStories[storyIndex];
     const storyUser = currentHighlight?.user;
 
-    const markAsSeen = useCallback(async (storyId) => {
-        if (!storyId || isArchiveMode || currentStory?.seen) return;
-        try {
-            await storyService.viewStory(storyId);
-            // We update the local object reference which is part of activeStories
-            // This is generally safe in this context as seen is checked before calling.
-            currentStory.seen = true;
-        } catch (error) {
-            console.error("Failed to mark story as seen", error);
-        }
-    }, [isArchiveMode, currentStory]);
+    const markAsSeen = useCallback(
+        async (storyId) => {
+            if (!storyId || isArchiveMode || currentStory?.seen) return;
+            try {
+                await storyService.viewStory(storyId);
+                // We update the local object reference which is part of activeStories
+                // This is generally safe in this context as seen is checked before calling.
+                currentStory.seen = true;
+            } catch (error) {
+                console.error("Failed to mark story as seen", error);
+            }
+        },
+        [isArchiveMode, currentStory],
+    );
 
     useEffect(() => {
         if (isOpen && currentStory && !currentStory.seen) {
@@ -154,11 +175,19 @@ const StoryModal = ({
                 storyService.getStoryViewers(currentStory.id),
                 storyService.getStoryReplies(currentStory.id),
             ]);
-            
+
             // Handle ApiResponse wrapper structure
-            const viewersList = viewersRes?.data || (Array.isArray(viewersRes) ? viewersRes : (viewersRes?.content || []));
-            const repliesList = repliesRes?.data || (Array.isArray(repliesRes) ? repliesRes : (repliesRes?.content || []));
-            
+            const viewersList =
+                viewersRes?.data ||
+                (Array.isArray(viewersRes)
+                    ? viewersRes
+                    : viewersRes?.content || []);
+            const repliesList =
+                repliesRes?.data ||
+                (Array.isArray(repliesRes)
+                    ? repliesRes
+                    : repliesRes?.content || []);
+
             setViewers(viewersList);
             setStoryReplies(repliesList);
         } catch (error) {
@@ -170,7 +199,7 @@ const StoryModal = ({
 
     const getFirstUnseenIndex = useCallback((stories) => {
         if (!stories || stories.length === 0) return 0;
-        const index = stories.findIndex(s => s.seen === false);
+        const index = stories.findIndex((s) => s.seen === false);
         return index === -1 ? 0 : index;
     }, []);
 
@@ -178,16 +207,16 @@ const StoryModal = ({
         if (isOpen) {
             const hIndex = initialHighlightIndex || 0;
             setHighlightIndex(hIndex);
-            
+
             // Jump to the first unseen story of the initial highlight
             const currentH = highlights?.[hIndex];
             const initialStories = currentH?.stories || currentH?.items || [];
             const initialStoryIndex = getFirstUnseenIndex(initialStories);
             setStoryIndex(initialStoryIndex);
-            
+
             // Sync liked state from story data
             setIsLiked(initialStories[initialStoryIndex]?.liked || false);
-            
+
             setProgress(0);
             setIsActivityOpen(false);
             setViewers([]);
@@ -205,13 +234,13 @@ const StoryModal = ({
         } else if (highlightIndex < highlights.length - 1) {
             const nextHighlightIndex = highlightIndex + 1;
             setHighlightIndex(nextHighlightIndex);
-            
+
             const nextH = highlights[nextHighlightIndex];
             const nextStories = nextH?.stories || nextH?.items || [];
             const nextStoryIdx = getFirstUnseenIndex(nextStories);
             setStoryIndex(nextStoryIdx);
             setIsLiked(nextStories[nextStoryIdx]?.liked || false);
-            
+
             setProgress(0);
         } else {
             onClose();
@@ -224,7 +253,7 @@ const StoryModal = ({
         onClose,
         isActivityOpen,
         isHighlighting,
-        getFirstUnseenIndex
+        getFirstUnseenIndex,
     ]);
 
     const handlePrev = useCallback(() => {
@@ -238,12 +267,12 @@ const StoryModal = ({
             const prevHighlightIdx = highlightIndex - 1;
             const prevH = highlights[prevHighlightIdx];
             const prevHighlightStories = prevH?.stories || prevH?.items || [];
-            
+
             setHighlightIndex(prevHighlightIdx);
             const lastIdx = (prevHighlightStories.length || 1) - 1;
             setStoryIndex(lastIdx);
             setIsLiked(prevHighlightStories[lastIdx]?.liked || false);
-            
+
             setProgress(0);
         }
     }, [
@@ -260,9 +289,9 @@ const StoryModal = ({
         try {
             const newLikedState = !isLiked;
             setIsLiked(newLikedState);
-            
+
             await storyService.likeStory(currentStory.id);
-            
+
             // Sync with local data
             if (currentStory) {
                 currentStory.liked = newLikedState;
@@ -302,19 +331,24 @@ const StoryModal = ({
         try {
             await storyService.deleteStory(currentStory.id);
             setIsMoreMenuOpen(false);
-            
-            const updatedStories = currentStories.filter(s => s.id !== currentStory.id);
+
+            const updatedStories = currentStories.filter(
+                (s) => s.id !== currentStory.id,
+            );
             setActiveStories(updatedStories);
 
             if (updatedStories.length > 0) {
-                const nextIdx = storyIndex >= updatedStories.length ? updatedStories.length - 1 : storyIndex;
+                const nextIdx =
+                    storyIndex >= updatedStories.length
+                        ? updatedStories.length - 1
+                        : storyIndex;
                 setStoryIndex(nextIdx);
                 setIsLiked(updatedStories[nextIdx]?.liked || false);
                 setProgress(0);
             } else {
                 onClose();
             }
-            
+
             setAlertConfig({
                 isOpen: true,
                 title: "Deleted",
@@ -337,7 +371,7 @@ const StoryModal = ({
             setIsMoreMenuOpen(false);
             onClose();
             // Optionally trigger a refresh of the profile
-            window.location.reload(); 
+            window.location.reload();
         } catch (error) {
             console.error("Failed to delete highlight", error);
             setAlertConfig({
@@ -353,13 +387,18 @@ const StoryModal = ({
         try {
             await storyService.archiveStory(currentStory.id);
             setIsMoreMenuOpen(false);
-            
+
             if (!isArchiveMode) {
-                const updatedStories = currentStories.filter(s => s.id !== currentStory.id);
+                const updatedStories = currentStories.filter(
+                    (s) => s.id !== currentStory.id,
+                );
                 setActiveStories(updatedStories);
 
                 if (updatedStories.length > 0) {
-                    const nextIdx = storyIndex >= updatedStories.length ? updatedStories.length - 1 : storyIndex;
+                    const nextIdx =
+                        storyIndex >= updatedStories.length
+                            ? updatedStories.length - 1
+                            : storyIndex;
                     setStoryIndex(nextIdx);
                     setIsLiked(updatedStories[nextIdx]?.liked || false);
                     setProgress(0);
@@ -373,8 +412,8 @@ const StoryModal = ({
             setAlertConfig({
                 isOpen: true,
                 title: isArchiveMode ? "Unarchived" : "Archived",
-                message: isArchiveMode 
-                    ? "Story has been moved out of archive." 
+                message: isArchiveMode
+                    ? "Story has been moved out of archive."
                     : "Story has been moved to your archive.",
             });
         } catch (error) {
@@ -388,7 +427,14 @@ const StoryModal = ({
     };
 
     useEffect(() => {
-        if (!isOpen || isActivityOpen || isHighlighting || isMoreMenuOpen || replyText.length > 0) return;
+        if (
+            !isOpen ||
+            isActivityOpen ||
+            isHighlighting ||
+            isMoreMenuOpen ||
+            replyText.length > 0
+        )
+            return;
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
@@ -399,7 +445,14 @@ const StoryModal = ({
             });
         }, 50);
         return () => clearInterval(interval);
-    }, [isOpen, handleNext, isActivityOpen, isHighlighting, isMoreMenuOpen, replyText]);
+    }, [
+        isOpen,
+        handleNext,
+        isActivityOpen,
+        isHighlighting,
+        isMoreMenuOpen,
+        replyText,
+    ]);
 
     if (!isOpen || !currentHighlight) return null;
 
@@ -529,9 +582,9 @@ const StoryModal = ({
                         onClick={handleNavigateToUser}
                         width="fit-content"
                     >
-                        <UserAvatar 
-                            src={storyUser?.avatar || storyUser?.avatarUrl} 
-                            size="32px" 
+                        <UserAvatar
+                            src={storyUser?.avatar || storyUser?.avatarUrl}
+                            size="32px"
                             hasBorder={false}
                         />
                         <Box
@@ -562,16 +615,24 @@ const StoryModal = ({
                 {(() => {
                     // Some backends nest the story object inside the highlight item
                     const actualStory = currentStory?.story || currentStory;
-                    const mediaUrl = actualStory?.mediaUrl || actualStory?.url || actualStory?.contentUrl;
-                    const isVideo = actualStory?.type === "VIDEO" || 
-                                   mediaUrl?.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) ||
-                                   mediaUrl?.includes("video");
+                    const mediaUrl =
+                        actualStory?.mediaUrl ||
+                        actualStory?.url ||
+                        actualStory?.contentUrl;
+                    const isVideo =
+                        actualStory?.type === "VIDEO" ||
+                        mediaUrl
+                            ?.toLowerCase()
+                            .match(/\.(mp4|webm|ogg|mov)$/) ||
+                        mediaUrl?.includes("video");
 
                     if (!mediaUrl) {
                         return (
                             <Center h="100%" flexDir="column" gap={4}>
                                 <Spinner color="white" size="lg" />
-                                <Text color="whiteAlpha.600" fontSize="sm">Loading media...</Text>
+                                <Text color="whiteAlpha.600" fontSize="sm">
+                                    Loading media...
+                                </Text>
                             </Center>
                         );
                     }
@@ -689,7 +750,9 @@ const StoryModal = ({
                                             >
                                                 <Image
                                                     src={
-                                                        currentStory?.views?.[0]?.viewer?.avatarUrl ||
+                                                        currentStory?.views?.[0]
+                                                            ?.viewer
+                                                            ?.avatarUrl ||
                                                         "https://i.pravatar.cc/150?u=1"
                                                     }
                                                 />
@@ -705,7 +768,9 @@ const StoryModal = ({
                                             >
                                                 <Image
                                                     src={
-                                                        currentStory?.views?.[1]?.viewer?.avatarUrl ||
+                                                        currentStory?.views?.[1]
+                                                            ?.viewer
+                                                            ?.avatarUrl ||
                                                         "https://i.pravatar.cc/150?u=2"
                                                     }
                                                 />
@@ -751,16 +816,15 @@ const StoryModal = ({
                                     _placeholder={{ color: "whiteAlpha.700" }}
                                     fontSize="14px"
                                     value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onChange={(e) =>
+                                        setReplyText(e.target.value)
+                                    }
                                     onKeyPress={handleSendReply}
                                     isDisabled={isSendingReply}
                                 />
                             </Flex>
                             <HStack gap={4} color="white">
-                                <Box
-                                    onClick={handleLike}
-                                    cursor="pointer"
-                                >
+                                <Box onClick={handleLike} cursor="pointer">
                                     {isLiked ? (
                                         <AiFillHeart
                                             size={30}
@@ -826,13 +890,22 @@ const StoryModal = ({
                                             Replies
                                         </Text>
                                         {storyReplies.map((rep, index) => {
-                                            const replyUser = rep.sender || rep.author || rep.user;
-                                            const username = replyUser?.username;
-                                            const avatarUrl = replyUser?.avatarUrl || replyUser?.avatar;
+                                            const replyUser =
+                                                rep.sender ||
+                                                rep.author ||
+                                                rep.user;
+                                            const username =
+                                                replyUser?.username;
+                                            const avatarUrl =
+                                                replyUser?.avatarUrl ||
+                                                replyUser?.avatar;
 
                                             return (
                                                 <Flex
-                                                    key={rep.id || `reply-${index}`}
+                                                    key={
+                                                        rep.id ||
+                                                        `reply-${index}`
+                                                    }
                                                     align="center"
                                                     gap={3}
                                                     mb={4}
@@ -841,7 +914,9 @@ const StoryModal = ({
                                                         e.stopPropagation();
                                                         if (username) {
                                                             onClose();
-                                                            navigate(`/${username}`);
+                                                            navigate(
+                                                                `/${username}`,
+                                                            );
                                                         }
                                                     }}
                                                 >
@@ -857,7 +932,8 @@ const StoryModal = ({
                                                             {username || "user"}
                                                         </Text>
                                                         <Text fontSize="sm">
-                                                            {rep.text || rep.content}
+                                                            {rep.text ||
+                                                                rep.content}
                                                         </Text>
                                                     </Box>
                                                     <Text
@@ -886,9 +962,11 @@ const StoryModal = ({
                                             <Spinner color="#0095f6" />
                                         </Flex>
                                     ) : viewers.length > 0 ? (
-                                            viewers.map((view, index) => (
+                                        viewers.map((view, index) => (
                                             <Flex
-                                                key={view.id || `viewer-${index}`}
+                                                key={
+                                                    view.id || `viewer-${index}`
+                                                }
                                                 align="center"
                                                 gap={3}
                                                 mb={4}
@@ -897,12 +975,18 @@ const StoryModal = ({
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     onClose();
-                                                    navigate(`/${view.viewer?.username || view.user?.username}`);
+                                                    navigate(
+                                                        `/${view.viewer?.username || view.user?.username}`,
+                                                    );
                                                 }}
                                             >
                                                 <HStack gap={3}>
                                                     <UserAvatar
-                                                        src={view.viewer?.avatarUrl || view.user?.avatarUrl}
+                                                        src={
+                                                            view.viewer
+                                                                ?.avatarUrl ||
+                                                            view.user?.avatarUrl
+                                                        }
                                                         size="44px"
                                                     />
                                                     <Box>
@@ -911,23 +995,41 @@ const StoryModal = ({
                                                                 fontWeight="bold"
                                                                 fontSize="sm"
                                                             >
-                                                                {view.viewer?.username || view.user?.username}
+                                                                {view.viewer
+                                                                    ?.username ||
+                                                                    view.user
+                                                                        ?.username}
                                                             </Text>
-                                                            {(view.viewer?.verified || view.user?.verified) && (
-                                                                <Image src="/verified.png" w="14px" h="14px" />
+                                                            {(view.viewer
+                                                                ?.verified ||
+                                                                view.user
+                                                                    ?.verified) && (
+                                                                <Image
+                                                                    src="/verified.png"
+                                                                    w="14px"
+                                                                    h="14px"
+                                                                />
                                                             )}
                                                         </HStack>
                                                         <Text
                                                             fontSize="xs"
                                                             color="gray.500"
                                                         >
-                                                            {(view.viewer?.mutualCount || view.user?.mutualCount) > 0 
-                                                                ? `Followed by ${view.viewer?.mutualCount || view.user?.mutualCount} mutual` 
-                                                                : (view.viewer?.fullName || view.user?.fullName)}
+                                                            {(view.viewer
+                                                                ?.mutualCount ||
+                                                                view.user
+                                                                    ?.mutualCount) >
+                                                            0
+                                                                ? `Followed by ${view.viewer?.mutualCount || view.user?.mutualCount} mutual`
+                                                                : view.viewer
+                                                                      ?.fullName ||
+                                                                  view.user
+                                                                      ?.fullName}
                                                         </Text>
                                                     </Box>
                                                 </HStack>
-                                                {(view.liked || view.isLiked) && (
+                                                {(view.liked ||
+                                                    view.isLiked) && (
                                                     <AiFillHeart
                                                         color="#ff3040"
                                                         size={20}
@@ -937,7 +1039,12 @@ const StoryModal = ({
                                         ))
                                     ) : (
                                         <Center p={8}>
-                                            <Text color="gray.500" fontSize="sm">No viewers yet</Text>
+                                            <Text
+                                                color="gray.500"
+                                                fontSize="sm"
+                                            >
+                                                No viewers yet
+                                            </Text>
                                         </Center>
                                     )}
                                 </Box>
@@ -1006,22 +1113,23 @@ const StoryModal = ({
                                 Delete Story
                             </Text>
                         </Box>
-                        {!isArchiveMode && currentHighlight?.id !== "active-story" && (
-                            <Box
-                                w="full"
-                                py={4}
-                                textAlign="center"
-                                cursor="pointer"
-                                borderBottom="1px solid"
-                                borderColor="gray.100"
-                                onClick={handleDeleteHighlight}
-                                _hover={{ bg: "gray.50" }}
-                            >
-                                <Text color="#ff3040" fontWeight="bold">
-                                    Delete Highlight
-                                </Text>
-                            </Box>
-                        )}
+                        {!isArchiveMode &&
+                            currentHighlight?.id !== "active-story" && (
+                                <Box
+                                    w="full"
+                                    py={4}
+                                    textAlign="center"
+                                    cursor="pointer"
+                                    borderBottom="1px solid"
+                                    borderColor="gray.100"
+                                    onClick={handleDeleteHighlight}
+                                    _hover={{ bg: "gray.50" }}
+                                >
+                                    <Text color="#ff3040" fontWeight="bold">
+                                        Delete Highlight
+                                    </Text>
+                                </Box>
+                            )}
                         <Box
                             w="full"
                             py={4}
