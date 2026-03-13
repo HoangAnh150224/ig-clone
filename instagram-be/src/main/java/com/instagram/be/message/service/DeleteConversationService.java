@@ -3,7 +3,7 @@ package com.instagram.be.message.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.message.ConversationParticipant;
-import com.instagram.be.message.ConversationParticipantRepository;
+import com.instagram.be.message.repository.ConversationParticipantRepository;
 import com.instagram.be.message.request.ConversationActionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

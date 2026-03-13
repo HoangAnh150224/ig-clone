@@ -3,7 +3,7 @@ package com.instagram.be.story.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.AppValidationException;
 import com.instagram.be.story.Story;
-import com.instagram.be.story.StoryRepository;
+import com.instagram.be.story.repository.StoryRepository;
 import com.instagram.be.story.request.CreateStoryRequest;
 import com.instagram.be.story.response.StoryResponse;
 import com.instagram.be.userprofile.UserProfile;

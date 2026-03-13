@@ -2,11 +2,11 @@ package com.instagram.be.favorite.service;
 
 import com.instagram.be.base.request.UserOnlyRequest;
 import com.instagram.be.base.service.BaseService;
-import com.instagram.be.favorite.FavoritePostRepository;
-import com.instagram.be.post.PostRepository;
+import com.instagram.be.favorite.repository.FavoritePostRepository;
+import com.instagram.be.post.repository.PostRepository;
 import com.instagram.be.post.PostResponseAssembler;
 import com.instagram.be.post.response.PostResponse;
-import com.instagram.be.saved.SavedPostRepository;
+import com.instagram.be.saved.repository.SavedPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

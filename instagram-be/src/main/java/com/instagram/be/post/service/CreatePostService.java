@@ -2,12 +2,14 @@ package com.instagram.be.post.service;
 
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.AppValidationException;
-import com.instagram.be.exception.BusinessException;
 import com.instagram.be.hashtag.Hashtag;
 import com.instagram.be.hashtag.HashtagUpsertService;
 import com.instagram.be.post.*;
 import com.instagram.be.post.enums.MediaType;
 import com.instagram.be.post.enums.PostType;
+import com.instagram.be.post.repository.PostMediaRepository;
+import com.instagram.be.post.repository.PostRepository;
+import com.instagram.be.post.repository.PostTagRepository;
 import com.instagram.be.post.request.CreatePostRequest;
 import com.instagram.be.post.response.CreatePostResponse;
 import com.instagram.be.userprofile.UserProfile;
@@ -20,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

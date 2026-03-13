@@ -1,7 +1,7 @@
 package com.instagram.be.message.service;
 
-import com.instagram.be.message.ConversationParticipantRepository;
-import com.instagram.be.message.ConversationRepository;
+import com.instagram.be.message.repository.ConversationParticipantRepository;
+import com.instagram.be.message.repository.ConversationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

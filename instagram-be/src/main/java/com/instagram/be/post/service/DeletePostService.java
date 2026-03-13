@@ -1,11 +1,10 @@
 package com.instagram.be.post.service;
 
-import com.instagram.be.base.request.BaseRequest;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.post.Post;
-import com.instagram.be.post.PostRepository;
+import com.instagram.be.post.repository.PostRepository;
 import com.instagram.be.post.request.PostActionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

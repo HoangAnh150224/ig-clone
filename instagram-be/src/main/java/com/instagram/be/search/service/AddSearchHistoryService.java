@@ -3,7 +3,7 @@ package com.instagram.be.search.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.hashtag.Hashtag;
-import com.instagram.be.hashtag.HashtagRepository;
+import com.instagram.be.hashtag.repository.HashtagRepository;
 import com.instagram.be.search.SearchHistory;
 import com.instagram.be.search.repository.SearchHistoryRepository;
 import com.instagram.be.search.request.AddSearchHistoryRequest;

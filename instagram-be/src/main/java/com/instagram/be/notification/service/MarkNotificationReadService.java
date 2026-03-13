@@ -3,7 +3,7 @@ package com.instagram.be.notification.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.notification.Notification;
-import com.instagram.be.notification.NotificationRepository;
+import com.instagram.be.notification.repository.NotificationRepository;
 import com.instagram.be.notification.request.NotificationActionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

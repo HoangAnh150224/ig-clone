@@ -1,10 +1,9 @@
 package com.instagram.be.search.service;
 
-import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.follow.response.FollowUserResponse;
 import com.instagram.be.hashtag.Hashtag;
-import com.instagram.be.hashtag.HashtagRepository;
+import com.instagram.be.hashtag.repository.HashtagRepository;
 import com.instagram.be.search.request.SearchRequest;
 import com.instagram.be.search.response.SearchResultResponse;
 import com.instagram.be.userprofile.UserProfile;

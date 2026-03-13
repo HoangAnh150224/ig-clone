@@ -4,7 +4,7 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.story.Story;
-import com.instagram.be.story.StoryRepository;
+import com.instagram.be.story.repository.StoryRepository;
 import com.instagram.be.story.request.StoryActionRequest;
 import com.instagram.be.story.response.StoryResponse;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,7 @@ package com.instagram.be.favorite.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.favorite.FavoriteUser;
-import com.instagram.be.favorite.FavoriteUserRepository;
+import com.instagram.be.favorite.repository.FavoriteUserRepository;
 import com.instagram.be.favorite.request.FavoriteRequest;
 import com.instagram.be.favorite.response.FavoriteResponse;
 import com.instagram.be.userprofile.UserProfile;

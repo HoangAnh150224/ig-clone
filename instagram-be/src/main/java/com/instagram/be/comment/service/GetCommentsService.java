@@ -2,8 +2,8 @@ package com.instagram.be.comment.service;
 
 import com.instagram.be.base.response.PaginatedResponse;
 import com.instagram.be.base.service.BaseService;
-import com.instagram.be.comment.CommentLikeRepository;
-import com.instagram.be.comment.CommentRepository;
+import com.instagram.be.comment.repository.CommentLikeRepository;
+import com.instagram.be.comment.repository.CommentRepository;
 import com.instagram.be.comment.request.GetCommentsRequest;
 import com.instagram.be.comment.response.CommentResponse;
 import lombok.RequiredArgsConstructor;

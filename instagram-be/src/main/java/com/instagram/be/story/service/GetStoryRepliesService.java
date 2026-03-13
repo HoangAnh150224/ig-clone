@@ -5,8 +5,8 @@ import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.story.Story;
 import com.instagram.be.story.StoryReply;
-import com.instagram.be.story.StoryReplyRepository;
-import com.instagram.be.story.StoryRepository;
+import com.instagram.be.story.repository.StoryReplyRepository;
+import com.instagram.be.story.repository.StoryRepository;
 import com.instagram.be.story.request.StoryActionRequest;
 import com.instagram.be.story.response.StoryReplyResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class GetStoryRepliesService extends BaseService<StoryActionRequest, List
         }
 
         List<StoryReply> replies = storyReplyRepository.findRepliesByStoryId(request.getStoryId());
-        
+
         return replies.stream()
                 .map(StoryReplyResponse::from)
                 .collect(Collectors.toList());

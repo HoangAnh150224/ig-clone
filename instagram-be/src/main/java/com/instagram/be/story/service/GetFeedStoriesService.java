@@ -5,8 +5,8 @@ import com.instagram.be.follow.enums.FollowStatus;
 import com.instagram.be.story.request.GetFeedStoriesRequest;
 import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.story.Story;
-import com.instagram.be.story.StoryRepository;
-import com.instagram.be.story.StoryViewRepository;
+import com.instagram.be.story.repository.StoryRepository;
+import com.instagram.be.story.repository.StoryViewRepository;
 import com.instagram.be.story.response.StoryFeedResponse;
 import com.instagram.be.story.response.StoryItemResponse;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +64,7 @@ public class GetFeedStoriesService extends BaseService<GetFeedStoriesRequest, Li
                     List<Story> userStories = e.getValue();
                     var user = userStories.get(0).getUser();
                     boolean hasUnseen = userStories.stream().anyMatch(s -> !viewedIds.contains(s.getId()));
-                    
+
                     List<StoryItemResponse> items = userStories.stream()
                             .map(s -> {
                                 boolean seen = viewedIds.contains(s.getId());

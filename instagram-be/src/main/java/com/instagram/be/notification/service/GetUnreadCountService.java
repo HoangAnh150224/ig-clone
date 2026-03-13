@@ -2,7 +2,7 @@ package com.instagram.be.notification.service;
 
 import com.instagram.be.base.request.UserOnlyRequest;
 import com.instagram.be.base.service.BaseService;
-import com.instagram.be.notification.NotificationRepository;
+import com.instagram.be.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

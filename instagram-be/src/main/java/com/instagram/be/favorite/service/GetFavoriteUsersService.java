@@ -2,7 +2,7 @@ package com.instagram.be.favorite.service;
 
 import com.instagram.be.base.request.UserOnlyRequest;
 import com.instagram.be.base.service.BaseService;
-import com.instagram.be.favorite.FavoriteUserRepository;
+import com.instagram.be.favorite.repository.FavoriteUserRepository;
 import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.follow.response.FollowUserResponse;
 import lombok.RequiredArgsConstructor;

@@ -1,10 +1,10 @@
 package com.instagram.be.hashtag.service;
 
 import com.instagram.be.base.service.BaseService;
-import com.instagram.be.hashtag.HashtagRepository;
+import com.instagram.be.hashtag.repository.HashtagRepository;
 import com.instagram.be.hashtag.request.HashtagSearchRequest;
 import com.instagram.be.hashtag.response.HashtagSuggestionResponse;
-import com.instagram.be.post.PostRepository;
+import com.instagram.be.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;

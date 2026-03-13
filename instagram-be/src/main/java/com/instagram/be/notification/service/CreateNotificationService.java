@@ -2,7 +2,7 @@ package com.instagram.be.notification.service;
 
 import com.instagram.be.comment.Comment;
 import com.instagram.be.notification.Notification;
-import com.instagram.be.notification.NotificationRepository;
+import com.instagram.be.notification.repository.NotificationRepository;
 import com.instagram.be.notification.enums.NotificationType;
 import com.instagram.be.notification.response.NotificationResponse;
 import com.instagram.be.post.Post;
@@ -46,7 +46,7 @@ public class CreateNotificationService {
                 "/queue/notifications",
                 response
         );
-        
+
         log.debug("Notification created: {} for user {}", type, recipient.getUsername());
     }
 }

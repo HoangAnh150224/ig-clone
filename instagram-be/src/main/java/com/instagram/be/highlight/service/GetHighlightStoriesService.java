@@ -3,7 +3,7 @@ package com.instagram.be.highlight.service;
 import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.highlight.Highlight;
-import com.instagram.be.highlight.HighlightRepository;
+import com.instagram.be.highlight.repository.HighlightRepository;
 import com.instagram.be.highlight.request.HighlightActionRequest;
 import com.instagram.be.story.response.StoryResponse;
 import lombok.RequiredArgsConstructor;

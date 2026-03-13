@@ -4,7 +4,7 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.message.Message;
-import com.instagram.be.message.MessageRepository;
+import com.instagram.be.message.repository.MessageRepository;
 import com.instagram.be.message.request.MessageActionRequest;
 import com.instagram.be.message.response.MessageResponse;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +39,11 @@ public class DeleteMessageService extends BaseService<MessageActionRequest, Void
 
         message.setDeleted(true);
         Message saved = messageRepository.save(message);
-        
+
         // Push delete event via WebSocket
         MessageResponse response = MessageResponse.from(saved);
         messagingTemplate.convertAndSend("/topic/messages/" + message.getConversation().getId(), response);
-        
+
         return null;
     }
 }

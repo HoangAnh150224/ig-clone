@@ -1,6 +1,8 @@
 package com.instagram.be.message;
 
 import com.instagram.be.follow.response.FollowUserResponse;
+import com.instagram.be.message.repository.ConversationParticipantRepository;
+import com.instagram.be.message.repository.MessageRepository;
 import com.instagram.be.message.response.ConversationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;

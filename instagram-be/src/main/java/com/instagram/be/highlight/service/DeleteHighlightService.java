@@ -4,7 +4,7 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.exception.BusinessException;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.highlight.Highlight;
-import com.instagram.be.highlight.HighlightRepository;
+import com.instagram.be.highlight.repository.HighlightRepository;
 import com.instagram.be.highlight.request.HighlightActionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

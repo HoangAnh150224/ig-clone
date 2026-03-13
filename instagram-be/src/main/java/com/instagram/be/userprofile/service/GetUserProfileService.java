@@ -4,7 +4,7 @@ import com.instagram.be.block.repository.BlockRepository;
 import com.instagram.be.exception.NotFoundException;
 import com.instagram.be.follow.enums.FollowStatus;
 import com.instagram.be.follow.repository.FollowRepository;
-import com.instagram.be.post.PostRepository;
+import com.instagram.be.post.repository.PostRepository;
 import com.instagram.be.userprofile.UserProfile;
 import com.instagram.be.userprofile.repository.UserProfileRepository;
 import com.instagram.be.userprofile.request.GetUserProfileRequest;

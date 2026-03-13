@@ -5,11 +5,11 @@ import com.instagram.be.base.service.BaseService;
 import com.instagram.be.follow.repository.FollowRepository;
 import com.instagram.be.follow.response.FollowUserResponse;
 import com.instagram.be.notification.Notification;
-import com.instagram.be.notification.NotificationRepository;
+import com.instagram.be.notification.repository.NotificationRepository;
 import com.instagram.be.notification.request.GetNotificationsRequest;
 import com.instagram.be.notification.response.NotificationResponse;
 import com.instagram.be.post.PostMedia;
-import com.instagram.be.post.PostMediaRepository;
+import com.instagram.be.post.repository.PostMediaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,7 +45,7 @@ public class GetNotificationsService extends BaseService<GetNotificationsRequest
                 .map(n -> {
                     boolean isFollowingActor = followRepository.existsByFollowerIdAndFollowingId(userId, n.getActor().getId());
                     FollowUserResponse actorResponse = FollowUserResponse.of(n.getActor(), isFollowingActor, 0);
-                    
+
                     String thumbUrl = null;
                     if (n.getPost() != null) {
                         List<PostMedia> media = postMediaRepository.findByPostIdOrderByDisplayOrderAsc(n.getPost().getId());
