@@ -3,7 +3,7 @@ import { store } from "../store";
 import { setGlobalError } from "../store/slices/uiSlice";
 
 const axiosClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1",
     headers: {
         "Content-Type": "application/json",
     },
@@ -25,9 +25,15 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
     (response) => {
         const apiResponse = response.data;
+        
+        if (!apiResponse) {
+            return null;
+        }
+
+        const status = apiResponse.status?.toLowerCase();
 
         // If Backend returns "error" status in body (even if HTTP code is 200)
-        if (apiResponse.status === "error") {
+        if (status === "error") {
             const error = new Error(
                 apiResponse.message || "An unexpected error occurred",
             );

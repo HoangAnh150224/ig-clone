@@ -17,8 +17,16 @@ const notificationService = {
      * API: GET /notifications/unread-count
      */
     getUnreadCount: async () => {
-        const response = await axiosClient.get("/notifications/unread-count");
-        return typeof response === 'number' ? response : (response.count || 0);
+        try {
+            const response = await axiosClient.get("/notifications/unread-count");
+            if (response === null || response === undefined) {
+                return 0;
+            }
+            return typeof response === 'number' ? response : (response.count || 0);
+        } catch (error) {
+            console.error("Error fetching unread count:", error);
+            return 0;
+        }
     },
 
     /**

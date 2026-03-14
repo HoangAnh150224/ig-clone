@@ -43,6 +43,7 @@ const messageService = {
     getRequestCount: async () => {
         try {
             const response = await axiosClient.get("/messages/requests");
+            if (!response) return 0;
             return Array.isArray(response) ? response.length : (response.content?.length || 0);
         } catch {
             return 0;
